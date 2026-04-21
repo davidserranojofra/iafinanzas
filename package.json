@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@google/genai": "^1.50.1",
+    "@nuxtjs/supabase": "^2.0.5",
+    "@supabase/supabase-js": "^2.104.0",
     "@tailwindcss/vite": "^4.2.4",
     "nuxt": "^4.4.2",
     "tailwindcss": "^4.2.4",

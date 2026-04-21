@@ -37,22 +37,19 @@ const TICKET_SCHEMA = {
   required: ['comercio', 'fecha', 'total', 'categoria', 'notas', 'metodo_pago'],
 }
 
-// Foto en duro para pruebas — ticket suizo de Wikimedia Commons
-const TEST_IMAGE_URL = 'https://upload.wikimedia.org/wikipedia/commons/0/0b/ReceiptSwiss.jpg'
-
 export default defineEventHandler(async (event) => {
   const { geminiApiKey } = useRuntimeConfig(event)
 
   const ai = new GoogleGenAI({ apiKey: geminiApiKey })
 
-  const imageRes = await fetch(TEST_IMAGE_URL)
-  if (!imageRes.ok) {
-    throw createError({ statusCode: 502, message: 'No se pudo obtener la imagen de prueba' })
+  const form = await readMultipartFormData(event)
+  const imageField = form?.find(f => f.name === 'image')
+  if (!imageField?.data) {
+    throw createError({ statusCode: 400, message: 'Se requiere una imagen en el campo "image"' })
   }
 
-  const mimeType = (imageRes.headers.get('content-type') ?? 'image/jpeg').split(';')[0]
-  const buffer = await imageRes.arrayBuffer()
-  const base64 = Buffer.from(buffer).toString('base64')
+  const mimeType = (imageField.type ?? 'image/jpeg').split(';')[0]
+  const base64 = Buffer.from(imageField.data).toString('base64')
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.0-flash',

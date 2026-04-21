@@ -1,5 +1,6 @@
 <template>
   <div>
-    <h1 class="flex justify-center">Cartera</h1>
+    <h1>Cartera</h1>
+    <TicketCapture />
   </div>
 </template>
