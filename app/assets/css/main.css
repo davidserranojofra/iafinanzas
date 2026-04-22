@@ -1,1 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
 @import "tailwindcss";
+
+@theme {
+  /* Paleta Dracula */
+  --color-dracula-bg:     #282a36;
+  --color-dracula-bg2:    #1e2030;
+  --color-dracula-card:   #44475a;
+  --color-dracula-card2:  #383a4a;
+  --color-dracula-text:   #f8f8f2;
+  --color-dracula-muted:  #6272a4;
+  --color-dracula-purple: #bd93f9;
+  --color-dracula-pink:   #ff79c6;
+  --color-dracula-green:  #50fa7b;
+  --color-dracula-cyan:   #8be9fd;
+  --color-dracula-yellow: #f1fa8c;
+  --color-dracula-orange: #ffb86c;
+  --color-dracula-red:    #ff5555;
+
+  /* Tipografía */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Fira Code', monospace;
+
+  /* Border radius */
+  --radius-2xl: 16px;
+  --radius-3xl: 20px;
+  --radius-4xl: 24px;
+}
+
+/* Base */
+html {
+  background-color: #282a36;
+  color: #f8f8f2;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Touch targets mínimos mobile */
+button, a, [role="button"] {
+  min-height: 44px;
+}

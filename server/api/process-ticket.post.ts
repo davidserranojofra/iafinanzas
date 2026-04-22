@@ -51,22 +51,31 @@ export default defineEventHandler(async (event) => {
   const mimeType = (imageField.type ?? 'image/jpeg').split(';')[0]
   const base64 = Buffer.from(imageField.data).toString('base64')
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash',
-    contents: [
-      {
-        role: 'user',
-        parts: [
-          { text: EXTRACTION_PROMPT },
-          { inlineData: { mimeType, data: base64 } },
-        ],
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: EXTRACTION_PROMPT },
+            { inlineData: { mimeType, data: base64 } },
+          ],
+        },
+      ],
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: TICKET_SCHEMA,
       },
-    ],
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: TICKET_SCHEMA,
-    },
-  })
+    })
 
-  return JSON.parse(response.text ?? '{}')
+    return JSON.parse(response.text ?? '{}')
+  }
+  catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : ''
+    if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('rate')) {
+      throw createError({ statusCode: 429, message: 'Límite de la API alcanzado. Esperá un minuto e intentá de nuevo.' })
+    }
+    throw createError({ statusCode: 500, message: 'Error al procesar la imagen con IA.' })
+  }
 })
