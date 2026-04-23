@@ -48,12 +48,11 @@ export function useTickets() {
       const { data, error } = await supabase
         .from('tickets')
         .select('*')
-        .eq('user_id', user.value.id)
         .order('fecha', { ascending: false })
       if (error) throw error
       return (data as Record<string, unknown>[]).map(fromRow)
     },
-    { default: () => [] },
+    { default: () => [] as Ticket[], watch: [user] },
   )
 
   const createTicket = async (dto: CreateTicketDto): Promise<Ticket> => {
@@ -63,13 +62,14 @@ export function useTickets() {
       .select()
       .single()
     if (error) throw error
-    await refresh()
+    clearNuxtData('tickets')
     return fromRow(data as Record<string, unknown>)
   }
 
   const deleteTicket = async (id: string) => {
     const { error } = await supabase.from('tickets').delete().eq('id', id)
     if (error) throw error
+    clearNuxtData('tickets')
     await refresh()
   }
 

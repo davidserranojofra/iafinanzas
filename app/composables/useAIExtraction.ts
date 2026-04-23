@@ -1,4 +1,27 @@
-import type { ExtractedTicket } from '~/types'
+import type { ExtractedTicket, TicketCategoria } from '~/types'
+
+const CATEGORIA_MAP: Record<string, TicketCategoria> = {
+  'alimentación': 'Alimentación',
+  'alimentacion': 'Alimentación',
+  'transporte':   'Transporte',
+  'salud':        'Salud',
+  'tecnología':   'Tecnología',
+  'tecnologia':   'Tecnología',
+  'ropa':         'Ropa',
+  'hogar':        'Hogar',
+  'entretenimiento': 'Ocio',
+  'ocio':         'Ocio',
+  'restaurante':  'Restaurantes',
+  'restaurantes': 'Restaurantes',
+  'suscripciones':'Suscripciones',
+  'otro':         'Otro',
+}
+
+function mapCategoria(raw: unknown): TicketCategoria {
+  if (!raw) return 'Otro'
+  const key = String(raw).toLowerCase().trim()
+  return CATEGORIA_MAP[key] ?? 'Otro'
+}
 
 export function useAIExtraction() {
   const phase = ref<'idle' | 'extracting' | 'done' | 'error'>('idle')
@@ -30,7 +53,7 @@ export function useAIExtraction() {
         comercio:   String(raw.comercio ?? ''),
         fecha:      String(raw.fecha ?? new Date().toISOString().slice(0, 10)),
         total:      Number(raw.total ?? 0),
-        categoria:  (raw.categoria as ExtractedTicket['categoria']) ?? 'Otro',
+        categoria:  mapCategoria(raw.categoria),
         metodoPago: String(raw.metodo_pago ?? raw.metodoPago ?? ''),
         notas:      raw.notas ? String(raw.notas) : undefined,
         items:      [],

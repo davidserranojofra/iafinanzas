@@ -69,7 +69,9 @@ export default defineEventHandler(async (event) => {
       },
     })
 
-    return JSON.parse(response.text ?? '{}')
+    const text = response.text?.trim()
+    if (!text) throw createError({ statusCode: 500, message: 'La IA no devolvió datos.' })
+    return JSON.parse(text)
   }
   catch (e: unknown) {
     const msg = e instanceof Error ? e.message : ''
