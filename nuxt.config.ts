@@ -9,7 +9,7 @@ export default defineNuxtConfig({
     redirect: false,
   },
   runtimeConfig: {
-    geminiApiKey: '',
+    groqApiKey: '',
   },
   css: ['~/assets/css/main.css'],
   vite: {

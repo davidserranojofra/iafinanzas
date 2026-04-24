@@ -11,6 +11,9 @@ const user = useSupabaseUser()
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const preview = ref<string | null>(null)
 const saving = ref(false)
+const saveError = ref<string | null>(null)
+
+const pendingTicket = useState<Record<string, unknown> | null>('pending-ticket', () => null)
 
 // Campos editables tras la extracción
 const form = ref({
@@ -44,9 +47,15 @@ function openPicker(capture?: boolean) {
   fileInput.value.click()
 }
 
+function editManually() {
+  pendingTicket.value = { ...form.value }
+  navigateTo('/tickets/manual')
+}
+
 async function confirm() {
   if (!result.value) return
   saving.value = true
+  saveError.value = null
   try {
     // Subir imagen a Supabase Storage si hay preview
     let imageUrl: string | undefined
@@ -76,7 +85,9 @@ async function confirm() {
 
     await navigateTo(`/tickets/${ticket.id}`, { replace: true })
   } catch (e: unknown) {
-    alert(e instanceof Error ? e.message : 'Error al guardar el ticket.')
+    const msg = e instanceof Error ? e.message : 'Error al guardar el ticket.'
+    console.error('[escanear] save error:', msg)
+    saveError.value = msg
   } finally {
     saving.value = false
   }
@@ -228,7 +239,12 @@ const fields = computed(() => [
       <!-- Aviso edición -->
       <p class="text-xs text-[#6272a4] text-center">
         ¿Algo no está bien?
-        <NuxtLink to="/tickets/manual" class="text-[#bd93f9] font-semibold">Editá manualmente</NuxtLink>
+        <button class="text-[#bd93f9] font-semibold" @click="editManually">Editá manualmente</button>
+      </p>
+
+      <!-- Error de guardado -->
+      <p v-if="saveError" class="text-xs text-[#ff5555] bg-[#ff5555]/10 rounded-xl px-3 py-2 text-center">
+        {{ saveError }}
       </p>
 
       <!-- Botones -->

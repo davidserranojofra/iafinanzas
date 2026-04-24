@@ -64,13 +64,16 @@ export function useAIExtraction() {
       phase.value = 'done'
     } catch (e: unknown) {
       phase.value = 'error'
-      const msg = e instanceof Error ? e.message : ''
-      if (msg.includes('429') || msg.includes('Límite')) {
-        errorMsg.value = 'Límite de la API alcanzado. Esperá un minuto e intentá de nuevo.'
-      } else if (msg.includes('400')) {
+      const fetchErr = e as { status?: number; data?: { message?: string }; message?: string }
+      const status = fetchErr?.status
+      const serverMsg = fetchErr?.data?.message ?? fetchErr?.message ?? ''
+      console.error('[useAIExtraction] error:', status, serverMsg)
+      if (status === 429 || serverMsg.includes('429') || serverMsg.includes('Límite')) {
+        errorMsg.value = serverMsg || 'Límite de la API alcanzado. Esperá un minuto e intentá de nuevo.'
+      } else if (status === 400 || serverMsg.includes('400')) {
         errorMsg.value = 'La imagen no es válida o no se pudo leer. Probá con otra foto.'
       } else {
-        errorMsg.value = 'No se pudo procesar la imagen. Intentá de nuevo.'
+        errorMsg.value = serverMsg || 'No se pudo procesar la imagen. Intentá de nuevo.'
       }
     } finally {
       if (progressInterval) clearInterval(progressInterval)

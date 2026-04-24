@@ -18,12 +18,12 @@ Sin suite de tests configurada todavía.
 Crear un archivo `.env` en la raíz del proyecto:
 
 ```
-NUXT_GEMINI_API_KEY=tu_clave_aqui
+NUXT_GROQ_API_KEY=tu_clave_aqui
 SUPABASE_URL=tu_supabase_url
 SUPABASE_KEY=tu_supabase_anon_key
 ```
 
-`NUXT_GEMINI_API_KEY` se mapea a `runtimeConfig.geminiApiKey` (solo servidor). Las variables de Supabase las toma automáticamente `@nuxtjs/supabase`.
+`NUXT_GROQ_API_KEY` se mapea a `runtimeConfig.groqApiKey` (solo servidor). Las variables de Supabase las toma automáticamente `@nuxtjs/supabase`.
 
 ## Arquitectura
 
@@ -40,7 +40,7 @@ Sigue la convención de directorio `app/` de Nuxt 4 — todo el código del clie
 - `app/assets/css/main.css` — Tailwind v4 con `@theme {}` para tokens Dracula
 
 El código del servidor vive en `server/`:
-- `server/api/process-ticket.post.ts` — extracción IA con Gemini (mantener Gemini, no migrar a OpenAI)
+- `server/api/process-ticket.post.ts` — extracción IA con Groq (Llama 4 Scout Vision). No migrar a OpenAI ni Gemini.
 
 ## Design System — Paleta Dracula
 

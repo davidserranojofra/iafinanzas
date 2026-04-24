@@ -9,13 +9,18 @@ const user = useSupabaseUser()
 const saving = ref(false)
 const errors = ref<Record<string, string>>({})
 
+const pendingTicket = useState<Record<string, unknown> | null>('pending-ticket', () => null)
+
+const prefill = pendingTicket.value
+pendingTicket.value = null
+
 const form = ref({
-  comercio:   '',
-  fecha:      new Date().toISOString().slice(0, 10),
-  total:      '',
-  categoria:  '' as TicketCategoria | '',
-  metodoPago: '',
-  notas:      '',
+  comercio:   String(prefill?.comercio ?? ''),
+  fecha:      String(prefill?.fecha ?? new Date().toISOString().slice(0, 10)),
+  total:      prefill?.total ? String(prefill.total) : '',
+  categoria:  (prefill?.categoria ?? '') as TicketCategoria | '',
+  metodoPago: String(prefill?.metodoPago ?? ''),
+  notas:      String(prefill?.notas ?? ''),
 })
 
 const categorias: TicketCategoria[] = [

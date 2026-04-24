@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai'
+import Groq from 'groq-sdk'
 
 const EXTRACTION_PROMPT = `
 Sos un sistema especializado en extracción de datos de tickets y facturas.
@@ -18,29 +18,10 @@ Reglas estrictas:
 4. La fecha siempre en formato YYYY-MM-DD.
 `.trim()
 
-const TICKET_SCHEMA = {
-  type: 'object',
-  properties: {
-    comercio: { type: 'string' },
-    fecha: { type: 'string' },
-    total: { type: 'number' },
-    categoria: {
-      type: 'string',
-      enum: ['alimentación', 'transporte', 'salud', 'tecnología', 'ropa', 'hogar', 'entretenimiento', 'restaurante', 'otro'],
-    },
-    notas: { type: 'string', nullable: true },
-    metodo_pago: {
-      type: 'string',
-      enum: ['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'desconocido'],
-    },
-  },
-  required: ['comercio', 'fecha', 'total', 'categoria', 'notas', 'metodo_pago'],
-}
-
 export default defineEventHandler(async (event) => {
-  const { geminiApiKey } = useRuntimeConfig(event)
+  const { groqApiKey } = useRuntimeConfig(event)
 
-  const ai = new GoogleGenAI({ apiKey: geminiApiKey })
+  const groq = new Groq({ apiKey: groqApiKey })
 
   const form = await readMultipartFormData(event)
   const imageField = form?.find(f => f.name === 'image')
@@ -52,32 +33,31 @@ export default defineEventHandler(async (event) => {
   const base64 = Buffer.from(imageField.data).toString('base64')
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: [
+    const response = await groq.chat.completions.create({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [
         {
           role: 'user',
-          parts: [
-            { text: EXTRACTION_PROMPT },
-            { inlineData: { mimeType, data: base64 } },
+          content: [
+            { type: 'text', text: EXTRACTION_PROMPT },
+            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } },
           ],
         },
       ],
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: TICKET_SCHEMA,
-      },
+      response_format: { type: 'json_object' },
+      temperature: 0,
     })
 
-    const text = response.text?.trim()
+    const text = response.choices[0]?.message?.content?.trim()
     if (!text) throw createError({ statusCode: 500, message: 'La IA no devolvió datos.' })
     return JSON.parse(text)
   }
   catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : ''
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[process-ticket] Groq error:', msg)
     if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('rate')) {
       throw createError({ statusCode: 429, message: 'Límite de la API alcanzado. Esperá un minuto e intentá de nuevo.' })
     }
-    throw createError({ statusCode: 500, message: 'Error al procesar la imagen con IA.' })
+    throw createError({ statusCode: 500, message: `Error al procesar la imagen con IA. (${msg})` })
   }
 })
