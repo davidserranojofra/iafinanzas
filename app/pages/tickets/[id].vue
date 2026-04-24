@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import type { Ticket } from '~/types'
+import type { Ticket, TicketCategoria } from '~/types'
 
 definePageMeta({ middleware: 'auth' })
 
 const route = useRoute()
 const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 const router = useRouter()
+const { updateTicket, deleteTicket } = useTickets()
 
-const { data: ticket, pending, error } = await useAsyncData<Ticket>(
+const { data: ticket, pending, error, refresh } = await useAsyncData<Ticket>(
   `ticket-${route.params.id}`,
   async () => {
     const { data, error } = await supabase
@@ -37,6 +39,90 @@ const { data: ticket, pending, error } = await useAsyncData<Ticket>(
 )
 
 const tab = ref<'detalles' | 'imagen'>('detalles')
+
+// ── ELIMINAR ────────────────────────────────────────────────────────────────
+const showDelete = ref(false)
+const deleting = ref(false)
+const deleteError = ref('')
+
+async function confirmDelete() {
+  if (!ticket.value) return
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    await deleteTicket(ticket.value.id)
+    await navigateTo('/tickets', { replace: true })
+  } catch (e: unknown) {
+    deleteError.value = e instanceof Error ? e.message : 'Error al eliminar.'
+    deleting.value = false
+  }
+}
+
+// ── EDITAR ───────────────────────────────────────────────────────────────────
+const showEdit = ref(false)
+const saving = ref(false)
+const saveError = ref('')
+
+const categorias: TicketCategoria[] = [
+  'Alimentación', 'Transporte', 'Ropa', 'Restaurantes',
+  'Suscripciones', 'Salud', 'Hogar', 'Ocio', 'Tecnología', 'Otro',
+]
+
+const TODOS_METODOS = ['Efectivo', 'Tarjeta débito', 'Tarjeta crédito', 'Transferencia', 'Otro']
+const metodos = ref<string[]>([])
+
+const { pending: loadingMetodos } = useAsyncData('metodos-pago-detail', async () => {
+  if (!user.value) return null
+  const { data } = await supabase.from('profiles').select('metodos_pago').single()
+  const activos = data?.metodos_pago
+  metodos.value = activos?.length ? activos : TODOS_METODOS
+  return data
+})
+
+const editForm = ref({
+  comercio:   '',
+  fecha:      '',
+  total:      '',
+  categoria:  '' as TicketCategoria,
+  metodoPago: '',
+  notas:      '',
+})
+
+function openEdit() {
+  if (!ticket.value) return
+  editForm.value = {
+    comercio:   ticket.value.comercio,
+    fecha:      ticket.value.fecha,
+    total:      String(ticket.value.total),
+    categoria:  ticket.value.categoria,
+    metodoPago: ticket.value.metodoPago ?? '',
+    notas:      ticket.value.notas ?? '',
+  }
+  saveError.value = ''
+  showEdit.value = true
+}
+
+async function submitEdit() {
+  if (!ticket.value) return
+  saving.value = true
+  saveError.value = ''
+  try {
+    await updateTicket(ticket.value.id, {
+      comercio:   editForm.value.comercio.trim(),
+      fecha:      editForm.value.fecha,
+      total:      Number(editForm.value.total),
+      categoria:  editForm.value.categoria,
+      metodoPago: editForm.value.metodoPago || undefined,
+      notas:      editForm.value.notas.trim() || undefined,
+    })
+    await refresh()
+    showEdit.value = false
+  } catch (e: unknown) {
+    saveError.value = e instanceof Error ? e.message : 'Error al guardar.'
+  } finally {
+    saving.value = false
+  }
+}
 
 const categoryColors: Record<string, string> = {
   Alimentación: '#50fa7b', Transporte: '#8be9fd', Ropa: '#ff79c6',
@@ -91,7 +177,28 @@ function downloadSVG() {
         </svg>
       </button>
       <h1 class="text-base font-semibold text-[#f8f8f2]">Detalle</h1>
-      <div class="w-10" />
+      <div class="flex items-center gap-2">
+        <button
+          class="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#383a4a] text-[#bd93f9] transition-colors active:bg-[#44475a]"
+          @click="openEdit"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button
+          class="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#383a4a] text-[#ff5555] transition-colors active:bg-[#44475a]"
+          @click="showDelete = true"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -215,4 +322,185 @@ function downloadSVG() {
       </div>
     </template>
   </div>
+
+  <!-- ── SHEET: ELIMINAR ───────────────────────────────────────────────── -->
+  <Teleport to="body">
+    <Transition name="overlay">
+      <div v-if="showDelete" class="fixed inset-0 z-40 bg-black/60" @click="showDelete = false" />
+    </Transition>
+    <Transition name="sheet">
+      <div v-if="showDelete" class="fixed bottom-0 left-0 right-0 z-50 bg-[#383a4a] rounded-t-3xl px-4 pt-5 pb-10 border-t border-[#6272a4]/20">
+        <div class="w-10 h-1 rounded-full bg-[#6272a4]/40 mx-auto mb-6" />
+
+        <div class="flex flex-col items-center gap-3 mb-6">
+          <div class="w-14 h-14 rounded-2xl bg-[#ff5555]/15 flex items-center justify-center">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff5555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+            </svg>
+          </div>
+          <h2 class="text-lg font-bold text-[#f8f8f2]">Eliminar ticket</h2>
+          <p class="text-sm text-[#6272a4] text-center">
+            ¿Eliminás <span class="text-[#f8f8f2] font-semibold">{{ ticket?.comercio }}</span>?
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+
+        <p v-if="deleteError" class="text-xs text-[#ff5555] bg-[#ff5555]/10 rounded-xl px-3 py-2 mb-3 text-center">{{ deleteError }}</p>
+
+        <div class="flex flex-col gap-2">
+          <button
+            :disabled="deleting"
+            class="w-full py-4 rounded-2xl text-sm font-semibold text-white bg-[#ff5555] transition-opacity disabled:opacity-50"
+            @click="confirmDelete"
+          >
+            {{ deleting ? 'Eliminando...' : 'Sí, eliminar' }}
+          </button>
+          <button
+            class="w-full py-3 rounded-2xl text-sm font-medium text-[#6272a4] bg-[#44475a]"
+            @click="showDelete = false"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
+  <!-- ── SHEET: EDITAR ─────────────────────────────────────────────────── -->
+  <Teleport to="body">
+    <Transition name="overlay">
+      <div v-if="showEdit" class="fixed inset-0 z-40 bg-black/60" @click="showEdit = false" />
+    </Transition>
+    <Transition name="sheet">
+      <div v-if="showEdit" class="fixed bottom-0 left-0 right-0 z-50 bg-[#383a4a] rounded-t-3xl border-t border-[#6272a4]/20 flex flex-col max-h-[90dvh]">
+        <!-- Handle + título fijo -->
+        <div class="px-4 pt-5 pb-4 flex-shrink-0">
+          <div class="w-10 h-1 rounded-full bg-[#6272a4]/40 mx-auto mb-4" />
+          <h2 class="text-lg font-bold text-[#f8f8f2]">Editar ticket</h2>
+        </div>
+
+        <!-- Contenido scrollable -->
+        <div class="overflow-y-auto flex-1 px-4 pb-10 flex flex-col gap-4">
+
+          <!-- Comercio -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold uppercase tracking-wider text-[#6272a4]">Comercio</label>
+            <input
+              v-model="editForm.comercio"
+              type="text"
+              class="w-full bg-[#282a36] rounded-2xl px-4 py-3.5 text-sm text-[#f8f8f2] border border-[#6272a4]/20 focus:border-[#bd93f9] focus:outline-none transition-colors"
+            >
+          </div>
+
+          <!-- Fecha -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold uppercase tracking-wider text-[#6272a4]">Fecha</label>
+            <input
+              v-model="editForm.fecha"
+              type="date"
+              class="w-full bg-[#282a36] rounded-2xl px-4 py-3.5 text-sm text-[#f8f8f2] border border-[#6272a4]/20 focus:border-[#bd93f9] focus:outline-none transition-colors appearance-none"
+            >
+          </div>
+
+          <!-- Total -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold uppercase tracking-wider text-[#6272a4]">Total</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#6272a4]">€</span>
+              <input
+                v-model="editForm.total"
+                type="number"
+                min="0"
+                step="0.01"
+                class="w-full bg-[#282a36] rounded-2xl pl-9 pr-4 py-3.5 text-sm text-[#f8f8f2] border border-[#6272a4]/20 focus:border-[#bd93f9] focus:outline-none transition-colors"
+              >
+            </div>
+          </div>
+
+          <!-- Categoría -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold uppercase tracking-wider text-[#6272a4]">Categoría</label>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="cat in categorias"
+                :key="cat"
+                type="button"
+                class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                :class="editForm.categoria === cat ? 'bg-[#bd93f9] text-[#282a36]' : 'bg-[#282a36] text-[#6272a4]'"
+                @click="editForm.categoria = cat"
+              >
+                {{ cat }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Método de pago -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold uppercase tracking-wider text-[#6272a4]">Método de pago</label>
+            <div v-if="loadingMetodos" class="flex gap-2">
+              <div v-for="i in 3" :key="i" class="h-7 w-20 rounded-full bg-[#282a36] animate-pulse" />
+            </div>
+            <div v-else class="flex flex-wrap gap-2">
+              <button
+                v-for="m in metodos"
+                :key="m"
+                type="button"
+                class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                :class="editForm.metodoPago === m ? 'bg-[#6272a4] text-[#f8f8f2]' : 'bg-[#282a36] text-[#6272a4]'"
+                @click="editForm.metodoPago = editForm.metodoPago === m ? '' : m"
+              >
+                {{ m }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold uppercase tracking-wider text-[#6272a4]">Notas</label>
+            <textarea
+              v-model="editForm.notas"
+              rows="3"
+              class="w-full bg-[#282a36] rounded-2xl px-4 py-3.5 text-sm text-[#f8f8f2] border border-[#6272a4]/20 focus:border-[#bd93f9] focus:outline-none transition-colors resize-none"
+            />
+          </div>
+
+          <p v-if="saveError" class="text-xs text-[#ff5555] bg-[#ff5555]/10 rounded-xl px-3 py-2 text-center">{{ saveError }}</p>
+
+          <button
+            :disabled="saving"
+            class="w-full py-4 rounded-2xl text-sm font-semibold text-[#282a36] transition-opacity disabled:opacity-50"
+            style="background: linear-gradient(135deg, #bd93f9, #ff79c6)"
+            @click="submitEdit"
+          >
+            {{ saving ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
+
+<style scoped>
+.overlay-enter-active,
+.overlay-leave-active {
+  transition: opacity 0.3s ease;
+}
+.overlay-enter-from,
+.overlay-leave-to {
+  opacity: 0;
+}
+
+.sheet-enter-active {
+  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.sheet-leave-active {
+  transition: transform 0.28s cubic-bezier(0.4, 0, 1, 1);
+}
+.sheet-enter-from,
+.sheet-leave-to {
+  transform: translateY(100%);
+}
+</style>

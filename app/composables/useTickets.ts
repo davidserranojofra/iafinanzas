@@ -66,6 +66,26 @@ export function useTickets() {
     return fromRow(data as Record<string, unknown>)
   }
 
+  const updateTicket = async (id: string, dto: Partial<CreateTicketDto>): Promise<Ticket> => {
+    const partial: Record<string, unknown> = {}
+    if (dto.comercio  !== undefined) partial.comercio     = dto.comercio
+    if (dto.fecha     !== undefined) partial.fecha        = dto.fecha
+    if (dto.total     !== undefined) partial.total        = dto.total
+    if (dto.categoria !== undefined) partial.categoria    = dto.categoria
+    if (dto.metodoPago !== undefined) partial.metodo_pago = dto.metodoPago || null
+    if (dto.notas     !== undefined) partial.notas        = dto.notas || null
+    const { data, error } = await supabase
+      .from('tickets')
+      .update(partial)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    clearNuxtData('tickets')
+    clearNuxtData(`ticket-${id}`)
+    return fromRow(data as Record<string, unknown>)
+  }
+
   const deleteTicket = async (id: string) => {
     const { error } = await supabase.from('tickets').delete().eq('id', id)
     if (error) throw error
@@ -73,5 +93,5 @@ export function useTickets() {
     await refresh()
   }
 
-  return { tickets, pending, createTicket, deleteTicket, refresh }
+  return { tickets, pending, createTicket, updateTicket, deleteTicket, refresh }
 }
