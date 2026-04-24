@@ -4,6 +4,8 @@ import type { TicketCategoria } from '~/types'
 definePageMeta({ middleware: 'auth' })
 
 const { createTicket } = useTickets()
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 const saving = ref(false)
 const errors = ref<Record<string, string>>({})
 
@@ -21,7 +23,29 @@ const categorias: TicketCategoria[] = [
   'Suscripciones', 'Salud', 'Hogar', 'Ocio', 'Tecnología', 'Otro',
 ]
 
-const metodos = ['Efectivo', 'Tarjeta débito', 'Tarjeta crédito', 'Transferencia', 'Otro']
+const TODOS_LOS_METODOS = ['Efectivo', 'Tarjeta débito', 'Tarjeta crédito', 'Transferencia', 'Otro']
+const metodos = ref<string[]>([])
+
+const { pending: loadingMetodos } = useAsyncData(
+  'metodos-pago-manual',
+  async () => {
+    if (!user.value) return null
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('metodos_pago')
+      .single()
+    if (error) throw error
+    return data
+  },
+  {
+    watch: [user],
+    transform: (data) => {
+      const activos = data?.metodos_pago
+      metodos.value = activos?.length ? activos : TODOS_LOS_METODOS
+      return data
+    },
+  },
+)
 
 const canSubmit = computed(() =>
   form.value.comercio.trim() &&
@@ -159,7 +183,10 @@ async function submit() {
       <!-- Método de pago -->
       <div class="flex flex-col gap-1.5">
         <label class="text-xs font-semibold uppercase tracking-wider text-[#6272a4]">Método de pago</label>
-        <div class="flex flex-wrap gap-2">
+        <div v-if="loadingMetodos" class="flex gap-2">
+          <div v-for="i in 3" :key="i" class="h-7 w-24 rounded-full bg-[#44475a] animate-pulse" />
+        </div>
+        <div v-else class="flex flex-wrap gap-2">
           <button
             v-for="m in metodos"
             :key="m"
