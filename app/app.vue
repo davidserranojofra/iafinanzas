@@ -7,5 +7,6 @@ const showNav = computed(() => route.path !== '/login')
   <div class="min-h-screen bg-dracula-bg text-dracula-text font-sans">
     <NuxtPage />
     <LayoutBottomNav v-if="showNav" />
+    <LayoutAddTicketSheet />
   </div>
 </template>

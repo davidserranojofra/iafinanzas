@@ -120,7 +120,7 @@ const fields = computed(() => [
     <div class="flex items-center justify-between px-4 pt-12 pb-4">
       <button
         class="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#383a4a] text-[#f8f8f2]"
-        @click="phase === 'idle' ? navigateTo('/tickets/nuevo') : reset()"
+        @click="phase === 'idle' ? navigateTo('/tickets') : reset()"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
