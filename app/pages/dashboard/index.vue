@@ -122,8 +122,7 @@ const router = useRouter()
 
         <div v-else-if="recentTickets.length === 0" class="flex flex-col items-center py-10 gap-3">
           <div class="w-14 h-14 rounded-2xl bg-dracula-card2 flex items-center justify-center text-2xl">🧾</div>
-          <p class="text-sm text-dracula-muted text-center">Todavía no hay tickets.<br>Escaneá tu primero.</p>
-          <NuxtLink to="/tickets/escanear" class="text-xs font-semibold text-dracula-purple">Escanear ahora →</NuxtLink>
+          <p class="text-sm text-dracula-muted text-center">Todavía no hay tickets.</p>
         </div>
 
         <div v-else class="flex flex-col gap-2">
@@ -137,23 +136,6 @@ const router = useRouter()
         </div>
       </div>
 
-      <!-- Banner CTA escaneo -->
-      <NuxtLink
-        to="/tickets/escanear"
-        class="flex items-center gap-4 rounded-3xl p-4 border border-dracula-green/30 transition-colors"
-        style="background: rgba(80,250,123,0.08)"
-      >
-        <div class="w-11 h-11 rounded-2xl bg-dracula-green/20 flex items-center justify-center text-xl flex-shrink-0">
-          📸
-        </div>
-        <div>
-          <p class="text-sm font-semibold text-dracula-text">Escaneá un ticket</p>
-          <p class="text-xs text-dracula-muted mt-0.5">La IA extrae los datos automáticamente</p>
-        </div>
-        <svg class="ml-auto text-dracula-green flex-shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </NuxtLink>
     </div>
   </div>
 </template>

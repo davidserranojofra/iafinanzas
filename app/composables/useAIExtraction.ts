@@ -53,10 +53,11 @@ export function useAIExtraction() {
         comercio:   String(raw.comercio ?? ''),
         fecha:      String(raw.fecha ?? new Date().toISOString().slice(0, 10)),
         total:      Number(raw.total ?? 0),
+        iva:        raw.iva != null ? Number(raw.iva) : undefined,
         categoria:  mapCategoria(raw.categoria),
         metodoPago: String(raw.metodo_pago ?? raw.metodoPago ?? ''),
         notas:      raw.notas ? String(raw.notas) : undefined,
-        items:      [],
+        items:      Array.isArray(raw.items) ? raw.items : [],
         confianza:  0.9,
       }
 

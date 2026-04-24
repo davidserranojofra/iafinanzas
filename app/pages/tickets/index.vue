@@ -71,9 +71,6 @@ const totalFiltrado = computed(() =>
         <p class="text-sm text-[#6272a4] text-center">
           {{ filtroActivo ? `No hay tickets de "${filtroActivo}"` : 'Todavía no hay tickets' }}
         </p>
-        <NuxtLink to="/tickets/escanear" class="text-xs font-semibold text-[#bd93f9]">
-          Escanear ahora →
-        </NuxtLink>
       </div>
 
       <!-- Tickets -->

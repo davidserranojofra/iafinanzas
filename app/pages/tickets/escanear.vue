@@ -15,6 +15,7 @@ const saveError = ref<string | null>(null)
 
 const pendingTicket = useState<Record<string, unknown> | null>('pending-ticket', () => null)
 
+
 // Campos editables tras la extracción
 const form = ref({
   comercio: '', fecha: '', total: 0,
@@ -74,6 +75,7 @@ async function confirm() {
       comercio:       form.value.comercio,
       fecha:          form.value.fecha,
       total:          form.value.total,
+      iva:            result.value.iva,
       categoria:      form.value.categoria,
       metodoPago:     form.value.metodoPago || undefined,
       notas:          form.value.notas || undefined,
@@ -109,7 +111,7 @@ const fields = computed(() => [
   { label: 'Fecha',      value: form.value.fecha },
   { label: 'Total',      value: `${form.value.total.toFixed(2)} €` },
   { label: 'Categoría',  value: form.value.categoria },
-  { label: 'Método',     value: form.value.metodoPago || '—' },
+  { label: 'Método',     value: formatMetodoPago(form.value.metodoPago) },
   { label: 'Notas',      value: form.value.notas || '—' },
 ])
 </script>

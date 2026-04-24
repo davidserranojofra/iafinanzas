@@ -134,33 +134,178 @@ const color = computed(() => ticket.value ? categoryColors[ticket.value.categori
 
 const formattedDate = computed(() => {
   if (!ticket.value) return ''
-  return new Date(ticket.value.fecha).toLocaleDateString('es-ES', {
+  return new Date(ticket.value.fecha + 'T12:00:00').toLocaleDateString('es-ES', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
 })
 
-function downloadSVG() {
+
+function downloadPNG() {
   if (!ticket.value) return
   const t = ticket.value
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" font-family="monospace">
-    <rect width="300" height="400" fill="#f8f8f2" rx="8"/>
-    <text x="150" y="40" text-anchor="middle" font-size="18" font-weight="bold">${t.comercio}</text>
-    <line x1="20" y1="55" x2="280" y2="55" stroke="#ccc" stroke-width="1"/>
-    <text x="20" y="80" font-size="12" fill="#555">Fecha: ${t.fecha}</text>
-    <text x="20" y="100" font-size="12" fill="#555">Categoría: ${t.categoria}</text>
-    <text x="20" y="120" font-size="12" fill="#555">Método: ${t.metodoPago ?? '—'}</text>
-    <line x1="20" y1="140" x2="280" y2="140" stroke="#ccc" stroke-dasharray="4"/>
-    <text x="20" y="165" font-size="20" font-weight="bold">Total: ${t.total.toFixed(2)} €</text>
-    ${t.notas ? `<text x="20" y="195" font-size="11" fill="#888">${t.notas}</text>` : ''}
-    <text x="150" y="380" text-anchor="middle" font-size="9" fill="#aaa">Generado por Cartera</text>
-  </svg>`
-  const blob = new Blob([svg], { type: 'image/svg+xml' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `ticket-${t.comercio}-${t.fecha}.svg`
-  a.click()
-  URL.revokeObjectURL(url)
+
+  const W = 600
+  const PAD = 40
+  const LINE_H = 28
+  const items = t.items ?? []
+
+  // Calcular altura dinámica
+  let rows = 6 // comercio + separador + fecha/cat/metodo + separador + total + footer
+  if (items.length > 0) rows += items.length + 2 // separador + items + separador
+  if (t.notas) rows += 1
+  const H = PAD * 2 + 60 + rows * LINE_H + 60
+
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = H
+  const ctx = canvas.getContext('2d')!
+
+  // Fondo blanco
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, W, H)
+
+  // Borde punteado superior e inferior
+  ctx.setLineDash([6, 4])
+  ctx.strokeStyle = '#cccccc'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(PAD, PAD)
+  ctx.lineTo(W - PAD, PAD)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(PAD, H - PAD)
+  ctx.lineTo(W - PAD, H - PAD)
+  ctx.stroke()
+  ctx.setLineDash([])
+
+  let y = PAD + 44
+
+  // Comercio
+  ctx.font = 'bold 28px monospace'
+  ctx.fillStyle = '#1a1a2e'
+  ctx.textAlign = 'center'
+  ctx.fillText(t.comercio.toUpperCase(), W / 2, y)
+  y += 10
+
+  // Separador
+  ctx.strokeStyle = '#eeeeee'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(PAD, y)
+  ctx.lineTo(W - PAD, y)
+  ctx.stroke()
+  y += LINE_H
+
+  // Fecha / Categoría / Método
+  ctx.font = '18px monospace'
+  ctx.textAlign = 'left'
+  const meta = [
+    ['Fecha',     new Date(t.fecha + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })],
+    ['Categoría', t.categoria],
+    ['Método',    formatMetodoPago(t.metodoPago)],
+  ]
+  for (const [label, val] of meta) {
+    ctx.fillStyle = '#888888'
+    ctx.fillText(label, PAD, y)
+    ctx.fillStyle = '#333333'
+    ctx.textAlign = 'right'
+    ctx.fillText(val, W - PAD, y)
+    ctx.textAlign = 'left'
+    y += LINE_H
+  }
+
+  // Separador punteado
+  ctx.setLineDash([4, 4])
+  ctx.strokeStyle = '#cccccc'
+  ctx.beginPath()
+  ctx.moveTo(PAD, y)
+  ctx.lineTo(W - PAD, y)
+  ctx.stroke()
+  ctx.setLineDash([])
+  y += LINE_H
+
+  // Items
+  if (items.length > 0) {
+    ctx.font = 'bold 14px monospace'
+    ctx.fillStyle = '#aaaaaa'
+    ctx.textAlign = 'left'
+    ctx.fillText('PRODUCTOS', PAD, y)
+    y += LINE_H
+
+    ctx.font = '17px monospace'
+    for (const item of items) {
+      const label = item.cantidad && item.cantidad > 1
+        ? `${item.cantidad}x ${item.nombre}`
+        : item.nombre
+      ctx.fillStyle = '#444444'
+      ctx.textAlign = 'left'
+      ctx.fillText(label, PAD, y)
+      ctx.fillStyle = '#333333'
+      ctx.textAlign = 'right'
+      ctx.fillText(`${item.precio.toFixed(2)} €`, W - PAD, y)
+      ctx.textAlign = 'left'
+      y += LINE_H
+    }
+
+    ctx.setLineDash([4, 4])
+    ctx.strokeStyle = '#cccccc'
+    ctx.beginPath()
+    ctx.moveTo(PAD, y)
+    ctx.lineTo(W - PAD, y)
+    ctx.stroke()
+    ctx.setLineDash([])
+    y += LINE_H
+  }
+
+  // Total
+  ctx.font = 'bold 26px monospace'
+  ctx.fillStyle = '#555555'
+  ctx.textAlign = 'left'
+  ctx.fillText('TOTAL', PAD, y)
+  ctx.fillStyle = '#1a1a2e'
+  ctx.textAlign = 'right'
+  ctx.fillText(`${t.total.toFixed(2)} €`, W - PAD, y)
+  y += LINE_H + 6
+
+  // Notas
+  if (t.notas) {
+    ctx.font = 'italic 15px monospace'
+    ctx.fillStyle = '#aaaaaa'
+    ctx.textAlign = 'center'
+    ctx.fillText(t.notas, W / 2, y)
+    y += LINE_H
+  }
+
+  // Código de barras simulado
+  y += 10
+  const barW = 3
+  const barCount = 60
+  const totalBarsW = barCount * barW * 2
+  let bx = (W - totalBarsW) / 2
+  for (let i = 0; i < barCount; i++) {
+    ctx.fillStyle = '#333333'
+    const bh = i % 5 === 0 ? 40 : i % 3 === 0 ? 32 : 24
+    ctx.fillRect(bx, y, barW, bh)
+    bx += barW * 2
+  }
+  y += 50
+
+  // Footer
+  ctx.font = '13px monospace'
+  ctx.fillStyle = '#bbbbbb'
+  ctx.textAlign = 'center'
+  ctx.fillText('IAFinanzas — generado automáticamente', W / 2, y)
+
+  // Descargar
+  canvas.toBlob((blob) => {
+    if (!blob) return
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `ticket-${t.comercio}-${t.fecha}.png`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, 'image/png')
 }
 </script>
 
@@ -257,7 +402,7 @@ function downloadSVG() {
         <div class="bg-[#383a4a] rounded-2xl p-4 border border-[#6272a4]/10">
           <div v-for="({ label, value }) in [
             { label: 'Fecha', value: formattedDate },
-            { label: 'Método de pago', value: ticket.metodoPago ?? '—' },
+            { label: 'Método de pago', value: formatMetodoPago(ticket.metodoPago) },
             { label: 'IVA', value: ticket.iva != null ? `${ticket.iva.toFixed(2)} €` : '—' },
             { label: 'Notas', value: ticket.notas ?? '—' },
           ]" :key="label" class="flex justify-between py-3 border-b border-[#6272a4]/10 last:border-0">
@@ -301,7 +446,7 @@ function downloadSVG() {
             <span>TOTAL</span>
             <span>{{ ticket.total.toFixed(2) }} €</span>
           </div>
-          <p v-if="ticket.metodoPago" class="text-xs text-center text-[#6272a4] mt-3">{{ ticket.metodoPago }}</p>
+          <p v-if="ticket.metodoPago" class="text-xs text-center text-[#6272a4] mt-3">{{ formatMetodoPago(ticket.metodoPago) }}</p>
           <!-- Código de barras simulado -->
           <div class="flex justify-center gap-px mt-4">
             <div v-for="i in 40" :key="i" class="bg-[#282a36]" :style="{ width: '2px', height: i % 3 === 0 ? '28px' : '20px' }" />
@@ -312,12 +457,12 @@ function downloadSVG() {
         <button
           class="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-semibold text-[#282a36] transition-opacity active:opacity-80"
           style="background: linear-gradient(135deg, #bd93f9, #ff79c6)"
-          @click="downloadSVG"
+          @click="downloadPNG"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          Descargar como SVG
+          Descargar como PNG
         </button>
       </div>
     </template>
