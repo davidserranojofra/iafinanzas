@@ -210,3 +210,142 @@ npx pwa-assets-generator --config pwa-assets.config.ts
 | `/perfil/datos` | privado | Datos personales |
 | `/perfil/pagos` | privado | Métodos de pago activos |
 | `/perfil/ia` | privado | Preferencias del motor IA |
+
+---
+
+## Infraestructura y navegación de datos
+
+### Arquitectura de servicios
+
+Visión global de los servicios externos y cómo se conectan con el cliente y el servidor.
+
+```mermaid
+graph TD
+    subgraph PWA["PWA — Cliente (Browser / iPhone)"]
+        Pages["Pages & Components"]
+        Composables["Composables"]
+        Store["Pinia Store"]
+        SW["Service Worker\ncaché offline"]
+    end
+
+    subgraph NuxtSrv["Nuxt 4 — Servidor"]
+        Endpoint["POST /api/process-ticket\nGroq key solo aquí"]
+    end
+
+    subgraph SB["Supabase"]
+        GoTrue["Auth — GoTrue"]
+        PG[("PostgreSQL\ntickets · profiles")]
+        Storage["Storage\nimágenes de tickets"]
+    end
+
+    Google["Google OAuth 2.0"]
+    Groq["Groq API\nLlama 4 Scout Vision"]
+
+    Pages -->|"supabase-js (realtime)"| PG
+    Pages -->|"supabase-js"| Storage
+    Pages -->|"supabase-js"| GoTrue
+    GoTrue <-->|"OAuth 2.0"| Google
+    Pages -->|"fetch FormData"| Endpoint
+    Endpoint -->|"REST + imagen"| Groq
+    Groq -->|"JSON estructurado"| Endpoint
+    SW -.->|"caché assets + rutas"| Pages
+```
+
+---
+
+### Flujo de autenticación con Google
+
+Cómo viajan las credenciales desde el botón de login hasta la sesión activa en el cliente.
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant Login as /login
+    participant Confirm as /confirm
+    participant SB as Supabase Auth
+    participant G as Google OAuth
+
+    U->>Login: Toca "Iniciar con Google"
+    Login->>SB: signInWithOAuth('google')<br/>redirectTo: /confirm
+    SB->>G: Redirect con client_id + scope
+    G->>U: Pantalla de consentimiento
+    U->>G: Autoriza
+    G->>SB: Authorization code
+    SB->>Confirm: Redirect a /confirm?code=xxx
+    Confirm->>SB: exchangeCodeForSession(code)
+    SB-->>Confirm: session + user
+    Confirm->>U: window.location → /dashboard
+```
+
+---
+
+### Flujo de escaneo con IA
+
+Recorrido de la imagen desde la cámara hasta el ticket guardado en base de datos.
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant E as /tickets/escanear
+    participant AI as useAIExtraction
+    participant API as /api/process-ticket
+    participant Groq as Groq (Llama 4 Scout)
+    participant SB as Supabase
+
+    U->>E: Selecciona imagen o abre cámara
+    E->>AI: extract(file)
+    AI->>API: POST FormData { image }
+    API->>Groq: imagen + prompt con JSON schema
+    Groq-->>API: { comercio, fecha, total, iva,<br/>items[], categoría, método_pago, notas }
+    API-->>AI: ExtractedTicket
+    AI-->>E: result reactivo · phase: done
+    E->>U: Formulario pre-rellenado
+    U->>E: Confirma o edita campos
+    E->>SB: storage.upload(imagen) → image_url
+    E->>SB: INSERT tickets { campos + image_url<br/>extracted_by_ai: true }
+    SB-->>E: ticket.id
+    E->>U: navigateTo /tickets/:id
+```
+
+---
+
+### Capa de estado y acceso a datos
+
+Cómo los componentes acceden a los datos a través de composables, store y servicios remotos.
+
+```mermaid
+graph LR
+    subgraph UI["Capa de UI"]
+        P["Pages"]
+        C["Components"]
+    end
+
+    subgraph Logic["Capa de lógica"]
+        uT["useTickets\nCRUD + caché reactivo"]
+        uAI["useAIExtraction\nphase · progress · result"]
+        uTh["useTheme\nisDark · setDark · setLight"]
+        Pinia["Pinia Store\ntickets[]"]
+    end
+
+    subgraph Remote["Supabase"]
+        DB[("PostgreSQL\ntickets · profiles")]
+        Stor["Storage\nimágenes"]
+    end
+
+    subgraph NuxtAPI["Servidor Nuxt"]
+        EP["/api/process-ticket"]
+    end
+
+    Groq["Groq API"]
+
+    P -->|"consume"| uT
+    P -->|"consume"| uAI
+    P -->|"consume"| uTh
+    C -->|"lee"| Pinia
+    uT <-->|"select / insert / update / delete"| DB
+    uT -->|"actualiza"| Pinia
+    uAI -->|"POST imagen"| EP
+    EP -->|"visión + schema"| Groq
+    Groq -->|"JSON ticket"| EP
+    P -->|"upload directo"| Stor
+```
