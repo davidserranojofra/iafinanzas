@@ -44,7 +44,7 @@ async function submit() {
 async function loginWithGoogle() {
   await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${window.location.origin}/dashboard` },
+    options: { redirectTo: `${window.location.origin}/confirm` },
   })
 }
 </script>
