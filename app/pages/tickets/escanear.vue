@@ -15,8 +15,6 @@ const saveError = ref<string | null>(null)
 
 const pendingTicket = useState<Record<string, unknown> | null>('pending-ticket', () => null)
 
-
-// Campos editables tras la extracción
 const form = ref({
   comercio: '', fecha: '', total: 0,
   categoria: 'Otro' as CreateTicketDto['categoria'],
@@ -58,7 +56,6 @@ async function confirm() {
   saving.value = true
   saveError.value = null
   try {
-    // Subir imagen a Supabase Storage si hay preview
     let imageUrl: string | undefined
     const file = fileInput.value?.files?.[0]
     if (file && user.value) {
@@ -95,7 +92,6 @@ async function confirm() {
   }
 }
 
-// Campos visibles en la fase "done" — aparecen uno a uno
 const visibleFields = ref(0)
 watch(phase, (p) => {
   if (p !== 'done') return
@@ -117,47 +113,37 @@ const fields = computed(() => [
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen bg-[#282a36] pb-8">
-    <!-- Header -->
+  <div class="flex flex-col min-h-screen bg-dracula-bg pb-8">
     <div class="flex items-center justify-between px-4 pt-12 pb-4">
       <button
-        class="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#383a4a] text-[#f8f8f2]"
+        class="flex items-center justify-center w-10 h-10 rounded-2xl bg-dracula-card2 text-dracula-text"
         @click="phase === 'idle' ? navigateTo('/tickets') : reset()"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
-      <h1 class="text-base font-semibold text-[#f8f8f2]">Escanear ticket</h1>
+      <h1 class="text-base font-semibold text-dracula-text">Escanear ticket</h1>
       <div class="w-10" />
     </div>
 
-    <!-- Input oculto -->
-    <input
-      ref="fileInput"
-      type="file"
-      accept="image/*"
-      class="hidden"
-      @change="onFileSelected"
-    >
+    <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileSelected">
 
-    <!-- ── FASE: IDLE ── -->
+    <!-- IDLE -->
     <div v-if="phase === 'idle'" class="flex flex-col items-center gap-6 px-4 pt-4">
-      <!-- Zona de upload -->
       <div
-        class="w-full aspect-[3/4] max-h-80 rounded-3xl border-2 border-dashed border-[#6272a4]/40 flex flex-col items-center justify-center gap-4 cursor-pointer transition-colors hover:border-[#bd93f9]/60 hover:bg-[#bd93f9]/5"
+        class="w-full aspect-[3/4] max-h-80 rounded-3xl border-2 border-dashed border-dracula-muted/40 flex flex-col items-center justify-center gap-4 cursor-pointer transition-colors hover:border-dracula-purple/60 hover:bg-dracula-purple/5"
         @click="openPicker(false)"
       >
-        <div class="w-16 h-16 rounded-2xl bg-[#383a4a] flex items-center justify-center text-3xl">🧾</div>
+        <div class="w-16 h-16 rounded-2xl bg-dracula-card2 flex items-center justify-center text-3xl">🧾</div>
         <div class="text-center">
-          <p class="text-sm font-semibold text-[#f8f8f2]">Subir imagen</p>
-          <p class="text-xs text-[#6272a4] mt-1">JPG, PNG o HEIC</p>
+          <p class="text-sm font-semibold text-dracula-text">Subir imagen</p>
+          <p class="text-xs text-dracula-muted mt-1">JPG, PNG o HEIC</p>
         </div>
       </div>
 
-      <!-- Botón cámara -->
       <button
-        class="w-full flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold text-[#282a36] transition-opacity active:opacity-80"
+        class="w-full flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold text-white transition-opacity active:opacity-80"
         style="background: linear-gradient(135deg, #bd93f9, #ff79c6)"
         @click="openPicker(true)"
       >
@@ -169,45 +155,41 @@ const fields = computed(() => [
       </button>
     </div>
 
-    <!-- ── FASE: EXTRACTING ── -->
+    <!-- EXTRACTING -->
     <div v-else-if="phase === 'extracting'" class="flex flex-col items-center gap-6 px-4 pt-4">
-      <!-- Preview con scan-line -->
-      <div class="relative w-full aspect-[3/4] max-h-80 rounded-3xl overflow-hidden bg-[#1e2030]">
+      <div class="relative w-full aspect-[3/4] max-h-80 rounded-3xl overflow-hidden bg-dracula-bg2">
         <img v-if="preview" :src="preview" class="w-full h-full object-cover opacity-40" alt="Ticket">
 
-        <!-- Guías de esquina -->
         <div class="absolute inset-4 pointer-events-none">
-          <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#50fa7b] rounded-tl-lg" />
-          <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#50fa7b] rounded-tr-lg" />
-          <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#50fa7b] rounded-bl-lg" />
-          <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#50fa7b] rounded-br-lg" />
+          <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-dracula-green rounded-tl-lg" />
+          <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-dracula-green rounded-tr-lg" />
+          <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-dracula-green rounded-bl-lg" />
+          <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-dracula-green rounded-br-lg" />
         </div>
 
-        <!-- Scan-line -->
-        <div class="scan-line absolute left-4 right-4 h-0.5 bg-[#50fa7b] shadow-[0_0_12px_#50fa7b]" />
+        <div class="scan-line absolute left-4 right-4 h-0.5 bg-dracula-green shadow-[0_0_12px_#50fa7b]" />
       </div>
 
-      <!-- Progress -->
       <div class="w-full">
-        <div class="flex justify-between text-xs text-[#6272a4] mb-2">
+        <div class="flex justify-between text-xs text-dracula-muted mb-2">
           <span>Analizando con IA...</span>
           <span>{{ progress }}%</span>
         </div>
-        <div class="h-1.5 bg-[#44475a] rounded-full overflow-hidden">
+        <div class="h-1.5 bg-dracula-card rounded-full overflow-hidden">
           <div
-            class="h-full bg-[#50fa7b] rounded-full transition-all duration-300"
+            class="h-full bg-dracula-green rounded-full transition-all duration-300"
             :style="{ width: `${progress}%` }"
           />
         </div>
       </div>
     </div>
 
-    <!-- ── FASE: ERROR ── -->
+    <!-- ERROR -->
     <div v-else-if="phase === 'error'" class="flex flex-col items-center gap-4 px-4 pt-8">
-      <div class="w-16 h-16 rounded-2xl bg-[#ff5555]/15 flex items-center justify-center text-3xl">❌</div>
-      <p class="text-sm text-[#ff5555] text-center">{{ errorMsg }}</p>
+      <div class="w-16 h-16 rounded-2xl bg-dracula-red/15 flex items-center justify-center text-3xl">❌</div>
+      <p class="text-sm text-dracula-red text-center">{{ errorMsg }}</p>
       <button
-        class="px-6 py-3 rounded-2xl text-sm font-semibold text-[#282a36]"
+        class="px-6 py-3 rounded-2xl text-sm font-semibold text-white"
         style="background: linear-gradient(135deg, #bd93f9, #ff79c6)"
         @click="reset"
       >
@@ -215,52 +197,47 @@ const fields = computed(() => [
       </button>
     </div>
 
-    <!-- ── FASE: DONE ── -->
+    <!-- DONE -->
     <div v-else-if="phase === 'done'" class="flex flex-col gap-4 px-4 pt-2">
-      <!-- Header resultado -->
-      <div class="flex items-center gap-3 p-4 rounded-2xl bg-[#50fa7b]/10 border border-[#50fa7b]/25">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#50fa7b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <div class="flex items-center gap-3 p-4 rounded-2xl bg-dracula-green/10 border border-dracula-green/25">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-green flex-shrink-0">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        <p class="text-sm font-semibold text-[#50fa7b]">Datos extraídos correctamente</p>
+        <p class="text-sm font-semibold text-dracula-green">Datos extraídos correctamente</p>
       </div>
 
-      <!-- Campos extraídos (aparecen uno a uno) -->
-      <div class="bg-[#383a4a] rounded-2xl border border-[#6272a4]/10 overflow-hidden">
+      <div class="bg-dracula-card2 rounded-2xl border border-dracula-muted/10 overflow-hidden">
         <div
           v-for="(field, i) in fields"
           :key="field.label"
-          class="flex justify-between items-center px-4 py-3 border-b border-[#6272a4]/10 last:border-0 transition-all duration-300"
+          class="flex justify-between items-center px-4 py-3 border-b border-dracula-muted/10 last:border-0 transition-all duration-300"
           :class="i < visibleFields ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'"
         >
-          <span class="text-xs font-semibold uppercase tracking-wider text-[#6272a4]">{{ field.label }}</span>
-          <span class="text-sm text-[#f8f8f2] font-medium text-right max-w-[60%] truncate">{{ field.value }}</span>
+          <span class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">{{ field.label }}</span>
+          <span class="text-sm text-dracula-text font-medium text-right max-w-[60%] truncate">{{ field.value }}</span>
         </div>
       </div>
 
-      <!-- Aviso edición -->
-      <p class="text-xs text-[#6272a4] text-center">
+      <p class="text-xs text-dracula-muted text-center">
         ¿Algo no está bien?
-        <button class="text-[#bd93f9] font-semibold" @click="editManually">Editá manualmente</button>
+        <button class="text-dracula-purple font-semibold" @click="editManually">Editá manualmente</button>
       </p>
 
-      <!-- Error de guardado -->
-      <p v-if="saveError" class="text-xs text-[#ff5555] bg-[#ff5555]/10 rounded-xl px-3 py-2 text-center">
+      <p v-if="saveError" class="text-xs text-dracula-red bg-dracula-red/10 rounded-xl px-3 py-2 text-center">
         {{ saveError }}
       </p>
 
-      <!-- Botones -->
       <div class="flex flex-col gap-3 mt-2">
         <button
           :disabled="saving"
-          class="w-full py-4 rounded-2xl text-sm font-semibold text-[#282a36] transition-opacity disabled:opacity-60"
+          class="w-full py-4 rounded-2xl text-sm font-semibold text-white transition-opacity disabled:opacity-60"
           style="background: linear-gradient(135deg, #bd93f9, #ff79c6)"
           @click="confirm"
         >
           {{ saving ? 'Guardando...' : 'Confirmar y guardar' }}
         </button>
         <button
-          class="w-full py-3 rounded-2xl text-sm font-medium text-[#6272a4] bg-[#383a4a]"
+          class="w-full py-3 rounded-2xl text-sm font-medium text-dracula-muted bg-dracula-card2"
           @click="reset"
         >
           Escanear otro

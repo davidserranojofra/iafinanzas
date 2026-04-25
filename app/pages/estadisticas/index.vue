@@ -38,7 +38,6 @@ const ticketsPeriodo = computed(() => {
 const total = computed(() => ticketsPeriodo.value.reduce((s, t) => s + t.total, 0))
 const count = computed(() => ticketsPeriodo.value.length)
 
-// Datos del gráfico de barras (no aplica para "día")
 const chartData = computed(() => {
   if (periodo.value === 'semana') {
     return Array.from({ length: 7 }, (_, i) => {
@@ -112,10 +111,10 @@ const catStats = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen bg-[#282a36] pb-24">
+  <div class="flex flex-col min-h-screen bg-dracula-bg pb-24">
     <!-- Header -->
     <div class="px-4 pt-12 pb-4">
-      <h1 class="text-xl font-bold text-[#f8f8f2]">Estadísticas</h1>
+      <h1 class="text-xl font-bold text-dracula-text">Estadísticas</h1>
     </div>
 
     <!-- Selector de período -->
@@ -125,8 +124,8 @@ const catStats = computed(() => {
         :key="p.key"
         class="flex-1 py-2 rounded-2xl text-xs font-semibold transition-colors"
         :class="periodo === p.key
-          ? 'bg-[#bd93f9] text-[#282a36]'
-          : 'bg-[#44475a] text-[#6272a4]'"
+          ? 'bg-dracula-purple text-dracula-bg'
+          : 'bg-dracula-card text-dracula-muted'"
         @click="periodo = p.key"
       >
         {{ p.label }}
@@ -134,35 +133,34 @@ const catStats = computed(() => {
     </div>
 
     <div class="flex flex-col gap-4 px-4">
-      <!-- Skeleton -->
       <template v-if="pending">
-        <div class="h-24 rounded-3xl bg-[#383a4a] animate-pulse" />
-        <div class="h-32 rounded-3xl bg-[#383a4a] animate-pulse" />
-        <div class="h-40 rounded-3xl bg-[#383a4a] animate-pulse" />
+        <div class="h-24 rounded-3xl bg-dracula-card2 animate-pulse" />
+        <div class="h-32 rounded-3xl bg-dracula-card2 animate-pulse" />
+        <div class="h-40 rounded-3xl bg-dracula-card2 animate-pulse" />
       </template>
 
       <template v-else>
         <!-- Total del período -->
         <div class="rounded-3xl p-5" style="background: linear-gradient(135deg, rgba(189,147,249,0.2), rgba(255,121,198,0.1)); border: 1px solid rgba(189,147,249,0.25)">
-          <p class="text-xs font-semibold uppercase tracking-wider text-[#6272a4] mb-1">Total</p>
-          <p class="text-4xl font-bold text-[#f8f8f2]">
-            {{ total.toFixed(2) }} <span class="text-2xl text-[#6272a4]">€</span>
+          <p class="text-xs font-semibold uppercase tracking-wider text-dracula-muted mb-1">Total</p>
+          <p class="text-4xl font-bold text-dracula-text">
+            {{ total.toFixed(2) }} <span class="text-2xl text-dracula-muted">€</span>
           </p>
-          <p class="text-sm text-[#6272a4] mt-1">
+          <p class="text-sm text-dracula-muted mt-1">
             {{ count }} ticket{{ count !== 1 ? 's' : '' }}
           </p>
         </div>
 
         <!-- Sin datos -->
         <div v-if="ticketsPeriodo.length === 0" class="flex flex-col items-center py-10 gap-3">
-          <div class="w-14 h-14 rounded-2xl bg-[#383a4a] flex items-center justify-center text-2xl">📊</div>
-          <p class="text-sm text-[#6272a4] text-center">Sin tickets en este período</p>
+          <div class="w-14 h-14 rounded-2xl bg-dracula-card2 flex items-center justify-center text-2xl">📊</div>
+          <p class="text-sm text-dracula-muted text-center">Sin tickets en este período</p>
         </div>
 
         <template v-else>
-          <!-- Gráfico de barras (semana / mes / año) -->
-          <div v-if="periodo !== 'dia'" class="bg-[#383a4a] rounded-3xl p-4 border border-[#6272a4]/10">
-            <p class="text-xs font-semibold uppercase tracking-wider text-[#6272a4] mb-4">
+          <!-- Gráfico de barras -->
+          <div v-if="periodo !== 'dia'" class="bg-dracula-card2 rounded-3xl p-4 border border-dracula-muted/10">
+            <p class="text-xs font-semibold uppercase tracking-wider text-dracula-muted mb-4">
               {{ periodo === 'semana' ? 'Por día' : periodo === 'mes' ? 'Por semana' : 'Por mes' }}
             </p>
             <div class="flex items-end justify-between gap-1.5 h-24">
@@ -180,24 +178,24 @@ const catStats = computed(() => {
                       : 'rgba(98,114,164,0.2)',
                   }"
                 />
-                <span class="text-[10px] text-[#6272a4] capitalize truncate w-full text-center">{{ bar.label }}</span>
+                <span class="text-[10px] text-dracula-muted capitalize truncate w-full text-center">{{ bar.label }}</span>
               </div>
             </div>
           </div>
 
           <!-- Desglose por categoría -->
-          <div class="bg-[#383a4a] rounded-3xl p-4 border border-[#6272a4]/10">
-            <p class="text-xs font-semibold uppercase tracking-wider text-[#6272a4] mb-4">Por categoría</p>
+          <div class="bg-dracula-card2 rounded-3xl p-4 border border-dracula-muted/10">
+            <p class="text-xs font-semibold uppercase tracking-wider text-dracula-muted mb-4">Por categoría</p>
             <div class="flex flex-col gap-3">
               <div v-for="stat in catStats" :key="stat.categoria" class="flex flex-col gap-1.5">
                 <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium text-[#f8f8f2]">{{ stat.categoria }}</span>
+                  <span class="text-sm font-medium text-dracula-text">{{ stat.categoria }}</span>
                   <div class="flex items-center gap-2">
-                    <span class="text-xs text-[#6272a4]">{{ stat.pct }}%</span>
-                    <span class="text-sm font-semibold text-[#f8f8f2]">{{ stat.amount.toFixed(2) }} €</span>
+                    <span class="text-xs text-dracula-muted">{{ stat.pct }}%</span>
+                    <span class="text-sm font-semibold text-dracula-text">{{ stat.amount.toFixed(2) }} €</span>
                   </div>
                 </div>
-                <div class="h-1.5 rounded-full bg-[#44475a] overflow-hidden">
+                <div class="h-1.5 rounded-full bg-dracula-card overflow-hidden">
                   <div
                     class="h-full rounded-full transition-all"
                     :style="{ width: `${stat.pct}%`, background: stat.color }"

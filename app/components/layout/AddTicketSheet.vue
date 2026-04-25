@@ -13,29 +13,21 @@ function goTo(path: string) {
 
 <template>
   <Teleport to="body">
-    <!-- Overlay -->
     <Transition name="overlay">
-      <div
-        v-if="show"
-        class="fixed inset-0 z-40 bg-black/60"
-        @click="close"
-      />
+      <div v-if="show" class="fixed inset-0 z-40 bg-black/60" @click="close" />
     </Transition>
 
-    <!-- Sheet -->
     <Transition name="sheet">
       <div
         v-if="show"
-        class="fixed bottom-0 left-0 right-0 z-50 bg-[#383a4a] rounded-t-3xl px-4 pt-5 pb-10 border-t border-[#6272a4]/20"
+        class="fixed bottom-0 left-0 right-0 z-50 bg-dracula-card2 rounded-t-3xl px-4 pt-5 pb-10 border-t border-dracula-muted/20"
       >
-        <!-- Handle -->
-        <div class="w-10 h-1 rounded-full bg-[#6272a4]/40 mx-auto mb-6" />
+        <div class="w-10 h-1 rounded-full bg-dracula-muted/40 mx-auto mb-6" />
 
-        <h2 class="text-lg font-bold text-[#f8f8f2] mb-2">Añadir ticket</h2>
-        <p class="text-sm text-[#6272a4] mb-6">¿Cómo querés registrarlo?</p>
+        <h2 class="text-lg font-bold text-dracula-text mb-2">Añadir ticket</h2>
+        <p class="text-sm text-dracula-muted mb-6">¿Cómo querés registrarlo?</p>
 
         <div class="flex flex-col gap-3">
-          <!-- Escanear con IA -->
           <button
             class="flex items-center gap-4 p-4 rounded-2xl border w-full text-left transition-colors active:opacity-80"
             style="background: rgba(80,250,123,0.08); border-color: rgba(80,250,123,0.3)"
@@ -46,29 +38,28 @@ function goTo(path: string) {
             </div>
             <div class="flex-1">
               <div class="flex items-center gap-2">
-                <p class="text-sm font-semibold text-[#f8f8f2]">Escanear con IA</p>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#50fa7b]/20 text-[#50fa7b]">RECOMENDADO</span>
+                <p class="text-sm font-semibold text-dracula-text">Escanear con IA</p>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-dracula-green/20 text-dracula-green">RECOMENDADO</span>
               </div>
-              <p class="text-xs text-[#6272a4] mt-0.5">Sacá una foto y la IA extrae los datos automáticamente</p>
+              <p class="text-xs text-dracula-muted mt-0.5">Sacá una foto y la IA extrae los datos automáticamente</p>
             </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#50fa7b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-green flex-shrink-0">
               <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>
 
-          <!-- Manual -->
           <button
-            class="flex items-center gap-4 p-4 rounded-2xl bg-[#44475a] border border-[#6272a4]/20 w-full text-left transition-colors active:opacity-80"
+            class="flex items-center gap-4 p-4 rounded-2xl bg-dracula-card border border-dracula-muted/20 w-full text-left transition-colors active:opacity-80"
             @click="goTo('/tickets/manual')"
           >
-            <div class="w-12 h-12 rounded-2xl bg-[#6272a4]/15 flex items-center justify-center text-2xl flex-shrink-0">
+            <div class="w-12 h-12 rounded-2xl bg-dracula-muted/15 flex items-center justify-center text-2xl flex-shrink-0">
               ✏️
             </div>
             <div class="flex-1">
-              <p class="text-sm font-semibold text-[#f8f8f2]">Formulario manual</p>
-              <p class="text-xs text-[#6272a4] mt-0.5">Ingresá los datos a mano</p>
+              <p class="text-sm font-semibold text-dracula-text">Formulario manual</p>
+              <p class="text-xs text-dracula-muted mt-0.5">Ingresá los datos a mano</p>
             </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6272a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-muted flex-shrink-0">
               <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>

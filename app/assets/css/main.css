@@ -29,10 +29,27 @@
 
 /* Base */
 html {
-  background-color: #282a36;
-  color: #f8f8f2;
+  background-color: var(--color-dracula-bg);
+  color: var(--color-dracula-text);
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Light theme overrides */
+html.light {
+  --color-dracula-bg:     #f4f4f0;
+  --color-dracula-bg2:    #eaeae4;
+  --color-dracula-card:   #e2e2da;
+  --color-dracula-card2:  #eaeae4;
+  --color-dracula-text:   #282a36;
+  --color-dracula-muted:  #5a6890;
+  --color-dracula-purple: #7c4dce;
+  --color-dracula-pink:   #c44d96;
+  --color-dracula-green:  #2daa54;
+  --color-dracula-cyan:   #3aabcc;
+  --color-dracula-yellow: #b5a500;
+  --color-dracula-orange: #e07b20;
+  --color-dracula-red:    #e02020;
 }
 
 /* Touch targets mínimos mobile */
