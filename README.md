@@ -1,6 +1,6 @@
-# Cartera
+# IAFinanzas
 
-**Cartera** es una app mobile-first de gestión de gastos personales. Permite registrar tickets y facturas de dos formas: escaneando la imagen con IA (extrae automáticamente el comercio, fecha, total, categoría y método de pago) o rellenando un formulario manual. Los gastos se organizan por categoría, se visualizan con gráficos y se almacenan de forma segura en la nube.
+**IAFinanzas** es una app mobile-first PWA de gestión de gastos personales. Permite registrar tickets y facturas de dos formas: escaneando la imagen con IA (extrae automáticamente el comercio, fecha, total, IVA, productos, categoría, método de pago y una nota descriptiva) o rellenando un formulario manual. Los gastos se organizan por categoría, se visualizan con gráficos y se almacenan de forma segura en la nube.
 
 Pensada para usarse desde el móvil como una PWA instalable, con una interfaz limpia basada en el tema Dracula.
 
@@ -85,7 +85,8 @@ app/
 │   └── ui/
 ├── composables/
 │   ├── useTickets.ts        # CRUD completo de tickets
-│   └── useAIExtraction.ts   # Lógica de llamada al endpoint IA
+│   ├── useAIExtraction.ts   # Lógica de llamada al endpoint IA
+│   └── useMetodoPago.ts     # formatMetodoPago — fuente única de labels
 ├── stores/
 │   ├── auth.ts
 │   └── tickets.ts
@@ -106,10 +107,10 @@ server/
 [Cámara / archivo] → FormData (image)
   → POST /api/process-ticket
     → Groq Llama 4 Scout Vision
-    → JSON estructurado (comercio, fecha, total, categoría, método_pago, notas)
+    → JSON estructurado (comercio, fecha, total, IVA, items[], categoría, método_pago, notas)
   → useAIExtraction composable
     → result reactivo pre-rellena el formulario
-  → createTicket() → Supabase INSERT
+  → createTicket() → Supabase INSERT (incluye items como JSONB)
 ```
 
 El endpoint vive exclusivamente en el servidor (`server/api/`) y nunca expone la API key al cliente.
@@ -163,14 +164,36 @@ Los tokens están definidos en `app/assets/css/main.css` bajo `@theme {}` y se u
 
 Gradiente de acento: `linear-gradient(135deg, #bd93f9, #ff79c6)` — FAB, botones primarios, avatares.
 
+### PWA
+
+Iconos generados con `@vite-pwa/assets-generator` desde `public/logo_IAFianza.png`. Configuración en `nuxt.config.ts` — display `standalone` (muestra barra de estado del SO, oculta la UI del browser).
+
+| Archivo | Uso |
+|---|---|
+| `favicon.ico` | Browser tab |
+| `pwa-64x64.png` | Manifest pequeño |
+| `pwa-192x192.png` | Android home screen |
+| `pwa-512x512.png` | Android splash + install |
+| `maskable-icon-512x512.png` | Android adaptive icon |
+| `apple-touch-icon-180x180.png` | iOS "Añadir a inicio" |
+
+Para regenerar iconos:
+
+```bash
+npx pwa-assets-generator --config pwa-assets.config.ts
+```
+
 ### Convenciones
 
 - **Tailwind v4**: tokens vía `@theme {}`, nunca `tailwind.config.ts`
 - **Auth redirects**: `supabase.redirect: false` — deshabilitados intencionalmente
 - **API key de Groq**: solo servidor, nunca en `runtimeConfig.public`
+- **Métodos de pago**: usar siempre `formatMetodoPago()` de `useMetodoPago.ts` para mostrar labels legibles ("Tarjeta de crédito" en lugar de "tarjeta_credito")
+- **Fechas**: parsear con `T12:00:00` para evitar desfase de zona horaria (`new Date(fecha + 'T12:00:00')`)
 - **Bottom sheets**: animación `cubic-bezier(0.32, 0.72, 0, 1)` consistente en toda la app
 - **Touch targets**: mínimo 44px de altura en todos los elementos interactivos
 - **Border radius**: `rounded-2xl` (16px) para cards, `rounded-3xl` para hero/modales
+- **Descarga de tickets**: genera PNG via Canvas API en cliente — incluye items si existen
 
 ### Rutas
 

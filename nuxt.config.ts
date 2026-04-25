@@ -30,9 +30,15 @@ export default defineNuxtConfig({
         { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
       ],
     },
-    registerType: 'autoUpdate',
+    registerType: 'prompt',
+    workbox: {
+      navigateFallback: '/',
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
+      cleanupOutdatedCaches: true,
+    },
     devOptions: {
       enabled: true,
+      type: 'module',
     },
   },
   app: {
