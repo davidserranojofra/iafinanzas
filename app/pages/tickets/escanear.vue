@@ -12,8 +12,19 @@ const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const preview = ref<string | null>(null)
 const saving = ref(false)
 const saveError = ref<string | null>(null)
+const selectedFile = ref<File | null>(null)
 
-const pendingTicket = useState<Record<string, unknown> | null>('pending-ticket', () => null)
+const pendingFile = useState<File | null>('pending-scan-file', () => null)
+
+onMounted(() => {
+  if (pendingFile.value) {
+    const file = pendingFile.value
+    pendingFile.value = null
+    selectedFile.value = file
+    preview.value = URL.createObjectURL(file)
+    extract(file)
+  }
+})
 
 const form = ref({
   comercio: '', fecha: '', total: 0,
@@ -33,9 +44,14 @@ watch(result, (r) => {
   }
 })
 
+watch(phase, (p) => {
+  if (p === 'done') save()
+})
+
 function onFileSelected(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
+  selectedFile.value = file
   preview.value = URL.createObjectURL(file)
   extract(file)
 }
@@ -46,18 +62,13 @@ function openPicker(capture?: boolean) {
   fileInput.value.click()
 }
 
-function editManually() {
-  pendingTicket.value = { ...form.value }
-  navigateTo('/tickets/manual')
-}
-
-async function confirm() {
+async function save() {
   if (!result.value) return
   saving.value = true
   saveError.value = null
   try {
     let imageUrl: string | undefined
-    const file = fileInput.value?.files?.[0]
+    const file = selectedFile.value ?? fileInput.value?.files?.[0]
     if (file && user.value) {
       const ext = file.name.split('.').pop() ?? 'jpg'
       const path = `${user.value.id}/${Date.now()}.${ext}`
@@ -91,25 +102,6 @@ async function confirm() {
     saving.value = false
   }
 }
-
-const visibleFields = ref(0)
-watch(phase, (p) => {
-  if (p !== 'done') return
-  visibleFields.value = 0
-  const interval = setInterval(() => {
-    visibleFields.value++
-    if (visibleFields.value >= 6) clearInterval(interval)
-  }, 180)
-})
-
-const fields = computed(() => [
-  { label: 'Comercio',   value: form.value.comercio },
-  { label: 'Fecha',      value: form.value.fecha },
-  { label: 'Total',      value: `${form.value.total.toFixed(2)} €` },
-  { label: 'Categoría',  value: form.value.categoria },
-  { label: 'Método',     value: formatMetodoPago(form.value.metodoPago) },
-  { label: 'Notas',      value: form.value.notas || '—' },
-])
 </script>
 
 <template>
@@ -155,8 +147,8 @@ const fields = computed(() => [
       </button>
     </div>
 
-    <!-- EXTRACTING -->
-    <div v-else-if="phase === 'extracting'" class="flex flex-col items-center gap-6 px-4 pt-4">
+    <!-- SCANNING / SAVING -->
+    <div v-else-if="phase === 'extracting' || (phase === 'done' && saving)" class="flex flex-col items-center gap-6 px-4 pt-4">
       <div class="relative w-full aspect-[3/4] max-h-80 rounded-3xl overflow-hidden bg-dracula-bg2">
         <img v-if="preview" :src="preview" class="w-full h-full object-cover opacity-40" alt="Ticket">
 
@@ -172,19 +164,34 @@ const fields = computed(() => [
 
       <div class="w-full">
         <div class="flex justify-between text-xs text-dracula-muted mb-2">
-          <span>Analizando con IA...</span>
-          <span>{{ progress }}%</span>
+          <span>{{ saving ? 'Guardando...' : 'Analizando con IA...' }}</span>
+          <span>{{ saving ? '100' : progress }}%</span>
         </div>
         <div class="h-1.5 bg-dracula-card rounded-full overflow-hidden">
           <div
             class="h-full bg-dracula-green rounded-full transition-all duration-300"
-            :style="{ width: `${progress}%` }"
+            :class="saving ? 'animate-pulse' : ''"
+            :style="{ width: saving ? '100%' : `${progress}%` }"
           />
         </div>
       </div>
     </div>
 
-    <!-- ERROR -->
+    <!-- SAVE ERROR -->
+    <div v-else-if="phase === 'done' && saveError" class="flex flex-col items-center gap-4 px-4 pt-8">
+      <div class="w-16 h-16 rounded-2xl bg-dracula-red/15 flex items-center justify-center text-3xl">❌</div>
+      <p class="text-sm text-dracula-red text-center">{{ saveError }}</p>
+      <button
+        class="px-6 py-3 rounded-2xl text-sm font-semibold text-white"
+        style="background: linear-gradient(135deg, #bd93f9, #ff79c6)"
+        @click="save"
+      >
+        Reintentar
+      </button>
+      <button class="text-sm text-dracula-muted" @click="reset">Escanear de nuevo</button>
+    </div>
+
+    <!-- EXTRACTION ERROR -->
     <div v-else-if="phase === 'error'" class="flex flex-col items-center gap-4 px-4 pt-8">
       <div class="w-16 h-16 rounded-2xl bg-dracula-red/15 flex items-center justify-center text-3xl">❌</div>
       <p class="text-sm text-dracula-red text-center">{{ errorMsg }}</p>
@@ -195,54 +202,6 @@ const fields = computed(() => [
       >
         Intentar de nuevo
       </button>
-    </div>
-
-    <!-- DONE -->
-    <div v-else-if="phase === 'done'" class="flex flex-col gap-4 px-4 pt-2">
-      <div class="flex items-center gap-3 p-4 rounded-2xl bg-dracula-green/10 border border-dracula-green/25">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-green flex-shrink-0">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        <p class="text-sm font-semibold text-dracula-green">Datos extraídos correctamente</p>
-      </div>
-
-      <div class="bg-dracula-card2 rounded-2xl border border-dracula-muted/10 overflow-hidden">
-        <div
-          v-for="(field, i) in fields"
-          :key="field.label"
-          class="flex justify-between items-center px-4 py-3 border-b border-dracula-muted/10 last:border-0 transition-all duration-300"
-          :class="i < visibleFields ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'"
-        >
-          <span class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">{{ field.label }}</span>
-          <span class="text-sm text-dracula-text font-medium text-right max-w-[60%] truncate">{{ field.value }}</span>
-        </div>
-      </div>
-
-      <p class="text-xs text-dracula-muted text-center">
-        ¿Algo no está bien?
-        <button class="text-dracula-purple font-semibold" @click="editManually">Editá manualmente</button>
-      </p>
-
-      <p v-if="saveError" class="text-xs text-dracula-red bg-dracula-red/10 rounded-xl px-3 py-2 text-center">
-        {{ saveError }}
-      </p>
-
-      <div class="flex flex-col gap-3 mt-2">
-        <button
-          :disabled="saving"
-          class="w-full py-4 rounded-2xl text-sm font-semibold text-white transition-opacity disabled:opacity-60"
-          style="background: linear-gradient(135deg, #bd93f9, #ff79c6)"
-          @click="confirm"
-        >
-          {{ saving ? 'Guardando...' : 'Confirmar y guardar' }}
-        </button>
-        <button
-          class="w-full py-3 rounded-2xl text-sm font-medium text-dracula-muted bg-dracula-card2"
-          @click="reset"
-        >
-          Escanear otro
-        </button>
-      </div>
     </div>
   </div>
 </template>

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 const show = useState('show-nuevo-sheet', () => false)
+const pendingFile = useState<File | null>('pending-scan-file', () => null)
+const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 
 function close() {
   show.value = false
@@ -8,6 +10,18 @@ function close() {
 function goTo(path: string) {
   show.value = false
   navigateTo(path)
+}
+
+function openCamera() {
+  fileInput.value?.click()
+}
+
+function onFileSelected(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  pendingFile.value = file
+  show.value = false
+  navigateTo('/tickets/escanear')
 }
 </script>
 
@@ -20,8 +34,10 @@ function goTo(path: string) {
     <Transition name="sheet">
       <div
         v-if="show"
-        class="fixed bottom-0 left-0 right-0 z-50 bg-dracula-card2 rounded-t-3xl px-4 pt-5 pb-10 border-t border-dracula-muted/20"
+        class="fixed bottom-0 left-0 right-0 z-50 bg-dracula-card2 rounded-t-3xl px-4 pt-5 pb-24 border-t border-dracula-muted/20"
       >
+        <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileSelected">
+
         <div class="w-10 h-1 rounded-full bg-dracula-muted/40 mx-auto mb-6" />
 
         <h2 class="text-lg font-bold text-dracula-text mb-2">Añadir ticket</h2>
@@ -31,7 +47,7 @@ function goTo(path: string) {
           <button
             class="flex items-center gap-4 p-4 rounded-2xl border w-full text-left transition-colors active:opacity-80"
             style="background: rgba(80,250,123,0.08); border-color: rgba(80,250,123,0.3)"
-            @click="goTo('/tickets/escanear')"
+            @click="openCamera"
           >
             <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background: rgba(80,250,123,0.15)">
               📸
