@@ -12,6 +12,9 @@ export default defineNuxtConfig({
     groqApiKey: '',
   },
   pwa: {
+    assets: {
+      preset: 'minimal-2023',
+    },
     manifest: {
       name: 'IAFinanzas',
       short_name: 'IAFinanzas',
