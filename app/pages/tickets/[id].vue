@@ -124,13 +124,20 @@ async function submitEdit() {
   }
 }
 
-const categoryColors: Record<string, string> = {
-  Alimentación: '#50fa7b', Transporte: '#8be9fd', Ropa: '#ff79c6',
-  Restaurantes: '#ffb86c', Suscripciones: '#bd93f9', Salud: '#ff5555',
-  Hogar: '#f1fa8c', Ocio: '#bd93f9', Tecnología: '#8be9fd', Otro: '#6272a4',
-}
+const { getCategoryColor, getCategoryBg } = useCategories()
+const { isDark } = useTheme()
 
-const color = computed(() => ticket.value ? categoryColors[ticket.value.categoria] ?? '#6272a4' : '#6272a4')
+const color = computed(() => ticket.value ? getCategoryColor(ticket.value.categoria) : getCategoryColor('Otro'))
+const heroBg = computed(() => {
+  if (!ticket.value) return '#6272a420'
+  const c = getCategoryColor(ticket.value.categoria)
+  return c + (isDark.value ? '15' : '18')
+})
+const heroBorder = computed(() => {
+  if (!ticket.value) return '#6272a430'
+  const c = getCategoryColor(ticket.value.categoria)
+  return c + (isDark.value ? '30' : '38')
+})
 
 const formattedDate = computed(() => {
   if (!ticket.value) return ''
@@ -299,14 +306,14 @@ function downloadPNG() {
       <!-- Hero -->
       <div
         class="mx-4 rounded-3xl p-6 flex flex-col items-center gap-3 mb-4"
-        :style="{ background: color + '15', border: `1.5px solid ${color}30` }"
+        :style="{ background: heroBg, border: `1.5px solid ${heroBorder}` }"
       >
         <TicketsCategoryIllustration :categoria="ticket.categoria" :size="90" />
         <h2 class="text-xl font-bold text-dracula-text">{{ ticket.comercio }}</h2>
         <div class="flex items-center gap-2 flex-wrap justify-center">
           <span
             class="text-xs font-semibold px-2.5 py-1 rounded-full"
-            :style="{ color, background: color + '20' }"
+            :style="{ color, background: getCategoryBg(ticket.categoria) }"
           >{{ ticket.categoria }}</span>
           <span v-if="ticket.extractedByAI" class="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-dracula-green/15 text-dracula-green">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>

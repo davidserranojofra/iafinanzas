@@ -10,34 +10,11 @@ const emit = defineEmits<{
   click: [ticket: Ticket]
 }>()
 
-const categoryColors: Record<string, string> = {
-  Alimentación: '#50fa7b',
-  Transporte:   '#8be9fd',
-  Ropa:         '#ff79c6',
-  Restaurantes: '#ffb86c',
-  Suscripciones:'#bd93f9',
-  Salud:        '#ff5555',
-  Hogar:        '#f1fa8c',
-  Ocio:         '#bd93f9',
-  Tecnología:   '#8be9fd',
-  Otro:         '#6272a4',
-}
+const { getCategoryColor, getCategoryBg, getCategoryIcon } = useCategories()
 
-const categoryIcons: Record<string, string> = {
-  Alimentación:  '🛒',
-  Transporte:    '🚗',
-  Ropa:          '👗',
-  Restaurantes:  '🍽️',
-  Suscripciones: '📺',
-  Salud:         '💊',
-  Hogar:         '🏠',
-  Ocio:          '🎮',
-  Tecnología:    '💻',
-  Otro:          '📄',
-}
-
-const color = computed(() => categoryColors[props.ticket.categoria] ?? '#6272a4')
-const icon = computed(() => categoryIcons[props.ticket.categoria] ?? '📄')
+const color = computed(() => getCategoryColor(props.ticket.categoria))
+const bg    = computed(() => getCategoryBg(props.ticket.categoria))
+const icon  = computed(() => getCategoryIcon(props.ticket.categoria))
 
 const formattedDate = computed(() => {
   return new Date(props.ticket.fecha).toLocaleDateString('es-ES', {
@@ -53,7 +30,7 @@ const formattedDate = computed(() => {
     @click="emit('click', ticket)"
   >
     <!-- Icono categoría -->
-    <div class="flex items-center justify-center w-10 h-10 rounded-xl text-lg flex-shrink-0" :style="{ background: color + '20' }">
+    <div class="flex items-center justify-center w-10 h-10 rounded-xl text-lg flex-shrink-0" :style="{ background: bg }">
       {{ icon }}
     </div>
 
@@ -61,7 +38,7 @@ const formattedDate = computed(() => {
     <div class="flex-1 min-w-0">
       <p class="text-sm font-semibold text-dracula-text truncate">{{ ticket.comercio }}</p>
       <div class="flex items-center gap-2 mt-0.5">
-        <span class="text-xs font-medium px-2 py-0.5 rounded-full" :style="{ color, background: color + '20' }">
+        <span class="text-xs font-medium px-2 py-0.5 rounded-full" :style="{ color, background: bg }">
           {{ ticket.categoria }}
         </span>
         <span class="text-xs text-dracula-muted">{{ formattedDate }}</span>

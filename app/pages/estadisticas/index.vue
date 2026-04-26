@@ -80,18 +80,7 @@ const chartData = computed(() => {
 
 const maxChart = computed(() => Math.max(...chartData.value.map(d => d.value), 1))
 
-const COLORES: Record<TicketCategoria, string> = {
-  'Alimentación':  '#50fa7b',
-  'Transporte':    '#8be9fd',
-  'Ropa':          '#ff79c6',
-  'Restaurantes':  '#ffb86c',
-  'Suscripciones': '#bd93f9',
-  'Salud':         '#ff5555',
-  'Hogar':         '#f1fa8c',
-  'Ocio':          '#ff79c6',
-  'Tecnología':    '#8be9fd',
-  'Otro':          '#6272a4',
-}
+const { getCategoryColor } = useCategories()
 
 const catStats = computed(() => {
   const map = new Map<TicketCategoria, number>()
@@ -104,7 +93,7 @@ const catStats = computed(() => {
       categoria,
       amount,
       pct: Math.round((amount / tot) * 100),
-      color: COLORES[categoria],
+      color: getCategoryColor(categoria),
     }))
     .sort((a, b) => b.amount - a.amount)
 })

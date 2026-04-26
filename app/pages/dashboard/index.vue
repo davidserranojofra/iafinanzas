@@ -16,8 +16,12 @@ const initials = computed(() => {
     : user.value?.email?.[0]?.toUpperCase() ?? '?'
 })
 
-// Últimos 4 tickets para el dashboard
-const recentTickets = computed(() => tickets.value.slice(0, 4))
+// Últimos 4 tickets ordenados por fecha de registro (el más reciente primero)
+const recentTickets = computed(() =>
+  [...tickets.value]
+    .sort((a, b) => new Date(b.createdAt ?? b.fecha).getTime() - new Date(a.createdAt ?? a.fecha).getTime())
+    .slice(0, 4)
+)
 
 // Balance del mes actual
 const now = new Date()
