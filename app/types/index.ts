@@ -33,7 +33,9 @@ export interface Ticket {
   createdAt: string
 }
 
-export type CreateTicketDto = Omit<Ticket, 'id' | 'userId' | 'createdAt'>
+export interface CreateTicketDto extends Omit<Ticket, 'id' | 'userId' | 'createdAt'> {
+  id?: string
+}
 
 export interface ExtractedTicket {
   comercio: string
@@ -42,6 +44,7 @@ export interface ExtractedTicket {
   iva?: number
   items: TicketItem[]
   metodoPago?: string
+  notas?: string
   categoria: TicketCategoria
   confianza: number
 }

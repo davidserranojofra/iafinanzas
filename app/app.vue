@@ -9,6 +9,9 @@ const { $pwa } = useNuxtApp()
   <div class="min-h-screen bg-dracula-bg text-dracula-text font-sans">
     <VitePwaManifest />
     <NuxtPage />
+    <ClientOnly>
+      <LayoutEstadoColaTickets />
+    </ClientOnly>
     <LayoutBottomNav v-if="showNav" />
     <LayoutAddTicketSheet />
 

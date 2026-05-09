@@ -5,6 +5,7 @@ definePageMeta({ middleware: 'auth' })
 
 const { phase, progress, result, errorMsg, extract, reset } = useAIExtraction()
 const { createTicket } = useTickets()
+const { encolarTicket, estadoRed } = useColaTickets()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 
@@ -66,8 +67,11 @@ async function save() {
   if (!result.value) return
   saving.value = true
   saveError.value = null
+
+  const id = crypto.randomUUID()
+  let imageUrl: string | undefined
+
   try {
-    let imageUrl: string | undefined
     const file = selectedFile.value ?? fileInput.value?.files?.[0]
     if (file && user.value) {
       const ext = file.name.split('.').pop() ?? 'jpg'
@@ -80,6 +84,7 @@ async function save() {
     }
 
     const ticket = await createTicket({
+      id,
       comercio:       form.value.comercio,
       fecha:          form.value.fecha,
       total:          form.value.total,
@@ -95,6 +100,25 @@ async function save() {
 
     await navigateTo(`/tickets/${ticket.id}`, { replace: true })
   } catch (e: unknown) {
+    if (esErrorDeRed(e) || estadoRed.value === 'offline') {
+      await encolarTicket({
+        id,
+        comercio:       form.value.comercio,
+        fecha:          form.value.fecha,
+        total:          form.value.total,
+        iva:            result.value.iva,
+        categoria:      form.value.categoria,
+        metodoPago:     form.value.metodoPago || undefined,
+        notas:          form.value.notas || undefined,
+        imageUrl:       imageUrl,
+        items:          result.value.items,
+        extractedByAI:  true,
+        aiConfidence:   result.value.confianza,
+      }, id)
+      await navigateTo('/tickets', { replace: true })
+      return
+    }
+
     const msg = e instanceof Error ? e.message : 'Error al guardar el ticket.'
     console.error('[escanear] save error:', msg)
     saveError.value = msg

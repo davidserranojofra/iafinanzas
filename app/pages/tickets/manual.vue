@@ -4,6 +4,7 @@ import type { TicketCategoria } from '~/types'
 definePageMeta({ middleware: 'auth' })
 
 const { createTicket } = useTickets()
+const { encolarTicket, estadoRed } = useColaTickets()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const saving = ref(false)
@@ -30,6 +31,7 @@ const categorias: TicketCategoria[] = [
 
 const TODOS_LOS_METODOS = ['Efectivo', 'Tarjeta débito', 'Tarjeta crédito', 'Transferencia', 'Otro']
 const metodos = ref<string[]>([])
+type PerfilMetodos = { metodos_pago?: string[] | null }
 
 const { pending: loadingMetodos } = useAsyncData(
   'metodos-pago-manual',
@@ -39,13 +41,13 @@ const { pending: loadingMetodos } = useAsyncData(
       .from('profiles')
       .select('metodos_pago')
       .single()
-    if (error) throw error
+    if (error) return null
     return data
   },
   {
     watch: [user],
     transform: (data) => {
-      const activos = data?.metodos_pago
+      const activos = (data as PerfilMetodos | null)?.metodos_pago
       metodos.value = activos?.length ? activos : TODOS_LOS_METODOS
       return data
     },
@@ -72,18 +74,37 @@ function validate() {
 async function submit() {
   if (!validate()) return
   saving.value = true
+
+  const payload = {
+    comercio:      form.value.comercio.trim(),
+    fecha:         form.value.fecha,
+    total:         Number(form.value.total),
+    categoria:     form.value.categoria as TicketCategoria,
+    metodoPago:    form.value.metodoPago || undefined,
+    notas:         form.value.notas.trim() || undefined,
+    extractedByAI: false,
+  } satisfies Parameters<typeof createTicket>[0]
+
   try {
+    if (estadoRed.value === 'offline') {
+      await encolarTicket(payload)
+      await navigateTo('/tickets', { replace: true })
+      return
+    }
+
     const ticket = await createTicket({
-      comercio:      form.value.comercio.trim(),
-      fecha:         form.value.fecha,
-      total:         Number(form.value.total),
-      categoria:     form.value.categoria as TicketCategoria,
-      metodoPago:    form.value.metodoPago || undefined,
-      notas:         form.value.notas.trim() || undefined,
-      extractedByAI: false,
+      ...payload,
+      id: crypto.randomUUID(),
     })
+
     await navigateTo(`/tickets/${ticket.id}`, { replace: true })
   } catch (e: unknown) {
+    if (esErrorDeRed(e)) {
+      await encolarTicket(payload)
+      await navigateTo('/tickets', { replace: true })
+      return
+    }
+
     errors.value.global = e instanceof Error ? e.message : 'Error al guardar el ticket.'
   } finally {
     saving.value = false
@@ -228,7 +249,7 @@ async function submit() {
         :class="canSubmit && !saving ? 'opacity-100' : 'opacity-40 cursor-not-allowed'"
         style="background: linear-gradient(135deg, #bd93f9, #ff79c6)"
       >
-        {{ saving ? 'Guardando...' : 'Guardar ticket' }}
+        {{ saving ? 'Guardando...' : estadoRed === 'offline' ? 'Guardar en cola offline' : 'Guardar ticket' }}
       </button>
 
     </form>

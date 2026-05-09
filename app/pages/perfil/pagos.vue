@@ -8,6 +8,7 @@ const saved = ref(false)
 const errorMsg = ref('')
 
 const METODOS = ['Efectivo', 'Tarjeta débito', 'Tarjeta crédito', 'Transferencia', 'Otro'] as const
+type PerfilPagos = { metodos_pago?: string[] | null }
 
 const activos = ref<string[]>([])
 
@@ -25,8 +26,9 @@ const { pending } = useAsyncData(
   {
     watch: [user],
     transform: (data) => {
-      if (data?.metodos_pago) activos.value = [...data.metodos_pago]
-      return data
+      const perfil = data as PerfilPagos | null
+      if (perfil?.metodos_pago) activos.value = [...perfil.metodos_pago]
+      return perfil
     },
   },
 )
@@ -49,7 +51,7 @@ async function guardar() {
     if (!authUser) throw new Error('No autenticado')
     const { error } = await supabase
       .from('profiles')
-      .update({ metodos_pago: activos.value })
+      .update({ metodos_pago: activos.value } as never)
       .eq('id', authUser.id)
     if (error) throw error
     saved.value = true

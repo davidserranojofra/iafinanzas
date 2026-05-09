@@ -12,6 +12,9 @@ export default defineNuxtConfig({
     groqApiKey: '',
   },
   pwa: {
+    strategies: 'injectManifest',
+    srcDir: '.',
+    filename: 'sw.ts',
     assets: {
       preset: 'minimal-2023',
     },
@@ -34,16 +37,14 @@ export default defineNuxtConfig({
       ],
     },
     registerType: 'prompt',
-    workbox: {
-      navigateFallback: '/',
+    injectManifest: {
       globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
-      cleanupOutdatedCaches: true,
     },
     devOptions: {
       enabled: true,
       type: 'module',
     },
-  },
+  } as any,
   app: {
     head: {
       meta: [

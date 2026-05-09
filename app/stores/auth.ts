@@ -1,3 +1,5 @@
+import { defineStore } from 'pinia'
+
 export const useAuthStore = defineStore('auth', () => {
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()

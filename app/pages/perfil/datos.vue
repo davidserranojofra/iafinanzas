@@ -8,6 +8,12 @@ const saved = ref(false)
 const errorMsg = ref('')
 
 const divisas = ['EUR', 'USD', 'GBP', 'JPY', 'MXN'] as const
+type PerfilDatos = {
+  nombre?: string | null
+  telefono?: string | null
+  ciudad?: string | null
+  divisa?: typeof divisas[number] | null
+}
 
 const form = ref({
   nombre:   '',
@@ -31,14 +37,15 @@ const { pending } = useAsyncData(
     watch: [user],
     immediate: true,
     transform: (data) => {
-      if (!data) return null
+      const perfil = data as PerfilDatos | null
+      if (!perfil) return null
       form.value = {
-        nombre:   data.nombre   ?? '',
-        telefono: data.telefono ?? '',
-        ciudad:   data.ciudad   ?? '',
-        divisa:   (data.divisa  ?? 'EUR') as typeof divisas[number],
+        nombre:   perfil.nombre   ?? '',
+        telefono: perfil.telefono ?? '',
+        ciudad:   perfil.ciudad   ?? '',
+        divisa:   (perfil.divisa  ?? 'EUR') as typeof divisas[number],
       }
-      return data
+      return perfil
     },
   },
 )
@@ -57,7 +64,7 @@ async function guardar() {
         telefono: form.value.telefono.trim() || null,
         ciudad:   form.value.ciudad.trim()   || null,
         divisa:   form.value.divisa,
-      })
+      } as never)
       .eq('id', authUser.id)
     if (error) throw error
     saved.value = true

@@ -9,14 +9,16 @@ const user = useSupabaseUser()
 const router = useRouter()
 const { updateTicket, deleteTicket } = useTickets()
 
+type PerfilMetodos = { metodos_pago?: string[] | null }
+
 const { data: ticket, pending, error, refresh } = await useAsyncData<Ticket>(
   `ticket-${route.params.id}`,
   async () => {
     const { data, error } = await supabase
-      .from('tickets')
-      .select('*')
-      .eq('id', route.params.id)
-      .single()
+        .from('tickets')
+        .select('*')
+        .eq('id', String(route.params.id))
+        .single()
     if (error) throw error
     const row = data as Record<string, unknown>
     return {
@@ -74,7 +76,7 @@ const metodos = ref<string[]>([])
 const { pending: loadingMetodos } = useAsyncData('metodos-pago-detail', async () => {
   if (!user.value) return null
   const { data } = await supabase.from('profiles').select('metodos_pago').single()
-  const activos = data?.metodos_pago
+  const activos = (data as PerfilMetodos | null)?.metodos_pago
   metodos.value = activos?.length ? activos : TODOS_METODOS
   return data
 })
@@ -195,8 +197,8 @@ function downloadPNG() {
     ['Método',    formatMetodoPago(t.metodoPago)],
   ]
   for (const [label, val] of meta) {
-    ctx.fillStyle = '#888888'; ctx.fillText(label, PAD, y)
-    ctx.fillStyle = '#333333'; ctx.textAlign = 'right'; ctx.fillText(val, W - PAD, y)
+    ctx.fillStyle = '#888888'; ctx.fillText(String(label), PAD, y)
+    ctx.fillStyle = '#333333'; ctx.textAlign = 'right'; ctx.fillText(String(val), W - PAD, y)
     ctx.textAlign = 'left'; y += LINE_H
   }
 

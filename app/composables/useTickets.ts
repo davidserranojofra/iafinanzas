@@ -3,6 +3,7 @@ import type { Ticket, CreateTicketDto } from '~/types'
 // camelCase → snake_case para INSERT (user_id lo pone la DB via auth.uid())
 function toRow(dto: CreateTicketDto) {
   return {
+    id:             dto.id,
     comercio:       dto.comercio,
     fecha:          dto.fecha,
     total:          dto.total,
@@ -56,11 +57,21 @@ export function useTickets() {
   )
 
   const createTicket = async (dto: CreateTicketDto): Promise<Ticket> => {
-    const { data, error } = await supabase
-      .from('tickets')
-      .insert(toRow(dto))
-      .select()
-      .single()
+    const fila = toRow(dto)
+
+    const query = dto.id
+      ? supabase
+          .from('tickets')
+          .upsert(fila as never, { onConflict: 'id' })
+          .select()
+          .single()
+      : supabase
+          .from('tickets')
+          .insert(fila as never)
+          .select()
+          .single()
+
+    const { data, error } = await query
     if (error) throw error
     clearNuxtData('tickets')
     return fromRow(data as Record<string, unknown>)
@@ -76,7 +87,7 @@ export function useTickets() {
     if (dto.notas     !== undefined) partial.notas        = dto.notas || null
     const { data, error } = await supabase
       .from('tickets')
-      .update(partial)
+      .update(partial as never)
       .eq('id', id)
       .select()
       .single()
