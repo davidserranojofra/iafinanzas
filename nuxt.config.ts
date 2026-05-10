@@ -16,8 +16,7 @@ export default defineNuxtConfig({
     srcDir: '.',
     filename: 'sw.ts',
     pwaAssets: {
-      preset: 'minimal-2023',
-      image: 'public/icono.png',
+      config: true,
       overrideManifestIcons: true,
       includeHtmlHeadLinks: true,
       injectThemeColor: false,
