@@ -1,15 +1,33 @@
 import { defineConfig, minimal2023Preset } from '@vite-pwa/assets-generator/config'
 
+const fondo = '#282a36'
+
 export default defineConfig({
   headLinkOptions: {
     preset: '2023',
   },
   preset: {
     ...minimal2023Preset,
-    appleSplashScreens: {
-      padding: 0.3,
+    transparent: {
+      ...minimal2023Preset.transparent,
+      padding: 0,
       resizeOptions: {
-        background: '#282a36',
+        background: fondo,
+        fit: 'cover',
+      },
+    },
+    apple: {
+      ...minimal2023Preset.apple,
+      padding: 0,
+      resizeOptions: {
+        background: fondo,
+        fit: 'cover',
+      },
+    },
+    appleSplashScreens: {
+      padding: 0,
+      resizeOptions: {
+        background: fondo,
         fit: 'contain',
       },
       linkMediaOptions: {
@@ -35,5 +53,5 @@ export default defineConfig({
       ],
     },
   },
-  images: ['public/logo_IAFianza.png'],
+  images: ['public/icono.png'],
 })
