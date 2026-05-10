@@ -2,7 +2,7 @@
 definePageMeta({ middleware: 'auth' })
 
 const user = useSupabaseUser()
-const { tickets, pending } = useTickets()
+const { tickets, pending, shouldShowSkeleton, shouldShowError, isRefreshing, isOfflineData } = useTickets()
 
 const firstName = computed(() => {
   const name = user.value?.user_metadata?.nombre ?? user.value?.email ?? ''
@@ -58,6 +58,13 @@ const weeklyData = computed(() => {
 const maxWeekly = computed(() => Math.max(...weeklyData.value.map(d => d.total), 1))
 
 const router = useRouter()
+
+const estadoResumen = computed(() => {
+  if (isRefreshing.value && isOfflineData.value) return 'Últimos datos guardados mientras revalidamos'
+  if (isRefreshing.value) return 'Actualizando resumen…'
+  if (isOfflineData.value) return 'Datos guardados offline'
+  return null
+})
 </script>
 
 <template>
@@ -67,6 +74,7 @@ const router = useRouter()
       <div>
         <p class="text-xs text-dracula-muted font-medium uppercase tracking-wider">Buenos días</p>
         <h1 class="text-xl font-bold text-dracula-text capitalize">{{ firstName }}</h1>
+        <p v-if="estadoResumen" class="mt-1 text-xs text-dracula-cyan">{{ estadoResumen }}</p>
       </div>
       <NuxtLink to="/perfil" class="flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold text-dracula-bg shadow-md" style="background: linear-gradient(135deg, #bd93f9, #ff79c6)">
         {{ initials }}
@@ -120,8 +128,13 @@ const router = useRouter()
           <NuxtLink to="/tickets" class="text-xs text-dracula-purple font-medium">Ver todos</NuxtLink>
         </div>
 
-        <div v-if="pending" class="flex flex-col gap-2">
+        <div v-if="shouldShowSkeleton" class="flex flex-col gap-2">
           <div v-for="i in 3" :key="i" class="h-16 rounded-2xl bg-dracula-card2 animate-pulse" />
+        </div>
+
+        <div v-else-if="shouldShowError" class="flex flex-col items-center py-10 gap-3">
+          <div class="w-14 h-14 rounded-2xl bg-dracula-card2 flex items-center justify-center text-2xl">⚠️</div>
+          <p class="text-sm text-dracula-muted text-center">No pudimos cargar los tickets.</p>
         </div>
 
         <div v-else-if="recentTickets.length === 0" class="flex flex-col items-center py-10 gap-3">

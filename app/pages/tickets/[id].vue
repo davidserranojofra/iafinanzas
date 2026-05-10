@@ -7,37 +7,45 @@ const route = useRoute()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const router = useRouter()
-const { updateTicket, deleteTicket } = useTickets()
+const {
+  tickets,
+  pending,
+  error,
+  isRefreshing,
+  isOfflineData,
+  refresh: refreshTickets,
+  updateTicket,
+  deleteTicket,
+} = useTickets()
 
 type PerfilMetodos = { metodos_pago?: string[] | null }
 
-const { data: ticket, pending, error, refresh } = await useAsyncData<Ticket>(
-  `ticket-${route.params.id}`,
-  async () => {
-    const { data, error } = await supabase
-        .from('tickets')
-        .select('*')
-        .eq('id', String(route.params.id))
-        .single()
-    if (error) throw error
-    const row = data as Record<string, unknown>
-    return {
-      id:            row.id,
-      userId:        row.user_id,
-      comercio:      row.comercio,
-      fecha:         row.fecha,
-      total:         Number(row.total),
-      iva:           row.iva != null ? Number(row.iva) : undefined,
-      categoria:     row.categoria,
-      metodoPago:    row.metodo_pago,
-      notas:         row.notas,
-      imageUrl:      row.image_url,
-      items:         row.items ?? [],
-      extractedByAI: Boolean(row.extracted_by_ai),
-      aiConfidence:  row.ai_confidence != null ? Number(row.ai_confidence) : undefined,
-      createdAt:     row.created_at,
-    } as Ticket
+const ticketId = computed(() => String(route.params.id))
+const ticket = computed<Ticket | null>(() =>
+  tickets.value.find(item => item.id === ticketId.value) ?? null,
+)
+const shouldShowLoading = computed(() => pending.value && !ticket.value)
+const shouldShowError = computed(() => Boolean(error.value) && !ticket.value && !shouldShowLoading.value)
+const estadoDetalle = computed(() => {
+  if (!ticket.value) return null
+  if (isRefreshing.value && isOfflineData.value) return 'Mostrando último ticket guardado mientras revalidamos'
+  if (isRefreshing.value) return 'Actualizando ticket…'
+  if (isOfflineData.value) return 'Mostrando ticket guardado offline'
+  return null
+})
+
+watch(
+  ticketId,
+  async (nextId, previousId) => {
+    if (!user.value || nextId === previousId || ticket.value) return
+
+    try {
+      await refreshTickets()
+    } catch {
+      // conservamos el último estado compartido si la red falla
+    }
   },
+  { immediate: true },
 )
 
 const tab = ref<'detalles' | 'imagen'>('detalles')
@@ -117,7 +125,6 @@ async function submitEdit() {
       metodoPago: editForm.value.metodoPago || undefined,
       notas:      editForm.value.notas.trim() || undefined,
     })
-    await refresh()
     showEdit.value = false
   } catch (e: unknown) {
     saveError.value = e instanceof Error ? e.message : 'Error al guardar.'
@@ -270,7 +277,8 @@ function downloadPNG() {
       <h1 class="text-base font-semibold text-dracula-text">Detalle</h1>
       <div class="flex items-center gap-2">
         <button
-          class="flex items-center justify-center w-10 h-10 rounded-2xl bg-dracula-card2 text-dracula-purple transition-colors active:bg-dracula-card"
+          :disabled="!ticket"
+          class="flex items-center justify-center w-10 h-10 rounded-2xl bg-dracula-card2 text-dracula-purple transition-colors active:bg-dracula-card disabled:opacity-40 disabled:active:bg-dracula-card2"
           @click="openEdit"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -279,7 +287,8 @@ function downloadPNG() {
           </svg>
         </button>
         <button
-          class="flex items-center justify-center w-10 h-10 rounded-2xl bg-dracula-card2 text-dracula-red transition-colors active:bg-dracula-card"
+          :disabled="!ticket"
+          class="flex items-center justify-center w-10 h-10 rounded-2xl bg-dracula-card2 text-dracula-red transition-colors active:bg-dracula-card disabled:opacity-40 disabled:active:bg-dracula-card2"
           @click="showDelete = true"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -293,18 +302,22 @@ function downloadPNG() {
     </div>
 
     <!-- Loading -->
-    <div v-if="pending" class="flex flex-col gap-4 px-4">
+    <div v-if="shouldShowLoading" class="flex flex-col gap-4 px-4">
       <div class="h-32 rounded-3xl bg-dracula-card2 animate-pulse" />
       <div class="h-48 rounded-3xl bg-dracula-card2 animate-pulse" />
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="flex flex-col items-center py-16 px-4 gap-3">
+    <div v-else-if="shouldShowError" class="flex flex-col items-center py-16 px-4 gap-3">
       <p class="text-sm text-dracula-red">No se pudo cargar el ticket.</p>
       <button class="text-xs text-dracula-purple" @click="router.back()">Volver</button>
     </div>
 
     <template v-else-if="ticket">
+      <p v-if="estadoDetalle" class="px-4 pb-3 text-xs text-dracula-cyan">
+        {{ estadoDetalle }}
+      </p>
+
       <!-- Hero -->
       <div
         class="mx-4 rounded-3xl p-6 flex flex-col items-center gap-3 mb-4"
@@ -409,6 +422,11 @@ function downloadPNG() {
         </button>
       </div>
     </template>
+
+    <div v-else class="flex flex-col items-center py-16 px-4 gap-3">
+      <p class="text-sm text-dracula-muted text-center">No encontramos ese ticket.</p>
+      <button class="text-xs text-dracula-purple" @click="router.push('/tickets')">Ir a tickets</button>
+    </div>
   </div>
 
   <!-- ── SHEET: ELIMINAR ───────────────────────────────────────────────── -->

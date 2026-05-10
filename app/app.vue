@@ -7,8 +7,12 @@ const { $pwa } = useNuxtApp()
 
 <template>
   <div class="min-h-screen bg-dracula-bg text-dracula-text font-sans">
+    <NuxtPwaAssets />
     <VitePwaManifest />
     <NuxtPage />
+    <ClientOnly>
+      <LayoutAvisoOffline />
+    </ClientOnly>
     <ClientOnly>
       <LayoutEstadoColaTickets />
     </ClientOnly>

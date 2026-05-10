@@ -15,8 +15,12 @@ export default defineNuxtConfig({
     strategies: 'injectManifest',
     srcDir: '.',
     filename: 'sw.ts',
-    assets: {
+    pwaAssets: {
       preset: 'minimal-2023',
+      image: 'public/icono.png',
+      overrideManifestIcons: true,
+      includeHtmlHeadLinks: true,
+      injectThemeColor: false,
     },
     manifest: {
       name: 'IAFinanzas',
@@ -29,12 +33,6 @@ export default defineNuxtConfig({
       start_url: '/',
       scope: '/',
       orientation: 'portrait',
-      icons: [
-        { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
-        { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-        { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-        { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-      ],
     },
     registerType: 'prompt',
     injectManifest: {
@@ -49,13 +47,10 @@ export default defineNuxtConfig({
     head: {
       meta: [
         { name: 'theme-color', content: '#282a36' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
         { name: 'apple-mobile-web-app-title', content: 'IAFinanzas' },
-      ],
-      link: [
-        { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon-180x180.png' },
       ],
     },
   },

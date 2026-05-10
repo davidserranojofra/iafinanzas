@@ -3,7 +3,7 @@ import type { TicketCategoria } from '~/types'
 
 definePageMeta({ middleware: 'auth' })
 
-const { tickets, pending } = useTickets()
+const { tickets, shouldShowSkeleton, shouldShowError, isRefreshing, isOfflineData } = useTickets()
 const router = useRouter()
 
 const categorias: TicketCategoria[] = [
@@ -22,6 +22,13 @@ const ticketsFiltrados = computed(() =>
 const totalFiltrado = computed(() =>
   ticketsFiltrados.value.reduce((s, t) => s + t.total, 0),
 )
+
+const estadoListado = computed(() => {
+  if (isRefreshing.value && isOfflineData.value) return 'Mostrando último snapshot disponible'
+  if (isRefreshing.value) return 'Actualizando tickets…'
+  if (isOfflineData.value) return 'Mostrando datos guardados offline'
+  return null
+})
 </script>
 
 <template>
@@ -31,6 +38,9 @@ const totalFiltrado = computed(() =>
       <h1 class="text-xl font-bold text-dracula-text">Mis tickets</h1>
       <p class="text-sm text-dracula-muted mt-0.5">
         {{ tickets.length }} ticket{{ tickets.length !== 1 ? 's' : '' }} · {{ totalFiltrado.toFixed(2) }} €
+      </p>
+      <p v-if="estadoListado" class="text-xs text-dracula-cyan mt-2">
+        {{ estadoListado }}
       </p>
     </div>
 
@@ -60,9 +70,16 @@ const totalFiltrado = computed(() =>
 
     <!-- Lista -->
     <div class="flex flex-col gap-2 px-4">
-      <template v-if="pending">
+      <template v-if="shouldShowSkeleton">
         <div v-for="i in 6" :key="i" class="h-16 rounded-2xl bg-dracula-card2 animate-pulse" />
       </template>
+
+      <div v-else-if="shouldShowError" class="flex flex-col items-center py-16 gap-3">
+        <div class="w-14 h-14 rounded-2xl bg-dracula-card2 flex items-center justify-center text-2xl">⚠️</div>
+        <p class="text-sm text-dracula-muted text-center">
+          No pudimos cargar los tickets. Reintentá en un rato.
+        </p>
+      </div>
 
       <div v-else-if="ticketsFiltrados.length === 0" class="flex flex-col items-center py-16 gap-3">
         <div class="w-14 h-14 rounded-2xl bg-dracula-card2 flex items-center justify-center text-2xl">🧾</div>

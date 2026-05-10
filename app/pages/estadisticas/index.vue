@@ -3,7 +3,7 @@ import type { StatsPeriod, TicketCategoria } from '~/types'
 
 definePageMeta({ middleware: 'auth' })
 
-const { tickets, pending } = useTickets()
+const { tickets, pending, shouldShowSkeleton, shouldShowError, isRefreshing, isOfflineData } = useTickets()
 
 const periodos: { key: StatsPeriod; label: string }[] = [
   { key: 'dia', label: 'Hoy' },
@@ -324,6 +324,13 @@ const catStats = computed(() => {
     }))
     .sort((a, b) => b.amount - a.amount)
 })
+
+const estadoStats = computed(() => {
+  if (isRefreshing.value && isOfflineData.value) return 'Mostrando snapshot guardado mientras actualizamos'
+  if (isRefreshing.value) return 'Actualizando estadísticas…'
+  if (isOfflineData.value) return 'Estadísticas basadas en datos guardados offline'
+  return null
+})
 </script>
 
 <template>
@@ -331,6 +338,7 @@ const catStats = computed(() => {
     <!-- Header -->
     <div class="px-4 pt-12 pb-4">
       <h1 class="text-xl font-bold text-dracula-text">Estadísticas</h1>
+      <p v-if="estadoStats" class="mt-2 text-xs text-dracula-cyan">{{ estadoStats }}</p>
     </div>
 
     <!-- Selector de período -->
@@ -375,11 +383,16 @@ const catStats = computed(() => {
     </div>
 
     <div class="flex flex-col gap-4 px-4">
-      <template v-if="pending">
+      <template v-if="shouldShowSkeleton">
         <div class="h-24 rounded-3xl bg-dracula-card2 animate-pulse" />
         <div class="h-32 rounded-3xl bg-dracula-card2 animate-pulse" />
         <div class="h-40 rounded-3xl bg-dracula-card2 animate-pulse" />
       </template>
+
+      <div v-else-if="shouldShowError" class="flex flex-col items-center py-10 gap-3">
+        <div class="w-14 h-14 rounded-2xl bg-dracula-card2 flex items-center justify-center text-2xl">⚠️</div>
+        <p class="text-sm text-dracula-muted text-center">No pudimos cargar las estadísticas.</p>
+      </div>
 
       <template v-else>
         <!-- Total del período -->

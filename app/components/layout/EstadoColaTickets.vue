@@ -1,6 +1,4 @@
 <script setup lang="ts">
-const route = useRoute()
-
 const {
   estadoRed,
   ticketsPendientes,
@@ -10,10 +8,11 @@ const {
   sincronizarCola,
 } = useColaTickets()
 
+const route = useRoute()
+
 const visible = computed(() =>
   route.path !== '/login' && (
-    estadoRed.value === 'offline'
-    || ticketsPendientes.value > 0
+    ticketsPendientes.value > 0
     || Boolean(mensajeCola.value)
   ),
 )
