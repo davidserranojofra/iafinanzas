@@ -50,6 +50,13 @@ export default defineConfig({
         { width: 1290, height: 2796, scaleFactor: 3 },  // iPhone 14 Pro Max, 15 Plus, 15 Pro Max
         { width: 1206, height: 2622, scaleFactor: 3 },  // iPhone 16, 16 Pro
         { width: 1320, height: 2868, scaleFactor: 3 },  // iPhone 16 Plus, 16 Pro Max
+        { width: 1488, height: 2266, scaleFactor: 2 },  // iPad Mini 6
+        { width: 1536, height: 2048, scaleFactor: 2 },  // iPad 9.7", Air 1/2, Mini 2/3/4/5
+        { width: 1620, height: 2160, scaleFactor: 2 },  // iPad 10.2"
+        { width: 1668, height: 2224, scaleFactor: 2 },  // iPad Pro 10.5", Air 3
+        { width: 1668, height: 2388, scaleFactor: 2 },  // iPad Pro 11", Air 4/5/6
+        { width: 2048, height: 2732, scaleFactor: 2 },  // iPad Pro 12.9", Air 13" (M4)
+        { width: 2064, height: 2752, scaleFactor: 2 },  // iPad Pro 13" (M4)
       ],
     },
   },
