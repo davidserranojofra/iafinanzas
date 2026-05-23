@@ -4,11 +4,58 @@ definePageMeta({ middleware: 'auth' })
 const confianzaMinima = ref(0.6)
 const autoCategoria = ref(true)
 const sugerirNotas = ref(true)
+const modeloActivo = ref('meta-llama/llama-4-scout-17b-16e-instruct')
+
+const modelos = [
+  { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout (17B)', provider: 'Groq — Optimizado Vision' },
+  { id: 'llama-3.2-11b-vision-preview', name: 'Llama 3.2 Vision (11B)', provider: 'Groq — Súper veloz' },
+  { id: 'llama-3.2-90b-vision-preview', name: 'Llama 3.2 Vision (90B)', provider: 'Groq — Máxima precisión' }
+]
 
 const labelConfianza = computed(() => {
   if (confianzaMinima.value < 0.5) return 'Baja — acepta más resultados, menos precisión'
   if (confianzaMinima.value < 0.8) return 'Media — balance entre velocidad y precisión'
   return 'Alta — solo resultados muy seguros'
+})
+
+onMounted(() => {
+  if (import.meta.client) {
+    const savedConfianza = localStorage.getItem('ia_min_confidence')
+    if (savedConfianza !== null) confianzaMinima.value = parseFloat(savedConfianza)
+
+    const savedAuto = localStorage.getItem('ia_auto_categoria')
+    if (savedAuto !== null) autoCategoria.value = savedAuto === 'true'
+
+    const savedNotas = localStorage.getItem('ia_sugerir_notas')
+    if (savedNotas !== null) sugerirNotas.value = savedNotas === 'true'
+
+    const savedModel = localStorage.getItem('ia_model')
+    if (savedModel !== null) modeloActivo.value = savedModel
+  }
+})
+
+watch(confianzaMinima, (val) => {
+  if (import.meta.client) {
+    localStorage.setItem('ia_min_confidence', String(val))
+  }
+})
+
+watch(autoCategoria, (val) => {
+  if (import.meta.client) {
+    localStorage.setItem('ia_auto_categoria', String(val))
+  }
+})
+
+watch(sugerirNotas, (val) => {
+  if (import.meta.client) {
+    localStorage.setItem('ia_sugerir_notas', String(val))
+  }
+})
+
+watch(modeloActivo, (val) => {
+  if (import.meta.client) {
+    localStorage.setItem('ia_model', val)
+  }
 })
 </script>
 
@@ -29,13 +76,31 @@ const labelConfianza = computed(() => {
     <div class="flex flex-col gap-4 px-4">
       <!-- Modelo -->
       <div class="bg-dracula-card2 rounded-3xl p-4 border border-dracula-muted/10">
-        <div class="flex items-center gap-3 mb-1">
+        <div class="flex items-center gap-3 mb-3">
           <span class="text-lg">🤖</span>
           <p class="text-sm font-semibold text-dracula-text">Modelo activo</p>
         </div>
-        <p class="text-xs text-dracula-muted pl-8">Gemini 2.0 Flash — Google AI</p>
-        <div class="mt-2 pl-8">
-          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-dracula-green/20 text-dracula-green">Activo</span>
+        <div class="flex flex-col gap-2 pl-2">
+          <div
+            v-for="m in modelos"
+            :key="m.id"
+            class="flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all"
+            :class="modeloActivo === m.id 
+              ? 'bg-dracula-purple/10 border-dracula-purple text-dracula-text' 
+              : 'bg-dracula-card/30 border-transparent text-dracula-muted hover:bg-dracula-card/55'"
+            @click="modeloActivo = m.id"
+          >
+            <div>
+              <p class="text-xs font-semibold" :class="modeloActivo === m.id ? 'text-dracula-purple' : 'text-dracula-text'">{{ m.name }}</p>
+              <p class="text-[10px] mt-0.5 opacity-80">{{ m.provider }}</p>
+            </div>
+            <div 
+              class="w-4 h-4 rounded-full border flex items-center justify-center"
+              :class="modeloActivo === m.id ? 'border-dracula-purple bg-dracula-purple' : 'border-dracula-muted'"
+            >
+              <div v-if="modeloActivo === m.id" class="w-1.5 h-1.5 rounded-full bg-dracula-bg" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -44,6 +109,7 @@ const labelConfianza = computed(() => {
         <p class="text-sm font-semibold text-dracula-text mb-1">Confianza mínima</p>
         <p class="text-xs text-dracula-muted mb-4">{{ labelConfianza }}</p>
         <input
+          v-slot="confianzaMinima"
           v-model.number="confianzaMinima"
           type="range"
           min="0.3"
@@ -96,7 +162,7 @@ const labelConfianza = computed(() => {
       </div>
 
       <p class="text-center text-xs text-dracula-muted/50 px-4">
-        Las preferencias de IA se aplican localmente. La API de Gemini procesa las imágenes en los servidores de Google.
+        Las preferencias de IA se aplican localmente. Las imágenes se procesan de forma segura en los servidores correspondientes.
       </p>
     </div>
   </div>

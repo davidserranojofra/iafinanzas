@@ -33,6 +33,7 @@ html {
   color: var(--color-dracula-text);
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
 }
 
 /* Light theme overrides */
