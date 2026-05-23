@@ -11,6 +11,7 @@ Analizá la imagen del ticket y devolvé ÚNICAMENTE un objeto JSON válido con 
 - iva: importe del IVA si aparece explícitamente en el ticket como número decimal, o null si no está indicado (number | null)
 - notas: redactá una frase corta y natural describiendo la compra (ej: "Compra de supermercado con varios productos frescos" o "Cena en restaurante para dos personas"). Nunca dejes este campo en null. (string)
 - metodo_pago: medio de pago detectado — elegí uno de: "efectivo", "tarjeta_debito", "tarjeta_credito", "transferencia", "desconocido"
+- confianza: tu nivel de certeza/seguridad general sobre la extracción de datos de este ticket como un número decimal entre 0.0 y 1.0 (number)
 - items: array con cada producto o línea del ticket. Cada elemento tiene:
     - nombre: descripción del producto (string)
     - precio: precio unitario como número decimal (number)
@@ -39,9 +40,12 @@ export default defineEventHandler(async (event) => {
     const mimeType = (imageField.type ?? 'image/jpeg').split(';')[0]
     const base64 = Buffer.from(imageField.data).toString('base64')
 
+    // Obtener modelo seleccionado desde cabeceras
+    const selectedModel = getHeader(event, 'x-ia-model') || 'meta-llama/llama-4-scout-17b-16e-instruct'
+
     try {
         const response = await groq.chat.completions.create({
-            model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+            model: selectedModel,
             messages: [
                 {
                     role: 'user',

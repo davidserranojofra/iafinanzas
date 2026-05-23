@@ -43,9 +43,14 @@ export function useAIExtraction() {
       const formData = new FormData()
       formData.append('image', file)
 
+      const activeModel = import.meta.client ? (localStorage.getItem('ia_model') || 'meta-llama/llama-4-scout-17b-16e-instruct') : 'meta-llama/llama-4-scout-17b-16e-instruct'
+
       const raw = await $fetch<Record<string, unknown>>('/api/process-ticket', {
         method: 'POST',
         body: formData,
+        headers: {
+          'x-ia-model': activeModel
+        }
       })
 
       // Mapear snake_case del endpoint a camelCase de la interfaz
@@ -58,7 +63,7 @@ export function useAIExtraction() {
         metodoPago: String(raw.metodo_pago ?? raw.metodoPago ?? ''),
         notas:      raw.notas ? String(raw.notas) : undefined,
         items:      Array.isArray(raw.items) ? raw.items : [],
-        confianza:  0.9,
+        confianza:  raw.confianza != null ? Number(raw.confianza) : 0.85,
       }
 
       progress.value = 100

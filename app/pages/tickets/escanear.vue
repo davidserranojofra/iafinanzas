@@ -17,6 +17,41 @@ const selectedFile = ref<File | null>(null)
 
 const pendingFile = useState<File | null>('pending-scan-file', () => null)
 
+const showConfirmation = ref(false)
+const autoCategoria = ref(true)
+const confianzaMinima = ref(0.6)
+const sugerirNotas = ref(true)
+
+const categorias: CreateTicketDto['categoria'][] = [
+  'Alimentación', 'Transporte', 'Ropa', 'Restaurantes',
+  'Suscripciones', 'Salud', 'Hogar', 'Ocio', 'Tecnología', 'Otro',
+]
+
+const TODOS_LOS_METODOS = ['Efectivo', 'Tarjeta débito', 'Tarjeta crédito', 'Transferencia', 'Otro']
+const metodos = ref<string[]>([])
+type PerfilMetodos = { metodos_pago?: string[] | null }
+
+const { pending: loadingMetodos } = useAsyncData(
+  'metodos-pago-escanear',
+  async () => {
+    if (!user.value) return null
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('metodos_pago')
+      .single()
+    if (error) return null
+    return data
+  },
+  {
+    watch: [user],
+    transform: (data) => {
+      const activos = (data as PerfilMetodos | null)?.metodos_pago
+      metodos.value = activos?.length ? activos : TODOS_LOS_METODOS
+      return data
+    },
+  },
+)
+
 onMounted(() => {
   if (pendingFile.value) {
     const file = pendingFile.value
@@ -24,6 +59,17 @@ onMounted(() => {
     selectedFile.value = file
     preview.value = URL.createObjectURL(file)
     extract(file)
+  }
+
+  if (import.meta.client) {
+    const savedAuto = localStorage.getItem('ia_auto_categoria')
+    if (savedAuto !== null) autoCategoria.value = savedAuto === 'true'
+
+    const savedConfianza = localStorage.getItem('ia_min_confidence')
+    if (savedConfianza !== null) confianzaMinima.value = parseFloat(savedConfianza)
+
+    const savedNotas = localStorage.getItem('ia_sugerir_notas')
+    if (savedNotas !== null) sugerirNotas.value = savedNotas === 'true'
   }
 })
 
@@ -41,13 +87,26 @@ watch(result, (r) => {
     total:      r.total,
     categoria:  r.categoria,
     metodoPago: r.metodoPago ?? '',
-    notas:      r.notas ?? '',
+    notas:      sugerirNotas.value ? (r.notas ?? '') : '',
   }
 })
 
 watch(phase, (p) => {
-  if (p === 'done') save()
+  if (p === 'done') {
+    const confidenceOk = (result.value?.confianza ?? 0.85) >= confianzaMinima.value
+    if (autoCategoria.value && confidenceOk) {
+      save()
+    } else {
+      showConfirmation.value = true
+    }
+  }
 })
+
+function handleReset() {
+  showConfirmation.value = false
+  reset()
+}
+
 
 function onFileSelected(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
@@ -133,7 +192,7 @@ async function save() {
     <div class="flex items-center justify-between px-4 pt-12 pb-4">
       <button
         class="flex items-center justify-center w-10 h-10 rounded-2xl bg-dracula-card2 text-dracula-text"
-        @click="phase === 'idle' ? navigateTo('/tickets') : reset()"
+        @click="phase === 'idle' ? navigateTo('/tickets') : handleReset()"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
@@ -201,6 +260,122 @@ async function save() {
       </div>
     </div>
 
+    <!-- DONE & NEED CONFIRMATION -->
+    <div v-else-if="phase === 'done' && showConfirmation && !saving" class="flex flex-col gap-4 px-4 pt-2 overflow-y-auto pb-16">
+      <div v-if="result && result.confianza < confianzaMinima" class="p-4 bg-dracula-yellow/10 border border-dracula-yellow/20 text-dracula-yellow rounded-2xl text-xs flex items-start gap-3">
+        <span class="text-base mt-0.5">⚠️</span>
+        <div>
+          <p class="font-semibold">Baja confianza en la extracción</p>
+          <p class="opacity-80 mt-0.5">La confianza calculada ({{ Math.round(result.confianza * 100) }}%) es menor a tu umbral configurado ({{ Math.round(confianzaMinima * 100) }}%). Por favor, verificá los datos extraídos.</p>
+        </div>
+      </div>
+      <div v-else class="p-4 bg-dracula-purple/10 border border-dracula-purple/20 text-dracula-purple rounded-2xl text-xs flex items-start gap-3">
+        <span class="text-base mt-0.5">ℹ️</span>
+        <div>
+          <p class="font-semibold">Confirmación de datos</p>
+          <p class="opacity-80 mt-0.5">Por favor, confirmá la información extraída por la IA antes de guardarla.</p>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <!-- Comercio -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Comercio</label>
+          <input
+            v-model="form.comercio"
+            type="text"
+            class="w-full bg-dracula-card2 rounded-2xl px-4 py-3.5 text-sm text-dracula-text border border-dracula-muted/20 focus:border-dracula-purple focus:outline-none transition-colors"
+          >
+        </div>
+
+        <!-- Fecha -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Fecha</label>
+          <input
+            v-model="form.fecha"
+            type="date"
+            class="w-full bg-dracula-card2 rounded-2xl px-4 py-3.5 text-sm text-dracula-text border border-dracula-muted/20 focus:border-dracula-purple focus:outline-none transition-colors"
+          >
+        </div>
+
+        <!-- Total -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Total</label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-dracula-muted">€</span>
+            <input
+              v-model="form.total"
+              type="number"
+              step="0.01"
+              class="w-full bg-dracula-card2 rounded-2xl pl-9 pr-4 py-3.5 text-sm text-dracula-text border border-dracula-muted/20 focus:border-dracula-purple focus:outline-none transition-colors"
+            >
+          </div>
+        </div>
+
+        <!-- Categoría -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Categoría</label>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="cat in categorias"
+              :key="cat"
+              type="button"
+              class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+              :class="form.categoria === cat
+                ? 'bg-dracula-purple text-dracula-bg'
+                : 'bg-dracula-card text-dracula-muted hover:text-dracula-text'"
+              @click="form.categoria = cat"
+            >
+              {{ cat }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Método de pago -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Método de pago</label>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="m in metodos"
+              :key="m"
+              type="button"
+              class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+              :class="form.metodoPago === m
+                ? 'bg-dracula-muted text-dracula-text'
+                : 'bg-dracula-card text-dracula-muted hover:text-dracula-text'"
+              @click="form.metodoPago = form.metodoPago === m ? '' : m"
+            >
+              {{ m }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Notas -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Notas</label>
+          <textarea
+            v-model="form.notas"
+            rows="3"
+            class="w-full bg-dracula-card2 rounded-2xl px-4 py-3.5 text-sm text-dracula-text border border-dracula-muted/20 focus:border-dracula-purple focus:outline-none transition-colors resize-none"
+          />
+        </div>
+
+        <button
+          class="w-full py-4 rounded-2xl text-sm font-semibold text-white transition-opacity mt-4"
+          style="background: linear-gradient(135deg, #bd93f9, #ff79c6)"
+          @click="save"
+        >
+          Confirmar y Guardar
+        </button>
+        <button
+          class="text-sm text-dracula-muted text-center"
+          @click="handleReset()"
+        >
+          Descartar y Escanear otro
+        </button>
+      </div>
+    </div>
+
     <!-- SAVE ERROR -->
     <div v-else-if="phase === 'done' && saveError" class="flex flex-col items-center gap-4 px-4 pt-8">
       <div class="w-16 h-16 rounded-2xl bg-dracula-red/15 flex items-center justify-center text-3xl">❌</div>
@@ -212,7 +387,7 @@ async function save() {
       >
         Reintentar
       </button>
-      <button class="text-sm text-dracula-muted" @click="reset">Escanear de nuevo</button>
+      <button class="text-sm text-dracula-muted" @click="handleReset()">Escanear de nuevo</button>
     </div>
 
     <!-- EXTRACTION ERROR -->
@@ -222,7 +397,7 @@ async function save() {
       <button
         class="px-6 py-3 rounded-2xl text-sm font-semibold text-white"
         style="background: linear-gradient(135deg, #bd93f9, #ff79c6)"
-        @click="reset"
+        @click="handleReset()"
       >
         Intentar de nuevo
       </button>

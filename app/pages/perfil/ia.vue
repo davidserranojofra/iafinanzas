@@ -109,7 +109,6 @@ watch(modeloActivo, (val) => {
         <p class="text-sm font-semibold text-dracula-text mb-1">Confianza mínima</p>
         <p class="text-xs text-dracula-muted mb-4">{{ labelConfianza }}</p>
         <input
-          v-slot="confianzaMinima"
           v-model.number="confianzaMinima"
           type="range"
           min="0.3"
