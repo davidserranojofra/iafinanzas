@@ -63,3 +63,49 @@ async function avisarClientes() {
     cliente.postMessage({ type: 'cola-tickets-actualizada' })
   }
 }
+
+// Escuchar eventos de Web Push enviados por el servidor
+self.addEventListener('push', (event: any) => {
+  let data = { title: 'Cartera 📊', body: 'Tenés novedades sobre tus finanzas.' }
+  if (event.data) {
+    try {
+      data = event.data.json()
+    } catch (e) {
+      data = { title: 'Cartera 📊', body: event.data.text() }
+    }
+  }
+
+  const options: NotificationOptions = {
+    body: data.body,
+    icon: '/icono.png',
+    badge: '/pwa-64x64.png',
+    vibrate: [100, 50, 100],
+    data: {
+      url: '/'
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  )
+})
+
+// Escuchar el clic sobre la notificación del sistema
+self.addEventListener('notificationclick', (event: any) => {
+  event.notification.close()
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList: any) => {
+      // Si ya hay una ventana abierta de la app, enfocarla
+      for (const client of clientList) {
+        if ('focus' in client) {
+          return client.focus()
+        }
+      }
+      // Si no, abrir una nueva ventana
+      if (self.clients.openWindow) {
+        return self.clients.openWindow('/')
+      }
+    })
+  )
+})

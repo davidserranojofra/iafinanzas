@@ -24,6 +24,7 @@ const secciones = [
   { label: 'Seguridad', icon: 'lock', to: '/perfil/seguridad' },
   { label: 'Métodos de pago', icon: 'card', to: '/perfil/pagos' },
   { label: 'Motor de IA', icon: 'sparkles', to: '/perfil/ia' },
+  { label: 'Notificaciones', icon: 'bell', to: '/perfil/notificaciones' },
 ]
 
 async function handleLogout() {
@@ -111,6 +112,9 @@ async function handleLogout() {
           </svg>
           <svg v-else-if="s.icon === 'sparkles'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#50fa7b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+          </svg>
+          <svg v-else-if="s.icon === 'bell'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff79c6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
         </div>
 
