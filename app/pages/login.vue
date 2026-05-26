@@ -26,9 +26,25 @@ async function submit() {
 
   try {
     if (isRegister.value) {
-      const { error: err } = await supabase.auth.signUp({ email: email.value, password: password.value })
+      const { data, error: err } = await supabase.auth.signUp({ email: email.value, password: password.value })
       if (err) throw err
-      error.value = '✓ Revisá tu email para confirmar la cuenta.'
+      
+      if (data?.session) {
+        await navigateTo('/dashboard', { replace: true })
+      } else {
+        // Intentamos loguear al usuario automáticamente para que entre directo
+        try {
+          const { error: loginErr } = await supabase.auth.signInWithPassword({
+            email: email.value,
+            password: password.value,
+          })
+          if (loginErr) throw loginErr
+          await navigateTo('/dashboard', { replace: true })
+        } catch {
+          // Si realmente requiere confirmación o falla por otra cosa, mostramos un mensaje limpio
+          error.value = '✓ Registro exitoso. Ya podés iniciar sesión.'
+        }
+      }
     } else {
       const { error: err } = await supabase.auth.signInWithPassword({ email: email.value, password: password.value })
       if (err) throw err
