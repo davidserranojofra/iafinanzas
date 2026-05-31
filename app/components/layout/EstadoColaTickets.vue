@@ -2,6 +2,7 @@
 const {
   estadoRed,
   ticketsPendientes,
+  lecturasPendientes,
   sincronizandoCola,
   mensajeCola,
   limpiarMensajeCola,
@@ -13,6 +14,7 @@ const route = useRoute()
 const visible = computed(() =>
   route.path !== '/login' && (
     ticketsPendientes.value > 0
+    || (lecturasPendientes?.value ?? 0) > 0
     || Boolean(mensajeCola.value)
   ),
 )
@@ -20,15 +22,39 @@ const visible = computed(() =>
 const descripcion = computed(() => {
   if (mensajeCola.value) return mensajeCola.value
 
-  if (estadoRed.value === 'offline' && ticketsPendientes.value > 0) {
-    return `Sin conexión. Tenés ${ticketsPendientes.value} ticket${ticketsPendientes.value === 1 ? '' : 's'} esperando sincronización.`
+  const totalOffline = ticketsPendientes.value + (lecturasPendientes.value ?? 0)
+
+  if (estadoRed.value === 'offline' && totalOffline > 0) {
+    let msg = `Sin conexión. Tenés `
+    const partes = []
+    if (ticketsPendientes.value > 0) {
+      partes.push(`${ticketsPendientes.value} ticket${ticketsPendientes.value === 1 ? '' : 's'}`)
+    }
+    if ((lecturasPendientes.value ?? 0) > 0) {
+      partes.push(`${lecturasPendientes.value} foto${lecturasPendientes.value === 1 ? '' : 's'} de ticket`)
+    }
+    msg += partes.join(' y ') + ' esperando sincronización.'
+    return msg
   }
 
   if (estadoRed.value === 'offline') {
     return 'Sin conexión. Los tickets nuevos se van a guardar localmente.'
   }
 
-  return `Hay ${ticketsPendientes.value} ticket${ticketsPendientes.value === 1 ? '' : 's'} pendiente${ticketsPendientes.value === 1 ? '' : 's'} de sincronización.`
+  if (totalOffline > 0) {
+    let msg = `Hay `
+    const partes = []
+    if (ticketsPendientes.value > 0) {
+      partes.push(`${ticketsPendientes.value} ticket${ticketsPendientes.value === 1 ? '' : 's'}`)
+    }
+    if ((lecturasPendientes.value ?? 0) > 0) {
+      partes.push(`${lecturasPendientes.value} foto${lecturasPendientes.value === 1 ? '' : 's'} por procesar con IA`)
+    }
+    msg += partes.join(' y ') + ' pendiente de sincronización.'
+    return msg
+  }
+
+  return 'Todo sincronizado.'
 })
 </script>
 
@@ -53,7 +79,7 @@ const descripcion = computed(() => {
             {{ descripcion }}
           </p>
 
-          <div v-if="estadoRed === 'online' && ticketsPendientes > 0" class="mt-3">
+          <div v-if="estadoRed === 'online' && (ticketsPendientes > 0 || (lecturasPendientes ?? 0) > 0)" class="mt-3">
             <button
               class="min-h-[44px] rounded-xl bg-dracula-cyan px-3 py-2 text-xs font-semibold text-dracula-bg transition-opacity disabled:opacity-50"
               :disabled="sincronizandoCola"

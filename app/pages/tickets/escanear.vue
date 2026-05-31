@@ -52,10 +52,26 @@ const { pending: loadingMetodos } = useAsyncData(
   },
 )
 
-onMounted(() => {
+onMounted(async () => {
   if (pendingFile.value) {
     const file = pendingFile.value
     pendingFile.value = null
+    
+    if (estadoRed.value === 'offline') {
+      if (user.value?.id) {
+        saving.value = true
+        try {
+          await encolarLectura(file, user.value.id)
+          await navigateTo('/tickets', { replace: true })
+        } catch (err) {
+          console.error('[escanear] Error encolando lectura offline en onMounted:', err)
+        } finally {
+          saving.value = false
+        }
+      }
+      return
+    }
+
     selectedFile.value = file
     preview.value = URL.createObjectURL(file)
     extract(file)
@@ -108,9 +124,25 @@ function handleReset() {
 }
 
 
-function onFileSelected(e: Event) {
+async function onFileSelected(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
+
+  if (estadoRed.value === 'offline') {
+    if (!user.value?.id) return
+    saving.value = true
+    try {
+      await encolarLectura(file, user.value.id)
+      await navigateTo('/tickets', { replace: true })
+    } catch (err) {
+      console.error('[escanear] Error encolando lectura offline en onFileSelected:', err)
+      saveError.value = 'No se pudo guardar la imagen localmente sin conexión.'
+    } finally {
+      saving.value = false
+    }
+    return
+  }
+
   selectedFile.value = file
   preview.value = URL.createObjectURL(file)
   extract(file)

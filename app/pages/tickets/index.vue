@@ -52,13 +52,6 @@ const ticketsFiltrados = computed(() => {
 const totalFiltrado = computed(() =>
   ticketsFiltrados.value.reduce((s, t) => s + t.total, 0),
 )
-
-const estadoListado = computed(() => {
-  if (isRefreshing.value && isOfflineData.value) return 'Mostrando último snapshot disponible'
-  if (isRefreshing.value) return 'Actualizando tickets…'
-  if (isOfflineData.value) return 'Mostrando datos guardados offline'
-  return null
-})
 </script>
 
 <template>
@@ -68,9 +61,6 @@ const estadoListado = computed(() => {
       <h1 class="text-xl font-bold text-dracula-text">Mis tickets</h1>
       <p class="text-sm text-dracula-muted mt-0.5">
         {{ tickets.length }} ticket{{ tickets.length !== 1 ? 's' : '' }} · {{ totalFiltrado.toFixed(2) }} €
-      </p>
-      <p v-if="estadoListado" class="text-xs text-dracula-cyan mt-2">
-        {{ estadoListado }}
       </p>
     </div>
 

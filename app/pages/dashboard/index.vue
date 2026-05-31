@@ -58,13 +58,6 @@ const weeklyData = computed(() => {
 const maxWeekly = computed(() => Math.max(...weeklyData.value.map(d => d.total), 1))
 
 const router = useRouter()
-
-const estadoResumen = computed(() => {
-  if (isRefreshing.value && isOfflineData.value) return 'Últimos datos guardados mientras revalidamos'
-  if (isRefreshing.value) return 'Actualizando resumen…'
-  if (isOfflineData.value) return 'Datos guardados offline'
-  return null
-})
 </script>
 
 <template>
@@ -74,7 +67,6 @@ const estadoResumen = computed(() => {
       <div>
         <p class="text-xs text-dracula-muted font-medium uppercase tracking-wider">Buenos días</p>
         <h1 class="text-xl font-bold text-dracula-text capitalize">{{ firstName }}</h1>
-        <p v-if="estadoResumen" class="mt-1 text-xs text-dracula-cyan">{{ estadoResumen }}</p>
       </div>
       <NuxtLink to="/perfil" class="flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold text-dracula-bg shadow-md" style="background: linear-gradient(135deg, #bd93f9, #ff79c6)">
         {{ initials }}

@@ -60,6 +60,9 @@ useHead({
       <LayoutAvisoOffline />
     </ClientOnly>
     <ClientOnly>
+      <LayoutActualizadorDatos />
+    </ClientOnly>
+    <ClientOnly>
       <LayoutEstadoColaTickets />
     </ClientOnly>
     <LayoutBottomNav v-if="showNav" />
