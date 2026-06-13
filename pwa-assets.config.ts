@@ -26,6 +26,12 @@ export default defineConfig({
     },
     appleSplashScreens: {
       padding: 0,
+      // Forzamos nombres "plain" (sin infijo light-/dark-) para que las imágenes
+      // generadas y los <link> inyectados por includeHtmlHeadLinks coincidan.
+      // El generador, con solo modo claro, escribe imágenes plain pero links con
+      // "-light-": ese mismatch causaba el 404 y la pantalla blanca en iOS.
+      name: (landscape, size) =>
+        `apple-splash-${landscape ? 'landscape' : 'portrait'}-${size.width}x${size.height}.png`,
       resizeOptions: {
         background: fondo,
         fit: 'contain',
@@ -54,6 +60,7 @@ export default defineConfig({
         { width: 1536, height: 2048, scaleFactor: 2 },  // iPad 9.7", Air 1/2, Mini 2/3/4/5
         { width: 1620, height: 2160, scaleFactor: 2 },  // iPad 10.2"
         { width: 1668, height: 2224, scaleFactor: 2 },  // iPad Pro 10.5", Air 3
+        { width: 1640, height: 2360, scaleFactor: 2 },  // iPad Air 11" M2/M3
         { width: 1668, height: 2388, scaleFactor: 2 },  // iPad Pro 11", Air 4/5/6
         { width: 2048, height: 2732, scaleFactor: 2 },  // iPad Pro 12.9", Air 13" (M4)
         { width: 2064, height: 2752, scaleFactor: 2 },  // iPad Pro 13" (M4)
