@@ -28,15 +28,14 @@ function traducirError(msg: string): string {
 function esperarUsuario(timeoutMs = 4000): Promise<void> {
   if (user.value) return Promise.resolve()
   return new Promise((resolve) => {
-    let timer: ReturnType<typeof setTimeout>
     const stop = watch(user, (u) => {
       if (u) {
         stop()
-        clearTimeout(timer)
         resolve()
       }
     })
-    timer = setTimeout(() => {
+    // Red de seguridad: si el ref nunca se puebla, no dejamos al usuario colgado.
+    setTimeout(() => {
       stop()
       resolve()
     }, timeoutMs)
