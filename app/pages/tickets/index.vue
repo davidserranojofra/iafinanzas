@@ -87,7 +87,7 @@ const totalFiltrado = computed(() =>
     <!-- Filtros por categoría -->
     <div class="flex gap-2 px-4 pb-4 overflow-x-auto scrollbar-hide">
       <button
-        class="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+        class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
         :class="filtroActivo === null
           ? 'bg-dracula-purple text-dracula-bg'
           : 'bg-dracula-card text-dracula-muted'"
@@ -98,7 +98,7 @@ const totalFiltrado = computed(() =>
       <button
         v-for="cat in categorias"
         :key="cat"
-        class="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+        class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
         :class="filtroActivo === cat
           ? 'bg-dracula-purple text-dracula-bg'
           : 'bg-dracula-card text-dracula-muted'"

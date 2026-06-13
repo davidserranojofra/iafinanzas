@@ -100,7 +100,7 @@ async function handleLogout() {
         :to="s.to"
         class="flex items-center gap-4 bg-dracula-card2 rounded-2xl px-4 py-4 min-h-[56px] transition-colors active:bg-dracula-card"
       >
-        <div class="w-9 h-9 rounded-xl bg-dracula-card flex items-center justify-center flex-shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-dracula-card flex items-center justify-center shrink-0">
           <svg v-if="s.icon === 'person'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#bd93f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
           </svg>

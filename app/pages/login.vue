@@ -2,6 +2,7 @@
 definePageMeta({ middleware: [] }) // pública
 
 const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 
 const email = ref('')
 const password = ref('')
@@ -20,6 +21,33 @@ function traducirError(msg: string): string {
   return 'Ocurrió un error. Intentá de nuevo.'
 }
 
+// @nuxtjs/supabase llena useSupabaseUser() con un getClaims().then() asíncrono
+// DESPUÉS de que signInWithPassword resuelve. Si navegamos de inmediato, el
+// middleware auth.ts ve user=null y rebota a /login (de ahí el "doble click").
+// Esperamos a que el ref se pueble antes de ir a una ruta protegida.
+function esperarUsuario(timeoutMs = 4000): Promise<void> {
+  if (user.value) return Promise.resolve()
+  return new Promise((resolve) => {
+    let timer: ReturnType<typeof setTimeout>
+    const stop = watch(user, (u) => {
+      if (u) {
+        stop()
+        clearTimeout(timer)
+        resolve()
+      }
+    })
+    timer = setTimeout(() => {
+      stop()
+      resolve()
+    }, timeoutMs)
+  })
+}
+
+async function irAlDashboard() {
+  await esperarUsuario()
+  await navigateTo('/dashboard', { replace: true })
+}
+
 async function submit() {
   loading.value = true
   error.value = null
@@ -30,7 +58,7 @@ async function submit() {
       if (err) throw err
       
       if (data?.session) {
-        await navigateTo('/dashboard', { replace: true })
+        await irAlDashboard()
       } else {
         // Intentamos loguear al usuario automáticamente para que entre directo
         try {
@@ -39,7 +67,7 @@ async function submit() {
             password: password.value,
           })
           if (loginErr) throw loginErr
-          await navigateTo('/dashboard', { replace: true })
+          await irAlDashboard()
         } catch {
           // Si realmente requiere confirmación o falla por otra cosa, mostramos un mensaje limpio
           error.value = '✓ Registro exitoso. Ya podés iniciar sesión.'
@@ -48,7 +76,7 @@ async function submit() {
     } else {
       const { error: err } = await supabase.auth.signInWithPassword({ email: email.value, password: password.value })
       if (err) throw err
-      await navigateTo('/dashboard', { replace: true })
+      await irAlDashboard()
     }
   } catch (e: unknown) {
     error.value = e instanceof Error ? traducirError(e.message) : 'Ocurrió un error. Intentá de nuevo.'
@@ -126,8 +154,8 @@ async function loginWithGoogle() {
           v-if="error"
           class="text-xs rounded-xl px-3 py-2"
           :class="error.startsWith('✓')
-            ? 'text-[#50fa7b] bg-[#50fa7b]/10'
-            : 'text-[#ff5555] bg-[#ff5555]/10'"
+            ? 'text-dracula-green bg-dracula-green/10'
+            : 'text-dracula-red bg-dracula-red/10'"
         >{{ error }}</p>
 
         <!-- Submit -->

@@ -267,7 +267,7 @@ function toggleCategoria(cat: string) {
           </div>
         </div>
         <div
-          class="w-11 h-6 rounded-full transition-colors relative flex-shrink-0"
+          class="w-11 h-6 rounded-full transition-colors relative shrink-0"
           :class="habilitarNotificaciones ? 'bg-dracula-purple' : 'bg-dracula-card'"
         >
           <div

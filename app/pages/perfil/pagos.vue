@@ -97,7 +97,7 @@ async function guardar() {
           <span class="flex-1 text-sm font-medium text-dracula-text">{{ metodo }}</span>
 
           <div
-            class="w-11 h-6 rounded-full transition-colors relative flex-shrink-0"
+            class="w-11 h-6 rounded-full transition-colors relative shrink-0"
             :class="activos.includes(metodo) ? 'bg-dracula-purple' : 'bg-dracula-card'"
           >
             <div

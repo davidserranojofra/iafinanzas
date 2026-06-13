@@ -482,7 +482,7 @@ function downloadPNG() {
     </Transition>
     <Transition name="sheet">
       <div v-if="showEdit" class="fixed bottom-0 left-0 right-0 z-50 bg-dracula-card2 rounded-t-3xl border-t border-dracula-muted/20 flex flex-col max-h-[90dvh]">
-        <div class="px-4 pt-5 pb-4 flex-shrink-0">
+        <div class="px-4 pt-5 pb-4 shrink-0">
           <div class="w-10 h-1 rounded-full bg-dracula-muted/40 mx-auto mb-4" />
           <h2 class="text-lg font-bold text-dracula-text">Editar ticket</h2>
         </div>

@@ -239,7 +239,7 @@ async function save() {
     <!-- IDLE -->
     <div v-if="phase === 'idle'" class="flex flex-col items-center gap-6 px-4 pt-4">
       <div
-        class="w-full aspect-[3/4] max-h-80 rounded-3xl border-2 border-dashed border-dracula-muted/40 flex flex-col items-center justify-center gap-4 cursor-pointer transition-colors hover:border-dracula-purple/60 hover:bg-dracula-purple/5"
+        class="w-full aspect-3/4 max-h-80 rounded-3xl border-2 border-dashed border-dracula-muted/40 flex flex-col items-center justify-center gap-4 cursor-pointer transition-colors hover:border-dracula-purple/60 hover:bg-dracula-purple/5"
         @click="openPicker(false)"
       >
         <div class="w-16 h-16 rounded-2xl bg-dracula-card2 flex items-center justify-center text-3xl">🧾</div>
@@ -264,7 +264,7 @@ async function save() {
 
     <!-- SCANNING / SAVING -->
     <div v-else-if="phase === 'extracting' || (phase === 'done' && saving)" class="flex flex-col items-center gap-6 px-4 pt-4">
-      <div class="relative w-full aspect-[3/4] max-h-80 rounded-3xl overflow-hidden bg-dracula-bg2">
+      <div class="relative w-full aspect-3/4 max-h-80 rounded-3xl overflow-hidden bg-dracula-bg2">
         <img v-if="preview" :src="preview" class="w-full h-full object-cover opacity-40" alt="Ticket">
 
         <div class="absolute inset-4 pointer-events-none">

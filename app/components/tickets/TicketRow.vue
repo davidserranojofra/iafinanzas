@@ -30,7 +30,7 @@ const formattedDate = computed(() => {
     @click="emit('click', ticket)"
   >
     <!-- Icono categoría -->
-    <div class="flex items-center justify-center w-10 h-10 rounded-xl text-lg flex-shrink-0" :style="{ background: bg }">
+    <div class="flex items-center justify-center w-10 h-10 rounded-xl text-lg shrink-0" :style="{ background: bg }">
       {{ icon }}
     </div>
 
@@ -46,7 +46,7 @@ const formattedDate = computed(() => {
     </div>
 
     <!-- Total -->
-    <div class="flex flex-col items-end flex-shrink-0">
+    <div class="flex flex-col items-end shrink-0">
       <span class="text-sm font-bold text-dracula-text">{{ ticket.total.toFixed(2) }} €</span>
       <span v-if="ticket.extractedByAI" class="text-xs text-dracula-green mt-0.5">IA ✓</span>
     </div>

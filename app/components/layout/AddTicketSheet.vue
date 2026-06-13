@@ -49,7 +49,7 @@ function onFileSelected(e: Event) {
             style="background: rgba(80,250,123,0.08); border-color: rgba(80,250,123,0.3)"
             @click="openCamera"
           >
-            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style="background: rgba(80,250,123,0.15)">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0" style="background: rgba(80,250,123,0.15)">
               📸
             </div>
             <div class="flex-1">
@@ -59,7 +59,7 @@ function onFileSelected(e: Event) {
               </div>
               <p class="text-xs text-dracula-muted mt-0.5">Sacá una foto y la IA extrae los datos automáticamente</p>
             </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-green flex-shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-green shrink-0">
               <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>
@@ -68,14 +68,14 @@ function onFileSelected(e: Event) {
             class="flex items-center gap-4 p-4 rounded-2xl bg-dracula-card border border-dracula-muted/20 w-full text-left transition-colors active:opacity-80"
             @click="goTo('/tickets/manual')"
           >
-            <div class="w-12 h-12 rounded-2xl bg-dracula-muted/15 flex items-center justify-center text-2xl flex-shrink-0">
+            <div class="w-12 h-12 rounded-2xl bg-dracula-muted/15 flex items-center justify-center text-2xl shrink-0">
               ✏️
             </div>
             <div class="flex-1">
               <p class="text-sm font-semibold text-dracula-text">Formulario manual</p>
               <p class="text-xs text-dracula-muted mt-0.5">Ingresá los datos a mano</p>
             </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-muted flex-shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-muted shrink-0">
               <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>
