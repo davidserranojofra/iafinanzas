@@ -133,7 +133,7 @@ async function submitEdit() {
   }
 }
 
-const { getCategoryColor, getCategoryBg } = useCategories()
+const { getCategoryColor, getCategoryBg, getCategoryIcon } = useCategories()
 const { isDark } = useTheme()
 
 const color = computed(() => ticket.value ? getCategoryColor(ticket.value.categoria) : getCategoryColor('Otro'))
@@ -323,7 +323,9 @@ function downloadPNG() {
         class="mx-4 rounded-3xl p-6 flex flex-col items-center gap-3 mb-4"
         :style="{ background: heroBg, border: `1.5px solid ${heroBorder}` }"
       >
-        <TicketsCategoryIllustration :categoria="ticket.categoria" :size="90" />
+        <div class="flex items-center justify-center w-20 h-20 rounded-2xl text-4xl shrink-0" :style="{ background: getCategoryBg(ticket.categoria) }">
+          {{ getCategoryIcon(ticket.categoria) }}
+        </div>
         <h2 class="text-xl font-bold text-dracula-text">{{ ticket.comercio }}</h2>
         <div class="flex items-center gap-2 flex-wrap justify-center">
           <span
