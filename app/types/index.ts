@@ -60,7 +60,7 @@ export interface UserProfile {
   createdAt: string
 }
 
-export type StatsPeriod = 'dia' | 'semana' | 'mes' | 'año'
+export type StatsPeriod = 'dia' | 'semana' | 'mes' | 'año' | 'rango'
 
 export interface CategoryStat {
   categoria: TicketCategoria

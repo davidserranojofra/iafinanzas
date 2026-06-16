@@ -10,9 +10,11 @@ const periodos: { key: StatsPeriod; label: string }[] = [
   { key: 'semana', label: 'Semana' },
   { key: 'mes', label: 'Mes' },
   { key: 'año', label: 'Año' },
+  { key: 'rango', label: 'Rango' },
 ]
 
 const periodo = ref<StatsPeriod>('semana')
+const showDatePickerSheet = ref(false)
 
 function createDate(
   year: number,
@@ -87,6 +89,8 @@ function getPeriodBounds(date: Date, selected: StatsPeriod) {
       return { start: getStartOfMonth(date), end: getEndOfMonth(date) }
     case 'año':
       return { start: getStartOfYear(date), end: getEndOfYear(date) }
+    case 'rango':
+      return { start: getStartOfDay(rangoPersonalizado.value.start), end: getEndOfDay(rangoPersonalizado.value.end) }
   }
 
   throw new Error('Período no soportado')
@@ -103,6 +107,58 @@ function isSameDay(a: Date, b: Date) {
 }
 
 const today = normalizeDate(new Date())
+
+const rangoPersonalizado = ref({
+  start: new Date(new Date().setDate(new Date().getDate() - 30)),
+  end: new Date(),
+})
+
+const rangoModel = computed({
+  get: () => ({
+    start: rangoPersonalizado.value.start,
+    end: rangoPersonalizado.value.end,
+  }),
+  set: (val) => {
+    if (val && val.start && val.end) {
+      rangoPersonalizado.value = {
+        start: val.start,
+        end: val.end,
+      }
+    }
+  },
+})
+
+function selectPreset(preset: '7d' | '30d' | 'mesActual' | 'mesPasado') {
+  const start = new Date()
+  const end = new Date()
+
+  switch (preset) {
+    case '7d':
+      start.setDate(end.getDate() - 7)
+      break
+    case '30d':
+      start.setDate(end.getDate() - 30)
+      break
+    case 'mesActual':
+      start.setDate(1)
+      break
+    case 'mesPasado':
+      start.setMonth(start.getMonth() - 1)
+      start.setDate(1)
+      end.setDate(0)
+      break
+  }
+
+  rangoPersonalizado.value = {
+    start: getStartOfDay(start),
+    end: getEndOfDay(end),
+  }
+}
+
+function abrirDatePicker() {
+  periodo.value = 'rango'
+  showDatePickerSheet.value = true
+}
 
 function clampToToday(value: Date) {
   return value.getTime() > today.getTime() ? new Date(today) : normalizeDate(value)
@@ -135,12 +191,32 @@ function shiftViewedDate(date: Date, selected: StatsPeriod, amount: number) {
       next.setMonth(month, Math.min(day, daysInTargetMonth))
       return clampToToday(next)
     }
+    case 'rango': {
+      const diffTime = Math.abs(bounds.value.end.getTime() - bounds.value.start.getTime())
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      const nextStart = new Date(rangoPersonalizado.value.start)
+      const nextEnd = new Date(rangoPersonalizado.value.end)
+      nextStart.setDate(nextStart.getDate() + amount * diffDays)
+      nextEnd.setDate(nextEnd.getDate() + amount * diffDays)
+
+      if (nextEnd.getTime() > today.getTime()) {
+        const offset = nextEnd.getTime() - today.getTime()
+        nextStart.setTime(nextStart.getTime() - offset)
+        nextEnd.setTime(today.getTime())
+      }
+
+      rangoPersonalizado.value = {
+        start: nextStart,
+        end: nextEnd,
+      }
+      return rangoPersonalizado.value.start
+    }
   }
 
   throw new Error('Período no soportado')
 }
 
-const viewedDates = reactive<Record<StatsPeriod, Date>>({
+const viewedDates = reactive<Record<Exclude<StatsPeriod, 'rango'>, Date>>({
   dia: new Date(today),
   semana: new Date(today),
   mes: new Date(today),
@@ -148,29 +224,57 @@ const viewedDates = reactive<Record<StatsPeriod, Date>>({
 })
 
 const viewedDate = computed({
-  get: () => viewedDates[periodo.value],
+  get: () => viewedDates[periodo.value as Exclude<StatsPeriod, 'rango'>],
   set: (value: Date) => {
-    viewedDates[periodo.value] = clampToToday(value)
+    viewedDates[periodo.value as Exclude<StatsPeriod, 'rango'>] = clampToToday(value)
   },
 })
 
-const bounds = computed(() => getPeriodBounds(viewedDate.value, periodo.value))
-const latestBounds = computed(() => getPeriodBounds(today, periodo.value))
+const bounds = computed(() => {
+  if (periodo.value === 'rango') {
+    return {
+      start: getStartOfDay(rangoPersonalizado.value.start),
+      end: getEndOfDay(rangoPersonalizado.value.end),
+    }
+  }
+  return getPeriodBounds(viewedDate.value, periodo.value)
+})
+
+const latestBounds = computed(() => {
+  if (periodo.value === 'rango') {
+    return {
+      start: getStartOfDay(today),
+      end: getEndOfDay(today),
+    }
+  }
+  return getPeriodBounds(today, periodo.value)
+})
 
 const canGoPrev = computed(() => true)
 
 const canGoNext = computed(() => {
+  if (periodo.value === 'rango') {
+    return bounds.value.end.getTime() < today.getTime()
+  }
   return bounds.value.start.getTime() < latestBounds.value.start.getTime()
 })
 
 function goToPreviousPeriod() {
   if (!canGoPrev.value) return
-  viewedDate.value = shiftViewedDate(viewedDate.value, periodo.value, -1)
+  if (periodo.value === 'rango') {
+    shiftViewedDate(rangoPersonalizado.value.start, 'rango', -1)
+  } else {
+    viewedDate.value = shiftViewedDate(viewedDate.value, periodo.value, -1)
+  }
 }
 
 function goToNextPeriod() {
   if (!canGoNext.value) return
-  viewedDate.value = shiftViewedDate(viewedDate.value, periodo.value, 1)
+  if (periodo.value === 'rango') {
+    shiftViewedDate(rangoPersonalizado.value.start, 'rango', 1)
+  } else {
+    viewedDate.value = shiftViewedDate(viewedDate.value, periodo.value, 1)
+  }
 }
 
 const periodTypeLabel = computed(() => {
@@ -183,6 +287,8 @@ const periodTypeLabel = computed(() => {
       return 'Mes'
     case 'año':
       return 'Año'
+    case 'rango':
+      return 'Personalizado'
   }
 
   throw new Error('Período no soportado')
@@ -214,6 +320,10 @@ const visiblePeriodLabel = computed(() => {
       return formatDate(viewedDate.value, { month: 'long', year: 'numeric' })
     case 'año':
       return String(viewedDate.value.getFullYear())
+    case 'rango': {
+      const { start, end } = bounds.value
+      return `${formatDate(start, { day: 'numeric', month: 'short' })} – ${formatDate(end, { day: 'numeric', month: 'short', year: 'numeric' })}`
+    }
   }
 
   throw new Error('Período no soportado')
@@ -229,9 +339,23 @@ const totalLabel = computed(() => {
       return 'Total del mes'
     case 'año':
       return 'Total del año'
+    case 'rango':
+      return 'Total del rango'
   }
 
   throw new Error('Período no soportado')
+})
+
+const chartTitle = computed(() => {
+  if (periodo.value === 'semana') return 'Por día'
+  if (periodo.value === 'mes') return 'Por semana'
+  if (periodo.value === 'año') return 'Por mes'
+  if (periodo.value === 'rango') {
+    const diffTime = Math.abs(bounds.value.end.getTime() - bounds.value.start.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays <= 31 ? 'Por día' : 'Por intervalo'
+  }
+  return ''
 })
 
 const ticketsPeriodo = computed(() => {
@@ -297,6 +421,62 @@ const chartData = computed(() => {
         value,
       }
     })
+  }
+
+  if (periodo.value === 'rango') {
+    const diffTime = Math.abs(bounds.value.end.getTime() - bounds.value.start.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays <= 7) {
+      return Array.from({ length: diffDays }, (_, index) => {
+        const day = normalizeDate(new Date(bounds.value.start))
+        day.setDate(bounds.value.start.getDate() + index)
+
+        const value = ticketsPeriodo.value
+          .filter(ticket => isSameDay(parseTicketDate(ticket.fecha), day))
+          .reduce((sum, ticket) => sum + ticket.total, 0)
+
+        return {
+          label: formatDate(day, { weekday: 'short', day: 'numeric' }),
+          value,
+        }
+      })
+    } else if (diffDays <= 31) {
+      return Array.from({ length: diffDays }, (_, index) => {
+        const day = normalizeDate(new Date(bounds.value.start))
+        day.setDate(bounds.value.start.getDate() + index)
+
+        const value = ticketsPeriodo.value
+          .filter(ticket => isSameDay(parseTicketDate(ticket.fecha), day))
+          .reduce((sum, ticket) => sum + ticket.total, 0)
+
+        return {
+          label: String(day.getDate()),
+          value,
+        }
+      })
+    } else {
+      const intervalDays = Math.ceil(diffDays / 5)
+      return Array.from({ length: 5 }, (_, i) => {
+        const start = new Date(bounds.value.start)
+        start.setDate(bounds.value.start.getDate() + i * intervalDays)
+        const end = new Date(start)
+        end.setDate(start.getDate() + intervalDays - 1)
+        if (end > bounds.value.end) end.setTime(bounds.value.end.getTime())
+
+        const value = ticketsPeriodo.value
+          .filter(ticket => {
+            const date = parseTicketDate(ticket.fecha)
+            return date >= start && date <= end
+          })
+          .reduce((sum, ticket) => sum + ticket.total, 0)
+
+        return {
+          label: `${formatDate(start, { day: 'numeric', month: 'short' })}`,
+          value,
+        }
+      })
+    }
   }
 
   return []
@@ -367,9 +547,15 @@ const estadoStats = computed(() => {
         ‹
       </button>
 
-      <div class="flex-1 rounded-3xl border border-dracula-muted/10 bg-dracula-card2 px-4 py-3 text-center">
+      <div
+        class="flex-1 rounded-3xl border border-dracula-muted/10 bg-dracula-card2 px-4 py-3 text-center cursor-pointer hover:border-dracula-purple/40 transition-colors"
+        @click="abrirDatePicker"
+      >
         <p class="text-[10px] font-semibold uppercase tracking-wider text-dracula-muted">{{ periodTypeLabel }}</p>
-        <p class="mt-1 text-sm font-semibold text-dracula-text">{{ visiblePeriodLabel }}</p>
+        <p class="mt-1 text-sm font-semibold text-dracula-text flex items-center justify-center gap-1">
+          {{ visiblePeriodLabel }}
+          <span class="text-xs text-dracula-purple shrink-0">📅</span>
+        </p>
       </div>
 
       <button
@@ -416,7 +602,7 @@ const estadoStats = computed(() => {
           <!-- Gráfico de barras -->
           <div v-if="periodo !== 'dia'" class="bg-dracula-card2 rounded-3xl p-4 border border-dracula-muted/10">
             <p class="text-xs font-semibold uppercase tracking-wider text-dracula-muted mb-4">
-              {{ periodo === 'semana' ? 'Por día' : periodo === 'mes' ? 'Por semana' : 'Por mes' }}
+              {{ chartTitle }}
             </p>
             <div class="flex items-end justify-between gap-1.5 h-24">
               <div
@@ -462,5 +648,121 @@ const estadoStats = computed(() => {
         </template>
       </template>
     </div>
+
+    <!-- Bottom Sheet para Selector de Fecha -->
+    <Teleport to="body">
+      <Transition name="overlay">
+        <div v-if="showDatePickerSheet" class="fixed inset-0 z-40 bg-black/60" @click="showDatePickerSheet = false" />
+      </Transition>
+
+      <Transition name="sheet">
+        <div
+          v-if="showDatePickerSheet"
+          class="fixed bottom-0 left-0 right-0 z-50 bg-dracula-card2 rounded-t-3xl px-4 pt-5 pb-24 border-t border-dracula-muted/20 max-w-md mx-auto"
+        >
+          <!-- Handle bar -->
+          <div class="w-10 h-1 rounded-full bg-dracula-muted/40 mx-auto mb-6" />
+
+          <h2 class="text-lg font-bold text-dracula-text mb-1">Seleccionar rango</h2>
+          <p class="text-xs text-dracula-muted mb-4">Elegí un rango de fechas para las estadísticas</p>
+
+          <!-- Presets -->
+          <div class="grid grid-cols-2 gap-2 mb-4">
+            <button
+              class="py-2.5 px-3 rounded-xl border border-dracula-muted/10 bg-dracula-card text-xs font-semibold text-dracula-text text-left hover:border-dracula-purple/30 active:opacity-85 transition-colors cursor-pointer"
+              @click="selectPreset('7d')"
+            >
+              🗓️ Últimos 7 días
+            </button>
+            <button
+              class="py-2.5 px-3 rounded-xl border border-dracula-muted/10 bg-dracula-card text-xs font-semibold text-dracula-text text-left hover:border-dracula-purple/30 active:opacity-85 transition-colors cursor-pointer"
+              @click="selectPreset('30d')"
+            >
+              📅 Últimos 30 días
+            </button>
+            <button
+              class="py-2.5 px-3 rounded-xl border border-dracula-muted/10 bg-dracula-card text-xs font-semibold text-dracula-text text-left hover:border-dracula-purple/30 active:opacity-85 transition-colors cursor-pointer"
+              @click="selectPreset('mesActual')"
+            >
+              💼 Este mes
+            </button>
+            <button
+              class="py-2.5 px-3 rounded-xl border border-dracula-muted/10 bg-dracula-card text-xs font-semibold text-dracula-text text-left hover:border-dracula-purple/30 active:opacity-85 transition-colors cursor-pointer"
+              @click="selectPreset('mesPasado')"
+            >
+              🏛️ Mes pasado
+            </button>
+          </div>
+
+          <!-- Calendar component -->
+          <div class="bg-dracula-bg rounded-2xl p-2 border border-dracula-muted/10 mb-5 overflow-hidden">
+            <ClientOnly>
+              <VDatePicker
+                v-model.range="rangoModel"
+                color="purple"
+                is-dark
+                :max-date="today"
+                columns="1"
+                expanded
+                borderless
+                transparent
+              />
+            </ClientOnly>
+          </div>
+
+          <!-- Botón de aplicar/cerrar -->
+          <button
+            class="w-full py-3 bg-dracula-purple text-dracula-bg rounded-2xl text-sm font-bold shadow-lg shadow-dracula-purple/25 active:opacity-90 transition-opacity cursor-pointer"
+            @click="showDatePickerSheet = false"
+          >
+            Listo
+          </button>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.overlay-enter-active,
+.overlay-leave-active {
+  transition: opacity 0.3s ease;
+}
+.overlay-enter-from,
+.overlay-leave-to {
+  opacity: 0;
+}
+
+.sheet-enter-active {
+  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.sheet-leave-active {
+  transition: transform 0.28s cubic-bezier(0.4, 0, 1, 1);
+}
+.sheet-enter-from,
+.sheet-leave-to {
+  transform: translateY(100%);
+}
+
+/* Custom v-calendar Dracula theme overrides */
+:deep(.vc-container) {
+  --vc-font-family: inherit;
+  --vc-bg: transparent;
+  --vc-border: none;
+  --vc-text-color: #f8f8f2;
+  --vc-accent-50: rgba(189, 147, 249, 0.1);
+  --vc-accent-100: rgba(189, 147, 249, 0.2);
+  --vc-accent-200: rgba(189, 147, 249, 0.3);
+  --vc-accent-300: rgba(189, 147, 249, 0.4);
+  --vc-accent-400: rgba(189, 147, 249, 0.5);
+  --vc-accent-500: #bd93f9;
+  --vc-accent-600: #a371f7;
+  --vc-accent-700: #8a50f5;
+  --vc-accent-800: #712ef2;
+  --vc-accent-900: #570cf0;
+}
+:deep(.vc-dark) {
+  --vc-bg: transparent;
+  --vc-border: none;
+}
+</style>
