@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartera — Finanzas Personales</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #1a1b26;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+    }
+    ::-webkit-scrollbar { width: 0; }
+
+    /* Dracula palette */
+    :root {
+      --bg:       #282a36;
+      --card:     #44475a;
+      --card2:    #383a4a;
+      --text:     #f8f8f2;
+      --muted:    #6272a4;
+      --pink:     #ff79c6;
+      --purple:   #bd93f9;
+      --green:    #50fa7b;
+      --cyan:     #8be9fd;
+      --yellow:   #f1fa8c;
+      --orange:   #ffb86c;
+      --red:      #ff5555;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      overflow: hidden;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .screen.hidden { opacity: 0; pointer-events: none; transform: translateY(12px); }
+    .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      background: #1e2030;
+      border-top: 1px solid rgba(98,114,164,0.2);
+      padding: 8px 0 20px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 4px 16px;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+    .tab-item span {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .tab-item.active span { color: var(--purple); }
+    .fab {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(189,147,249,0.4);
+      margin-top: -20px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .fab:active { transform: scale(0.94); box-shadow: 0 2px 10px rgba(189,147,249,0.3); }
+
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 20px;
+    }
+    .card2 { background: var(--card2); border-radius: 16px; padding: 16px; }
+
+    input, select, textarea {
+      font-family: 'Inter', sans-serif;
+      background: var(--card);
+      border: 1.5px solid rgba(98,114,164,0.3);
+      border-radius: 14px;
+      color: var(--text);
+      font-size: 15px;
+      padding: 14px 16px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--purple);
+    }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    select option { background: var(--card); color: var(--text); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 16px;
+      width: 100%;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      letter-spacing: 0.3px;
+    }
+    .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+
+    .btn-secondary {
+      background: var(--card2);
+      color: var(--text);
+      border: 1.5px solid rgba(98,114,164,0.3);
+      border-radius: 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 14px;
+      width: 100%;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-secondary:active { background: var(--card); }
+
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+    .modal-sheet {
+      width: 100%;
+      background: #1e2030;
+      border-radius: 24px 24px 0 0;
+      padding: 12px 20px 36px;
+      transform: translateY(0);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    }
+    .modal-overlay.hidden .modal-sheet { transform: translateY(100%); }
+    .modal-handle {
+      width: 40px; height: 4px;
+      background: var(--muted);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+      opacity: 0.4;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .scroll-area {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* Bar chart */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 80px;
+    }
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .bar {
+      width: 100%;
+      border-radius: 6px 6px 2px 2px;
+      transition: height 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .bar-label {
+      font-size: 9px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* Donut */
+    .donut-ring { transform: rotate(-90deg); }
+
+    /* Animated spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse-glow { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+    @keyframes scan-line {
+      0% { top: 10%; }
+      100% { top: 90%; }
+    }
+    .scan-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+      animation: scan-line 2s ease-in-out infinite alternate;
+      box-shadow: 0 0 12px var(--green);
+    }
+    @keyframes fadeInUp {
+      from { opacity:0; transform: translateY(10px); }
+      to { opacity:1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeInUp 0.4s ease forwards; }
+
+    .json-line { animation: fadeInUp 0.3s ease forwards; opacity: 0; }
+
+    /* Tweaks panel */
+    #tweaks-panel {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      background: #1e2030;
+      border: 1.5px solid rgba(98,114,164,0.3);
+      border-radius: 20px;
+      padding: 16px;
+      width: 200px;
+      z-index: 9999;
+      display: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    #tweaks-panel.visible { display: block; }
+    #tweaks-panel h4 {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+    .tweak-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .tweak-row label { color: var(--muted); font-size: 12px; }
+    .tweak-toggle {
+      width: 36px; height: 20px;
+      background: var(--card);
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+      border: none;
+    }
+    .tweak-toggle.on { background: var(--purple); }
+    .tweak-toggle::after {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px; left: 2px;
+      transition: transform 0.2s;
+    }
+    .tweak-toggle.on::after { transform: translateX(16px); }
+  </style>
+</head>
+<body>
+<script type="text/babel">
+
+// ── Phone Frame ──────────────────────────────────────────────
+function PhoneFrame({ children }) {
+  return (
+    <div style={{
+      width: 393, height: 852, borderRadius: 48, overflow: 'hidden',
+      position: 'relative', background: '#1a1b26',
+      boxShadow: '0 0 0 1px rgba(255,255,255,0.08), 0 40px 80px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.04)',
+      fontFamily: "'Inter', sans-serif",
+    }}>
+      {/* Dynamic island */}
+      <div style={{
+        position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)',
+        width: 120, height: 34, borderRadius: 20, background: '#000', zIndex: 50,
+      }}/>
+      {/* Status bar */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 40,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '18px 28px 0',
+      }}>
+        <span style={{ color: '#f8f8f2', fontSize: 14, fontWeight: 600 }}>9:41</span>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="#f8f8f2"><rect x="0" y="6" width="2.5" height="5" rx="0.5"/><rect x="4" y="4" width="2.5" height="7" rx="0.5"/><rect x="8" y="2" width="2.5" height="9" rx="0.5"/><rect x="12" y="0" width="2.5" height="11" rx="0.5"/></svg>
+          <svg width="15" height="11" viewBox="0 0 15 11" fill="none"><path d="M7.5 2.5C9.4 2.5 11.1 3.2 12.4 4.4L13.3 3.5C11.7 2 9.7 1 7.5 1C5.3 1 3.3 2 1.7 3.5L2.6 4.4C3.9 3.2 5.6 2.5 7.5 2.5Z" fill="#f8f8f2"/><path d="M7.5 5.5C8.8 5.5 10 6 10.8 6.9L11.7 6C10.6 5 9.1 4.3 7.5 4.3C5.9 4.3 4.4 5 3.3 6L4.2 6.9C5 6 6.2 5.5 7.5 5.5Z" fill="#f8f8f2"/><circle cx="7.5" cy="9.5" r="1.5" fill="#f8f8f2"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="rgba(255,255,255,0.35)"/><rect x="2" y="2" width="18" height="8" rx="2" fill="#f8f8f2"/><path d="M23 4v4c0.8-.3 1.5-1.2 1.5-2s-.7-1.7-1.5-2z" fill="rgba(255,255,255,0.4)"/></svg>
+        </div>
+      </div>
+      {/* Content */}
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', paddingTop: 50 }}>
+        {children}
+      </div>
+      {/* Home indicator */}
+      <div style={{
+        position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+        width: 134, height: 5, borderRadius: 99,
+        background: 'rgba(255,255,255,0.3)', zIndex: 50, pointerEvents: 'none',
+      }}/>
+    </div>
+  );
+}
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "compactMode": false,
+  "colorAccent": "purple",
+  "showBalance": false
+}/*EDITMODE-END*/;
+
+// ── Icons ───────────────────────────────────────────────────
+const Icon = ({ name, size = 20, color = 'currentColor', strokeWidth = 1.8 }) => {
+  const s = { width: size, height: size, fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  const paths = {
+    home: <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></>,
+    chart: <><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,
+    receipt: <><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/></>,
+    user: <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+    plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+    camera: <><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></>,
+    edit: <><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+    zap: <><polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/></>,
+    arrow_right: <><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></>,
+    check: <><polyline points="20,6 9,17 4,12"/></>,
+    x: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+    calendar: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+    tag: <><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></>,
+    wallet: <><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></>,
+    cpu: <><rect x="9" y="9" width="6" height="6"/><path d="M20 14h1M20 10h1M4 14H3M4 10H3M14 4V3M10 4V3M14 21v-1M10 21v-1M16 4h2a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h2"/></>,
+    file_text: <><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></>,
+    trending_up: <><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/><polyline points="17,6 23,6 23,12"/></>,
+    shield: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>,
+    lock: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>,
+    mail: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>,
+    store: <><path d="M3 9l1-6h16l1 6"/><path d="M3 9c0 1.1.9 2 2 2s2-.9 2-2 .9 2 2 2 2-.9 2-2 .9 2 2 2 2-.9 2-2"/><rect x="3" y="11" width="18" height="10" rx="1"/><rect x="9" y="15" width="6" height="6"/></>,
+    credit_card: <><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,
+    phone: <><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 0110 1.18 2 2 0 0112 3.15v3a2 2 0 01-1.45 1.94 16 16 0 006.29 6.29A2 2 0 0122 16.92z"/></>,
+  };
+  return <svg viewBox="0 0 24 24" style={s}>{paths[name]}</svg>;
+};
+
+// ── Donut chart component ───────────────────────────────────
+function DonutChart({ data, size = 120 }) {
+  const r = 44, cx = 60, cy = 60, circ = 2 * Math.PI * r;
+  const total = data.reduce((a, b) => a + b.value, 0);
+  let offset = 0;
+  return (
+    <svg width={size} height={size} viewBox="0 0 120 120">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(98,114,164,0.15)" strokeWidth="14"/>
+      {data.map((d, i) => {
+        const pct = d.value / total;
+        const dash = pct * circ;
+        const seg = (
+          <circle key={i} cx={cx} cy={cy} r={r} fill="none"
+            stroke={d.color} strokeWidth="14"
+            strokeDasharray={`${dash} ${circ - dash}`}
+            strokeDashoffset={-offset}
+            className="donut-ring"
+            strokeLinecap="round"
+          />
+        );
+        offset += dash;
+        return seg;
+      })}
+      <text x="60" y="55" textAnchor="middle" fill="#f8f8f2" fontSize="18" fontWeight="700" fontFamily="Inter">€284</text>
+      <text x="60" y="72" textAnchor="middle" fill="#6272a4" fontSize="9" fontFamily="Inter">este mes</text>
+    </svg>
+  );
+}
+
+// ── Data ────────────────────────────────────────────────────
+const TICKETS = [
+  { id:1, comercio:'Mercadona', fecha:'Hoy, 14:32', total: 47.85, categoria:'Alimentación', color:'#50fa7b', icon:'store' },
+  { id:2, comercio:'Repsol', fecha:'Ayer, 09:15', total: 62.00, categoria:'Transporte', color:'#ffb86c', icon:'credit_card' },
+  { id:3, comercio:'El Corte Inglés', fecha:'19 abr', total: 38.99, categoria:'Ropa', color:'#ff79c6', icon:'tag' },
+  { id:4, comercio:'Netflix', fecha:'18 abr', total: 15.99, categoria:'Suscripciones', color:'#bd93f9', icon:'shield' },
+  { id:5, comercio:'Zara', fecha:'17 abr', total: 29.50, categoria:'Ropa', color:'#ff79c6', icon:'tag' },
+  { id:6, comercio:'Carrefour', fecha:'16 abr', total: 89.20, categoria:'Alimentación', color:'#50fa7b', icon:'store' },
+];
+
+const CHART_DATA = [
+  { label:'Lun', v:0.4 }, { label:'Mar', v:0.7 }, { label:'Mié', v:0.3 },
+  { label:'Jue', v:0.9 }, { label:'Vie', v:0.6 }, { label:'Sáb', v:1.0 },
+  { label:'Hoy', v:0.5, highlight: true },
+];
+
+const DONUT_DATA = [
+  { label:'Alim.', value:38, color:'#50fa7b' },
+  { label:'Trans.', value:22, color:'#ffb86c' },
+  { label:'Ropa', value:24, color:'#ff79c6' },
+  { label:'Subs.', value:10, color:'#bd93f9' },
+  { label:'Otro', value:6, color:'#8be9fd' },
+];
+
+const JSON_LINES = [
+  '  "comercio": "Mercadona S.A.",',
+  '  "fecha": "2026-04-21",',
+  '  "total": 47.85,',
+  '  "moneda": "EUR",',
+  '  "productos": [',
+  '    { "nombre": "Pan integral", "precio": 1.45 },',
+  '    { "nombre": "Leche desnat.", "precio": 0.89 },',
+  '    { "nombre": "Fruta variada", "precio": 3.20 },',
+  '  ],',
+  '  "iva": 21,',
+  '  "metodo_pago": "Visa ****4521",',
+  '  "categoria_ia": "Alimentación"',
+];
+
+// ── Screens ─────────────────────────────────────────────────
+
+function LoginScreen({ onLogin }) {
+  const [email, setEmail] = React.useState('');
+  const [pass, setPass] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+
+  const handleLogin = () => {
+    setLoading(true);
+    setTimeout(() => { setLoading(false); onLogin(); }, 1200);
+  };
+
+  return (
+    <div className="screen active" style={{ padding: '0 24px', justifyContent: 'center', gap: 0 }}>
+      {/* Logo */}
+      <div style={{ textAlign:'center', marginBottom: 48 }}>
+        <div style={{
+          width: 72, height: 72, borderRadius: 22,
+          background: 'linear-gradient(135deg, #bd93f9, #ff79c6)',
+          display: 'flex', alignItems:'center', justifyContent:'center',
+          margin: '0 auto 16px',
+          boxShadow: '0 8px 32px rgba(189,147,249,0.35)'
+        }}>
+          <Icon name="wallet" size={32} color="#fff" strokeWidth={2}/>
+        </div>
+        <h1 style={{ color:'#f8f8f2', fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>Cartera</h1>
+        <p style={{ color:'#6272a4', fontSize: 14, marginTop: 6 }}>Tus finanzas, digitalizadas</p>
+      </div>
+
+      {/* Form */}
+      <div style={{ display:'flex', flexDirection:'column', gap: 14 }}>
+        <div style={{ position:'relative' }}>
+          <div style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', opacity:0.5 }}>
+            <Icon name="mail" size={16} color="#6272a4"/>
+          </div>
+          <input type="email" placeholder="Correo electrónico"
+            value={email} onChange={e => setEmail(e.target.value)}
+            style={{ paddingLeft: 42 }}/>
+        </div>
+        <div style={{ position:'relative' }}>
+          <div style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', opacity:0.5 }}>
+            <Icon name="lock" size={16} color="#6272a4"/>
+          </div>
+          <input type="password" placeholder="Contraseña"
+            value={pass} onChange={e => setPass(e.target.value)}
+            style={{ paddingLeft: 42 }}/>
+        </div>
+        <div style={{ textAlign:'right', marginTop: -4 }}>
+          <span style={{ color:'#bd93f9', fontSize:13, fontWeight:600, cursor:'pointer' }}>¿Olvidaste tu contraseña?</span>
+        </div>
+        <button className="btn-primary" onClick={handleLogin} style={{ marginTop: 8 }}>
+          {loading
+            ? <div style={{ width:20,height:20,border:'2px solid rgba(255,255,255,0.3)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin 0.7s linear infinite',margin:'0 auto'}}/>
+            : 'Iniciar sesión'}
+        </button>
+        <div style={{ textAlign:'center', marginTop: 8 }}>
+          <span style={{ color:'#6272a4', fontSize:13 }}>¿No tienes cuenta? </span>
+          <span style={{ color:'#bd93f9', fontSize:13, fontWeight:600, cursor:'pointer' }}>Regístrate</span>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ display:'flex', alignItems:'center', gap:12, margin:'24px 0' }}>
+        <div style={{ flex:1, height:1, background:'rgba(98,114,164,0.2)' }}/>
+        <span style={{ color:'#6272a4', fontSize:12 }}>o continúa con</span>
+        <div style={{ flex:1, height:1, background:'rgba(98,114,164,0.2)' }}/>
+      </div>
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+        {[['G', '#ea4335'], ['A', '#555']].map(([l, c]) => (
+          <button key={l} className="btn-secondary" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+            <span style={{ fontWeight:800, color: c }}>{l}</span>
+            <span style={{ fontSize:13 }}>{l === 'G' ? 'Google' : 'Apple'}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DashboardScreen({ onNav, tweaks, onDetail, onProfile }) {
+  return (
+    <div className="screen active scroll-area" style={{ paddingBottom: 0 }}>
+      {/* Header */}
+      <div style={{ padding: '20px 20px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <div>
+          <p style={{ color:'#6272a4', fontSize:13, fontWeight:500 }}>Buenos días 👋</p>
+          <h2 style={{ color:'#f8f8f2', fontSize:22, fontWeight:800, letterSpacing:-0.5 }}>Ana García</h2>
+        </div>
+        <div onClick={onProfile} style={{
+          width:42, height:42, borderRadius:14,
+          background:'linear-gradient(135deg,#bd93f9,#ff79c6)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          cursor:'pointer', fontSize:15, fontWeight:800, color:'#fff',
+          boxShadow:'0 4px 12px rgba(189,147,249,0.3)',
+        }}>AG</div>
+      </div>
+
+      {/* Balance hero */}
+      {tweaks.showBalance && (
+        <div style={{ padding:'16px 20px 0' }}>
+          <div className="card" style={{ background:'linear-gradient(135deg,#383a4a,#44475a)', position:'relative', overflow:'hidden' }}>
+            <div style={{
+              position:'absolute', top:-30, right:-30,
+              width:120, height:120, borderRadius:'50%',
+              background:'rgba(189,147,249,0.1)'
+            }}/>
+            <p style={{ color:'#6272a4', fontSize:12, fontWeight:500, letterSpacing:0.5, textTransform:'uppercase' }}>Saldo disponible</p>
+            <h1 style={{ color:'#f8f8f2', fontSize:34, fontWeight:800, letterSpacing:-1, margin:'4px 0 12px' }}>€2.847<span style={{ fontSize:18, opacity:0.6 }}>,50</span></h1>
+            <div style={{ display:'flex', gap:16 }}>
+              {[['Ingresos', '€3.500', '#50fa7b'], ['Gastos', '€652,50', '#ff5555']].map(([l,v,c]) => (
+                <div key={l}>
+                  <p style={{ color:'#6272a4', fontSize:11, fontWeight:500 }}>{l}</p>
+                  <p style={{ color:c, fontSize:16, fontWeight:700 }}>{v}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Charts row */}
+      <div style={{ padding:'16px 20px 0', display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+        {/* Bar chart */}
+        <div className="card2">
+          <p style={{ color:'#f8f8f2', fontSize:12, fontWeight:700, marginBottom:12 }}>Gasto semanal</p>
+          <div className="bar-chart">
+            {CHART_DATA.map(d => (
+              <div key={d.label} className="bar-col">
+                <div className="bar" style={{
+                  height: `${d.v * 60}px`,
+                  background: d.highlight
+                    ? 'linear-gradient(180deg,#bd93f9,#ff79c6)'
+                    : 'rgba(98,114,164,0.25)'
+                }}/>
+                <span className="bar-label">{d.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Donut */}
+        <div className="card2" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+          <p style={{ color:'#f8f8f2', fontSize:12, fontWeight:700, alignSelf:'flex-start' }}>Por categoría</p>
+          <DonutChart data={DONUT_DATA}/>
+        </div>
+      </div>
+
+      {/* Last tickets */}
+      <div style={{ padding:'16px 20px 4px' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+          <h3 style={{ color:'#f8f8f2', fontSize:15, fontWeight:700 }}>Últimos tickets</h3>
+          <span style={{ color:'#bd93f9', fontSize:13, fontWeight:600, cursor:'pointer' }}>Ver todos</span>
+        </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {TICKETS.slice(0,4).map(t => (
+            <div key={t.id} onClick={() => onDetail(t)} className="card2" style={{ display:'flex', alignItems:'center', gap:14, padding:'12px 14px', cursor:'pointer' }}>
+              <div style={{
+                width:40, height:40, borderRadius:12,
+                background:`${t.color}20`,
+                display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
+              }}>
+                <Icon name={t.icon} size={18} color={t.color}/>
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <p style={{ color:'#f8f8f2', fontSize:14, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{t.comercio}</p>
+                <p style={{ color:'#6272a4', fontSize:11, marginTop:2 }}>{t.fecha} · {t.categoria}</p>
+              </div>
+              <span style={{ color:'#ff5555', fontSize:15, fontWeight:700, flexShrink:0 }}>-€{t.total.toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick action banner */}
+      <div style={{ padding:'12px 20px 24px' }}>
+        <div style={{
+          background:'linear-gradient(135deg, rgba(189,147,249,0.15), rgba(255,121,198,0.1))',
+          border:'1.5px solid rgba(189,147,249,0.25)',
+          borderRadius:18, padding:'14px 16px',
+          display:'flex', alignItems:'center', gap:12, cursor:'pointer'
+        }} onClick={() => onNav('tickets')}>
+          <div style={{ width:36,height:36,borderRadius:10,background:'rgba(189,147,249,0.2)',display:'flex',alignItems:'center',justifyContent:'center' }}>
+            <Icon name="zap" size={18} color="#bd93f9"/>
+          </div>
+          <div style={{ flex:1 }}>
+            <p style={{ color:'#f8f8f2', fontSize:13, fontWeight:700 }}>Escanea un ticket ahora</p>
+            <p style={{ color:'#6272a4', fontSize:11, marginTop:1 }}>IA extrae los datos automáticamente</p>
+          </div>
+          <Icon name="arrow_right" size={16} color="#bd93f9"/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Category Illustrations (SVG) ────────────────────────────
+const CatIllustration = ({ categoria, size = 110 }) => {
+  const s = size;
+  const ills = {
+    'Alimentación': (
+      <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
+        {/* basket */}
+        <ellipse cx="55" cy="72" rx="32" ry="20" fill="rgba(80,250,123,0.12)" stroke="#50fa7b" strokeWidth="2"/>
+        <path d="M23 72 Q30 50 55 50 Q80 50 87 72" stroke="#50fa7b" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+        <line x1="38" y1="50" x2="30" y2="32" stroke="#50fa7b" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="55" y1="50" x2="55" y2="28" stroke="#50fa7b" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="72" y1="50" x2="80" y2="32" stroke="#50fa7b" strokeWidth="2" strokeLinecap="round"/>
+        {/* fruits */}
+        <circle cx="55" cy="24" r="8" fill="rgba(255,184,108,0.3)" stroke="#ffb86c" strokeWidth="1.5"/>
+        <circle cx="29" cy="28" r="6" fill="rgba(255,121,198,0.3)" stroke="#ff79c6" strokeWidth="1.5"/>
+        <circle cx="81" cy="28" r="6" fill="rgba(255,85,85,0.3)" stroke="#ff5555" strokeWidth="1.5"/>
+        {/* handle */}
+        <path d="M38 50 Q38 38 55 38 Q72 38 72 50" stroke="#50fa7b" strokeWidth="2" fill="none"/>
+        {/* lines in basket */}
+        <line x1="35" y1="65" x2="75" y2="65" stroke="rgba(80,250,123,0.3)" strokeWidth="1"/>
+        <line x1="33" y1="72" x2="77" y2="72" stroke="rgba(80,250,123,0.3)" strokeWidth="1"/>
+      </svg>
+    ),
+    'Transporte': (
+      <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
+        {/* road */}
+        <rect x="10" y="72" width="90" height="18" rx="4" fill="rgba(255,184,108,0.1)" stroke="rgba(255,184,108,0.3)" strokeWidth="1.5"/>
+        <line x1="30" y1="81" x2="45" y2="81" stroke="#ffb86c" strokeWidth="2" strokeDasharray="4 4"/>
+        <line x1="55" y1="81" x2="70" y2="81" stroke="#ffb86c" strokeWidth="2" strokeDasharray="4 4"/>
+        {/* car body */}
+        <rect x="20" y="52" width="70" height="26" rx="8" fill="rgba(255,184,108,0.2)" stroke="#ffb86c" strokeWidth="2"/>
+        {/* roof */}
+        <path d="M32 52 Q38 36 55 34 Q72 36 78 52" fill="rgba(255,184,108,0.15)" stroke="#ffb86c" strokeWidth="2"/>
+        {/* windows */}
+        <path d="M36 52 Q40 42 50 41 L50 52Z" fill="rgba(139,233,253,0.3)" stroke="rgba(139,233,253,0.5)" strokeWidth="1"/>
+        <path d="M52 52 L52 41 Q62 41 68 52Z" fill="rgba(139,233,253,0.3)" stroke="rgba(139,233,253,0.5)" strokeWidth="1"/>
+        {/* wheels */}
+        <circle cx="34" cy="78" r="8" fill="rgba(40,42,54,0.8)" stroke="#ffb86c" strokeWidth="2"/>
+        <circle cx="34" cy="78" r="3" fill="#ffb86c"/>
+        <circle cx="76" cy="78" r="8" fill="rgba(40,42,54,0.8)" stroke="#ffb86c" strokeWidth="2"/>
+        <circle cx="76" cy="78" r="3" fill="#ffb86c"/>
+        {/* headlights */}
+        <rect x="84" y="60" width="8" height="6" rx="2" fill="rgba(241,250,140,0.6)" stroke="#f1fa8c" strokeWidth="1"/>
+        <path d="M92 61 L100 58 M92 63 L100 65" stroke="#f1fa8c" strokeWidth="1" strokeLinecap="round" opacity="0.6"/>
+      </svg>
+    ),
+    'Ropa': (
+      <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
+        {/* hanger */}
+        <path d="M55 18 Q55 26 65 30 L88 44 Q92 46 90 52 Q88 56 83 54 L70 48 L70 88 Q70 92 66 92 L44 92 Q40 92 40 88 L40 48 L27 54 Q22 56 20 52 Q18 46 22 44 L45 30 Q55 26 55 18Z"
+          fill="rgba(255,121,198,0.15)" stroke="#ff79c6" strokeWidth="2" strokeLinejoin="round"/>
+        {/* collar */}
+        <path d="M45 30 Q50 38 55 40 Q60 38 65 30" fill="rgba(255,121,198,0.2)" stroke="#ff79c6" strokeWidth="1.5"/>
+        {/* pocket */}
+        <rect x="46" y="60" width="18" height="14" rx="4" fill="rgba(255,121,198,0.2)" stroke="rgba(255,121,198,0.5)" strokeWidth="1.5"/>
+        {/* buttons */}
+        <circle cx="55" cy="52" r="2" fill="#ff79c6" opacity="0.6"/>
+        <circle cx="55" cy="44" r="2" fill="#ff79c6" opacity="0.6"/>
+        {/* hanger hook */}
+        <path d="M55 18 Q60 10 65 12 Q70 14 68 20" stroke="#ff79c6" strokeWidth="2" fill="none" strokeLinecap="round"/>
+      </svg>
+    ),
+    'Suscripciones': (
+      <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
+        {/* screen */}
+        <rect x="18" y="22" width="74" height="52" rx="8" fill="rgba(189,147,249,0.12)" stroke="#bd93f9" strokeWidth="2"/>
+        <rect x="22" y="26" width="66" height="44" rx="5" fill="rgba(189,147,249,0.08)"/>
+        {/* play button */}
+        <circle cx="55" cy="48" r="14" fill="rgba(189,147,249,0.25)" stroke="#bd93f9" strokeWidth="2"/>
+        <path d="M51 42 L51 54 L63 48Z" fill="#bd93f9"/>
+        {/* stand */}
+        <rect x="48" y="74" width="14" height="8" fill="rgba(189,147,249,0.2)" stroke="#bd93f9" strokeWidth="1.5"/>
+        <rect x="36" y="82" width="38" height="5" rx="2.5" fill="rgba(189,147,249,0.2)" stroke="#bd93f9" strokeWidth="1.5"/>
+        {/* signal arcs */}
+        <path d="M72 34 Q80 40 80 48 Q80 56 72 62" stroke="rgba(189,147,249,0.4)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M76 30 Q88 38 88 48 Q88 58 76 66" stroke="rgba(189,147,249,0.2)" strokeWidth="1" fill="none" strokeLinecap="round"/>
+      </svg>
+    ),
+    'Salud': (
+      <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
+        {/* heart */}
+        <path d="M55 82 Q20 62 20 42 Q20 28 32 25 Q44 22 55 36 Q66 22 78 25 Q90 28 90 42 Q90 62 55 82Z"
+          fill="rgba(255,85,85,0.15)" stroke="#ff5555" strokeWidth="2"/>
+        {/* cross */}
+        <rect x="49" y="38" width="12" height="30" rx="3" fill="rgba(255,85,85,0.4)" stroke="#ff5555" strokeWidth="1.5"/>
+        <rect x="40" y="47" width="30" height="12" rx="3" fill="rgba(255,85,85,0.4)" stroke="#ff5555" strokeWidth="1.5"/>
+        {/* pulse line */}
+        <path d="M20 55 L32 55 L36 44 L42 66 L48 55 L62 55 L66 46 L72 64 L76 55 L90 55"
+          stroke="#8be9fd" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.7"/>
+      </svg>
+    ),
+    'Restaurantes': (
+      <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
+        {/* plate */}
+        <circle cx="55" cy="62" r="30" fill="rgba(241,250,140,0.08)" stroke="rgba(241,250,140,0.3)" strokeWidth="1.5"/>
+        <circle cx="55" cy="62" r="23" fill="rgba(241,250,140,0.06)" stroke="rgba(241,250,140,0.2)" strokeWidth="1"/>
+        {/* fork */}
+        <line x1="28" y1="28" x2="28" y2="52" stroke="#f1fa8c" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="24" y1="28" x2="24" y2="38" stroke="#f1fa8c" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="32" y1="28" x2="32" y2="38" stroke="#f1fa8c" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M24 38 Q28 44 32 38" stroke="#f1fa8c" strokeWidth="1.5" fill="none"/>
+        <line x1="28" y1="44" x2="28" y2="88" stroke="#f1fa8c" strokeWidth="2" strokeLinecap="round"/>
+        {/* knife */}
+        <line x1="82" y1="28" x2="82" y2="88" stroke="#f1fa8c" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M82 28 Q92 36 86 50 L82 50Z" fill="rgba(241,250,140,0.3)" stroke="#f1fa8c" strokeWidth="1.5"/>
+        {/* food on plate */}
+        <ellipse cx="55" cy="62" rx="14" ry="8" fill="rgba(255,184,108,0.3)" stroke="#ffb86c" strokeWidth="1.5"/>
+        <circle cx="50" cy="60" r="4" fill="rgba(255,85,85,0.4)" stroke="#ff5555" strokeWidth="1"/>
+        <circle cx="60" cy="64" r="3" fill="rgba(80,250,123,0.4)" stroke="#50fa7b" strokeWidth="1"/>
+      </svg>
+    ),
+    'Hogar': (
+      <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
+        {/* house */}
+        <path d="M55 20 L18 50 L26 50 L26 88 L84 88 L84 50 L92 50Z" fill="rgba(139,233,253,0.1)" stroke="#8be9fd" strokeWidth="2" strokeLinejoin="round"/>
+        {/* roof fill */}
+        <path d="M55 20 L18 50 L92 50Z" fill="rgba(139,233,253,0.15)"/>
+        {/* door */}
+        <rect x="46" y="66" width="18" height="22" rx="4" fill="rgba(139,233,253,0.2)" stroke="#8be9fd" strokeWidth="1.5"/>
+        <circle cx="62" cy="77" r="2" fill="#8be9fd"/>
+        {/* windows */}
+        <rect x="28" y="56" width="16" height="14" rx="3" fill="rgba(241,250,140,0.2)" stroke="rgba(241,250,140,0.5)" strokeWidth="1.5"/>
+        <rect x="66" y="56" width="16" height="14" rx="3" fill="rgba(241,250,140,0.2)" stroke="rgba(241,250,140,0.5)" strokeWidth="1.5"/>
+        <line x1="36" y1="56" x2="36" y2="70" stroke="rgba(241,250,140,0.4)" strokeWidth="1"/>
+        <line x1="28" y1="63" x2="44" y2="63" stroke="rgba(241,250,140,0.4)" strokeWidth="1"/>
+        <line x1="74" y1="56" x2="74" y2="70" stroke="rgba(241,250,140,0.4)" strokeWidth="1"/>
+        <line x1="66" y1="63" x2="82" y2="63" stroke="rgba(241,250,140,0.4)" strokeWidth="1"/>
+        {/* chimney */}
+        <rect x="68" y="26" width="10" height="18" rx="2" fill="rgba(139,233,253,0.15)" stroke="#8be9fd" strokeWidth="1.5"/>
+        <path d="M65 26 Q73 18 81 26" stroke="#8be9fd" strokeWidth="1" fill="none" opacity="0.4"/>
+      </svg>
+    ),
+    'Ocio': (
+      <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
+        {/* controller */}
+        <rect x="16" y="38" width="78" height="40" rx="20" fill="rgba(189,147,249,0.12)" stroke="#bd93f9" strokeWidth="2"/>
+        {/* left dpad */}
+        <rect x="28" y="53" width="7" height="18" rx="2" fill="rgba(189,147,249,0.3)" stroke="#bd93f9" strokeWidth="1"/>
+        <rect x="24" y="57" width="15" height="10" rx="2" fill="rgba(189,147,249,0.3)" stroke="#bd93f9" strokeWidth="1"/>
+        {/* right buttons */}
+        <circle cx="78" cy="52" r="5" fill="rgba(255,85,85,0.3)" stroke="#ff5555" strokeWidth="1.5"/>
+        <circle cx="88" cy="61" r="5" fill="rgba(80,250,123,0.3)" stroke="#50fa7b" strokeWidth="1.5"/>
+        <circle cx="78" cy="70" r="5" fill="rgba(241,250,140,0.3)" stroke="#f1fa8c" strokeWidth="1.5"/>
+        <circle cx="68" cy="61" r="5" fill="rgba(139,233,253,0.3)" stroke="#8be9fd" strokeWidth="1.5"/>
+        {/* center */}
+        <circle cx="55" cy="61" r="8" fill="rgba(189,147,249,0.15)" stroke="rgba(189,147,249,0.3)" strokeWidth="1"/>
+        <circle cx="51" cy="59" r="3" fill="rgba(189,147,249,0.4)"/>
+        <circle cx="59" cy="63" r="3" fill="rgba(189,147,249,0.4)"/>
+        {/* cord */}
+        <path d="M55 78 Q55 92 42 94 Q30 96 28 88" stroke="#bd93f9" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+      </svg>
+    ),
+  };
+  const fallback = (
+    <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
+      <circle cx="55" cy="55" r="35" fill="rgba(98,114,164,0.12)" stroke="rgba(98,114,164,0.3)" strokeWidth="2"/>
+      <path d="M40 55 L50 65 L70 45" stroke="#6272a4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  return ills[categoria] || fallback;
+};
+
+// Fake receipt SVG (for "image" preview)
+const FakeReceiptImage = ({ ticket }) => {
+  const c = ticket.color || '#bd93f9';
+  return (
+    <svg width="100%" viewBox="0 0 320 460" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ borderRadius: 12 }}>
+      <rect width="320" height="460" fill="#f8f8f2"/>
+      {/* header band */}
+      <rect width="320" height="90" fill={c} opacity="0.15"/>
+      <text x="160" y="38" textAnchor="middle" fill={c} fontSize="18" fontWeight="700" fontFamily="monospace">{ticket.comercio.toUpperCase()}</text>
+      <text x="160" y="58" textAnchor="middle" fill="#282a36" fontSize="11" fontFamily="monospace">CIF: B-12345678</text>
+      <text x="160" y="72" textAnchor="middle" fill="#6272a4" fontSize="10" fontFamily="monospace">Calle Gran Vía 42, Madrid</text>
+      <text x="160" y="84" textAnchor="middle" fill="#6272a4" fontSize="10" fontFamily="monospace">Tel: 900 000 000</text>
+      {/* divider */}
+      <line x1="20" y1="98" x2="300" y2="98" stroke="#ccc" strokeWidth="0.8" strokeDasharray="4 3"/>
+      {/* date/ref */}
+      <text x="20" y="114" fill="#555" fontSize="10" fontFamily="monospace">Fecha: {ticket.fecha}</text>
+      <text x="300" y="114" textAnchor="end" fill="#555" fontSize="10" fontFamily="monospace">Ref: #0{ticket.id * 7}4821</text>
+      <line x1="20" y1="120" x2="300" y2="120" stroke="#ccc" strokeWidth="0.8" strokeDasharray="4 3"/>
+      {/* items */}
+      {[
+        ['Pan integral 500g', '1', '1.45'],
+        ['Leche semidesnat. 1L', '2', '1.78'],
+        ['Pollo fresco kg', '1', '6.30'],
+        ['Fruta variada', '1', '4.20'],
+        ['Yogures x4', '3', '5.10'],
+        ['Aceite oliva 1L', '1', '7.99'],
+      ].map(([n, q, p], i) => (
+        <g key={i}>
+          <text x="20" y={142 + i * 22} fill="#333" fontSize="10" fontFamily="monospace">{n}</text>
+          <text x="220" y={142 + i * 22} fill="#555" fontSize="10" fontFamily="monospace" textAnchor="middle">{q} ud.</text>
+          <text x="300" y={142 + i * 22} fill="#333" fontSize="10" fontFamily="monospace" textAnchor="end">{p} €</text>
+        </g>
+      ))}
+      <line x1="20" y1="280" x2="300" y2="280" stroke="#ccc" strokeWidth="0.8" strokeDasharray="4 3"/>
+      {/* totals */}
+      <text x="20" y="296" fill="#555" fontSize="10" fontFamily="monospace">Subtotal</text>
+      <text x="300" y="296" fill="#333" fontSize="10" fontFamily="monospace" textAnchor="end">26.82 €</text>
+      <text x="20" y="312" fill="#555" fontSize="10" fontFamily="monospace">IVA (21%)</text>
+      <text x="300" y="312" fill="#333" fontSize="10" fontFamily="monospace" textAnchor="end">{(ticket.total - 26.82).toFixed(2)} €</text>
+      <line x1="20" y1="320" x2="300" y2="320" stroke="#333" strokeWidth="1"/>
+      <text x="20" y="338" fill="#282a36" fontSize="14" fontWeight="700" fontFamily="monospace">TOTAL</text>
+      <text x="300" y="338" fill={c} fontSize="14" fontWeight="700" fontFamily="monospace" textAnchor="end">{ticket.total.toFixed(2)} €</text>
+      <line x1="20" y1="346" x2="300" y2="346" stroke="#333" strokeWidth="1"/>
+      {/* payment */}
+      <text x="20" y="362" fill="#555" fontSize="10" fontFamily="monospace">Método: Visa ****4521</text>
+      <text x="300" y="362" fill="#50fa7b" fontSize="10" fontFamily="monospace" textAnchor="end">PAGADO ✓</text>
+      {/* barcode */}
+      {Array.from({length: 28}, (_,i) => (
+        <rect key={i} x={80 + i * 5.5} y="382" width={i%3===0?3:i%2===0?2:1} height="36" fill="#282a36" opacity="0.8"/>
+      ))}
+      <text x="160" y="432" textAnchor="middle" fill="#555" fontSize="9" fontFamily="monospace">*{ticket.id}042100{ticket.total.toFixed(0)}*</text>
+      <text x="160" y="450" textAnchor="middle" fill="#aaa" fontSize="9" fontFamily="monospace">Gracias por su compra</text>
+    </svg>
+  );
+};
+
+// ── Ticket Detail ────────────────────────────────────────────
+function TicketDetail({ ticket, onBack }) {
+  const [tab, setTab] = React.useState('info'); // info | imagen
+  const c = ticket.color || '#bd93f9';
+
+  const downloadReceipt = () => {
+    const svg = document.getElementById('receipt-svg-' + ticket.id);
+    if (!svg) return;
+    const data = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([data], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `ticket-${ticket.comercio.replace(/\s/g,'-')}.svg`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="screen active" style={{ background:'var(--bg)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      {/* Hero header with illustration */}
+      <div style={{
+        position:'relative', flexShrink:0,
+        background:`linear-gradient(180deg, ${c}18 0%, transparent 100%)`,
+        padding:'14px 20px 0',
+        borderBottom:`1px solid rgba(98,114,164,0.15)`,
+      }}>
+        {/* back button */}
+        <button onClick={onBack} style={{
+          background:'rgba(98,114,164,0.15)', border:'none', borderRadius:10,
+          width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center',
+          cursor:'pointer', marginBottom:12,
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6272a4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+
+        <div style={{ display:'flex', alignItems:'flex-start', gap:16, paddingBottom:16 }}>
+          {/* Category illustration */}
+          <div style={{
+            flexShrink:0,
+            width:110, height:110, borderRadius:24,
+            background:`${c}12`,
+            border:`1.5px solid ${c}30`,
+            display:'flex', alignItems:'center', justifyContent:'center',
+          }}>
+            <CatIllustration categoria={ticket.categoria} size={90}/>
+          </div>
+
+          <div style={{ flex:1, paddingTop:4 }}>
+            <span className="pill" style={{ background:`${c}20`, color:c, fontSize:11, marginBottom:8, display:'inline-block' }}>
+              {ticket.categoria}
+            </span>
+            <h2 style={{ color:'#f8f8f2', fontSize:20, fontWeight:800, letterSpacing:-0.3, lineHeight:1.2, marginBottom:6 }}>
+              {ticket.comercio}
+            </h2>
+            <p style={{ color:'#6272a4', fontSize:12 }}>{ticket.fecha}</p>
+            <p style={{ color:c, fontSize:28, fontWeight:800, letterSpacing:-0.5, marginTop:6 }}>
+              -€{ticket.total.toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display:'flex', gap:4 }}>
+          {[['info','Detalles'],['imagen','Ticket']].map(([id,label]) => (
+            <button key={id} onClick={() => setTab(id)} style={{
+              flex:1, padding:'10px', border:'none', cursor:'pointer',
+              background:'transparent',
+              color: tab===id ? c : '#6272a4',
+              fontSize:13, fontWeight:700,
+              borderBottom: tab===id ? `2px solid ${c}` : '2px solid transparent',
+              transition:'all 0.2s',
+            }}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab content */}
+      <div className="scroll-area" style={{ flex:1, padding:'16px 20px 100px' }}>
+
+        {tab === 'info' && (
+          <div className="fade-in">
+            {/* Status badge */}
+            <div style={{
+              display:'flex', alignItems:'center', gap:10, marginBottom:16,
+              background:'rgba(80,250,123,0.08)', border:'1px solid rgba(80,250,123,0.2)',
+              borderRadius:12, padding:'10px 14px',
+            }}>
+              <div style={{ width:8, height:8, borderRadius:'50%', background:'#50fa7b', boxShadow:'0 0 8px #50fa7b' }}/>
+              <span style={{ color:'#50fa7b', fontSize:13, fontWeight:600 }}>Verificado · Procesado por IA</span>
+              <span style={{ marginLeft:'auto', color:'#6272a4', fontSize:11 }}>97% confianza</span>
+            </div>
+
+            {/* Fields */}
+            {[
+              { label:'Comercio', value:ticket.comercio, icon:'store' },
+              { label:'Categoría', value:ticket.categoria, icon:'tag' },
+              { label:'Fecha', value:ticket.fecha, icon:'calendar' },
+              { label:'Importe total', value:`€${ticket.total.toFixed(2)}`, icon:'wallet', highlight:true },
+              { label:'IVA aplicado', value:'21%', icon:'file_text' },
+              { label:'Método de pago', value:'Visa ****4521', icon:'credit_card' },
+              { label:'Referencia', value:`#TK-${ticket.id}0422${ticket.total.toFixed(0)}`, icon:'receipt' },
+            ].map((f,i) => (
+              <div key={i} style={{
+                display:'flex', alignItems:'center', gap:12,
+                padding:'13px 14px', marginBottom:8,
+                background:'var(--card2)', borderRadius:14,
+                border: f.highlight ? `1px solid ${c}33` : '1px solid transparent',
+              }}>
+                <div style={{ width:34, height:34, borderRadius:10, background:`${f.highlight ? c : '#6272a4'}18`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <Icon name={f.icon} size={16} color={f.highlight ? c : '#6272a4'}/>
+                </div>
+                <div style={{ flex:1 }}>
+                  <p style={{ color:'#6272a4', fontSize:11, fontWeight:500, textTransform:'uppercase', letterSpacing:0.4 }}>{f.label}</p>
+                  <p style={{ color: f.highlight ? c : '#f8f8f2', fontSize:14, fontWeight: f.highlight ? 800 : 600, marginTop:2 }}>{f.value}</p>
+                </div>
+              </div>
+            ))}
+
+            {/* Line items */}
+            <div style={{ marginTop:4, marginBottom:8 }}>
+              <p style={{ color:'#6272a4', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:0.4, marginBottom:10 }}>Productos detectados</p>
+              <div style={{ background:'var(--card2)', borderRadius:14, overflow:'hidden' }}>
+                {[
+                  ['Pan integral 500g', '1,45 €'],
+                  ['Leche semidesnat. 1L ×2', '1,78 €'],
+                  ['Pollo fresco', '6,30 €'],
+                  ['Fruta variada', '4,20 €'],
+                  ['Yogures ×4 ×3', '5,10 €'],
+                  ['Aceite oliva 1L', '7,99 €'],
+                ].map(([n, p], i, arr) => (
+                  <div key={i} style={{
+                    display:'flex', justifyContent:'space-between', alignItems:'center',
+                    padding:'11px 14px',
+                    borderBottom: i < arr.length-1 ? '1px solid rgba(98,114,164,0.12)' : 'none',
+                  }}>
+                    <span style={{ color:'#f8f8f2', fontSize:13 }}>{n}</span>
+                    <span style={{ color:'#8be9fd', fontSize:13, fontWeight:600 }}>{p}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display:'flex', gap:10, marginTop:16 }}>
+              <button onClick={downloadReceipt} className="btn-primary" style={{
+                flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'14px',
+              }}>
+                <Icon name="trending_up" size={16} color="#fff" strokeWidth={2}/>
+                Descargar
+              </button>
+              <button className="btn-secondary" style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                <Icon name="edit" size={16} color="#6272a4" strokeWidth={2}/>
+                Editar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {tab === 'imagen' && (
+          <div className="fade-in">
+            <p style={{ color:'#6272a4', fontSize:12, marginBottom:12, textAlign:'center' }}>
+              Imagen del ticket original
+            </p>
+            <div id={`receipt-svg-${ticket.id}`} style={{
+              background:'#f8f8f2', borderRadius:16, overflow:'hidden',
+              border:`1.5px solid ${c}30`,
+              boxShadow:`0 8px 32px ${c}18`,
+            }}>
+              <FakeReceiptImage ticket={ticket}/>
+            </div>
+            <button onClick={downloadReceipt} className="btn-primary" style={{
+              marginTop:16, display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+            }}>
+              <Icon name="trending_up" size={16} color="#fff" strokeWidth={2}/>
+              Descargar ticket
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TicketsScreen({ onDetail }) {
+  return (
+    <div className="screen active scroll-area">
+      <div style={{ padding:'20px 20px 0' }}>
+        <h2 style={{ color:'#f8f8f2', fontSize:22, fontWeight:800, letterSpacing:-0.5 }}>Mis Tickets</h2>
+        <p style={{ color:'#6272a4', fontSize:13, marginTop:2 }}>Abril 2026</p>
+      </div>
+      {/* Summary pills */}
+      <div style={{ padding:'14px 20px', display:'flex', gap:8, flexWrap:'wrap' }}>
+        {[['Todo','rgba(98,114,164,0.25)','#f8f8f2'],['Alim.','rgba(80,250,123,0.15)','#50fa7b'],['Ropa','rgba(255,121,198,0.15)','#ff79c6'],['Trans.','rgba(255,184,108,0.15)','#ffb86c']].map(([l,bg,tc]) => (
+          <span key={l} className="pill" style={{ background:bg, color:tc, fontSize:12, padding:'6px 14px', cursor:'pointer' }}>{l}</span>
+        ))}
+      </div>
+      <div style={{ padding:'0 20px', display:'flex', flexDirection:'column', gap:10, paddingBottom: 24 }}>
+        {TICKETS.map(t => (
+          <div key={t.id} onClick={() => onDetail(t)} className="card" style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', cursor:'pointer' }}>
+            <div style={{ width:44,height:44,borderRadius:14,background:`${t.color}20`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>
+              <Icon name={t.icon} size={20} color={t.color}/>
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <p style={{ color:'#f8f8f2', fontSize:15, fontWeight:600 }}>{t.comercio}</p>
+              <p style={{ color:'#6272a4', fontSize:12, marginTop:2 }}>{t.fecha}</p>
+              <span className="pill" style={{ background:`${t.color}20`, color:t.color, marginTop:5 }}>{t.categoria}</span>
+            </div>
+            <div style={{ textAlign:'right' }}>
+              <p style={{ color:'#ff5555', fontSize:16, fontWeight:700 }}>-€{t.total.toFixed(2)}</p>
+              <div style={{ marginTop:4, display:'flex', justifyContent:'flex-end' }}>
+                <Icon name="check" size={14} color="#50fa7b"/>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AIScreen({ onBack, onDone }) {
+  const [phase, setPhase] = React.useState('scan'); // scan | loading | result
+  const [jsonLines, setJsonLines] = React.useState([]);
+
+  const startAnalysis = () => {
+    setPhase('loading');
+    setTimeout(() => {
+      setPhase('result');
+      let i = 0;
+      const iv = setInterval(() => {
+        setJsonLines(prev => [...prev, JSON_LINES[i]]);
+        i++;
+        if (i >= JSON_LINES.length) clearInterval(iv);
+      }, 140);
+    }, 2800);
+  };
+
+  return (
+    <div className="screen active" style={{ padding:'0 20px 24px' }}>
+      {/* Nav */}
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'16px 0' }}>
+        <button onClick={onBack} style={{ background:'rgba(98,114,164,0.15)', border:'none', borderRadius:10, width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <Icon name="x" size={18} color="#6272a4"/>
+        </button>
+        <h2 style={{ color:'#f8f8f2', fontSize:17, fontWeight:700 }}>Escanear Ticket con IA</h2>
+      </div>
+
+      {phase === 'scan' && (
+        <div className="fade-in">
+          {/* Camera viewport */}
+          <div style={{
+            position:'relative', borderRadius:24, overflow:'hidden',
+            background:'#1a1b26', border:'2px solid rgba(189,147,249,0.3)',
+            height:220, marginBottom:20,
+            display:'flex', alignItems:'center', justifyContent:'center'
+          }}>
+            {/* Corner guides */}
+            {[[0,0],[0,1],[1,0],[1,1]].map(([r,c],i) => (
+              <div key={i} style={{
+                position:'absolute',
+                top: r ? 'auto':12, bottom: r ? 12:'auto',
+                left: c ? 'auto':12, right: c ? 12:'auto',
+                width:24, height:24,
+                borderTop: r ? 'none':`3px solid #bd93f9`,
+                borderBottom: r ? `3px solid #bd93f9`:'none',
+                borderLeft: c ? 'none':`3px solid #bd93f9`,
+                borderRight: c ? `3px solid #bd93f9`:'none',
+              }}/>
+            ))}
+            <div style={{ textAlign:'center' }}>
+              <Icon name="receipt" size={40} color="rgba(98,114,164,0.3)"/>
+              <p style={{ color:'#6272a4', fontSize:13, marginTop:8 }}>Apunta al ticket</p>
+            </div>
+          </div>
+
+          {/* OR divider */}
+          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+            <div style={{ flex:1, height:1, background:'rgba(98,114,164,0.2)'}}/>
+            <span style={{ color:'#6272a4', fontSize:12 }}>o sube un archivo</span>
+            <div style={{ flex:1, height:1, background:'rgba(98,114,164,0.2)'}}/>
+          </div>
+
+          {/* Upload zone */}
+          <div style={{
+            border:'2px dashed rgba(98,114,164,0.3)', borderRadius:20,
+            padding:'28px 20px', textAlign:'center', marginBottom:20,
+            cursor:'pointer', transition:'border-color 0.2s',
+          }} onClick={startAnalysis}
+            onMouseEnter={e => e.currentTarget.style.borderColor='rgba(189,147,249,0.6)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor='rgba(98,114,164,0.3)'}
+          >
+            <Icon name="file_text" size={32} color="#6272a4"/>
+            <p style={{ color:'#f8f8f2', fontSize:14, fontWeight:600, marginTop:10 }}>Arrastra o selecciona imagen</p>
+            <p style={{ color:'#6272a4', fontSize:12, marginTop:4 }}>JPG, PNG o PDF · máx. 10 MB</p>
+          </div>
+
+          <button className="btn-primary" onClick={startAnalysis} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
+            <Icon name="camera" size={18} color="#fff" strokeWidth={2}/>
+            Capturar con cámara
+          </button>
+        </div>
+      )}
+
+      {phase === 'loading' && (
+        <div className="fade-in" style={{ textAlign:'center', paddingTop:32 }}>
+          {/* Animated receipt scan */}
+          <div style={{
+            position:'relative', width:160, height:200, margin:'0 auto 28px',
+            borderRadius:16, overflow:'hidden',
+            background:'#1e2030',
+            border:'1.5px solid rgba(189,147,249,0.25)',
+          }}>
+            {/* Fake receipt lines */}
+            <div style={{ padding:'16px 14px', display:'flex', flexDirection:'column', gap:8 }}>
+              <div style={{ height:10, borderRadius:4, background:'rgba(189,147,249,0.25)', width:'70%' }}/>
+              <div style={{ height:7, borderRadius:4, background:'rgba(98,114,164,0.2)', width:'50%' }}/>
+              <div style={{ height:1, background:'rgba(98,114,164,0.15)', margin:'4px 0' }}/>
+              {[80,65,90,55,75].map((w,i) => (
+                <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8 }}>
+                  <div style={{ height:6, borderRadius:3, background:'rgba(98,114,164,0.18)', flex:1, maxWidth:`${w}%` }}/>
+                  <div style={{ height:6, borderRadius:3, background:'rgba(139,233,253,0.2)', width:28, flexShrink:0 }}/>
+                </div>
+              ))}
+              <div style={{ height:1, background:'rgba(98,114,164,0.15)', margin:'4px 0' }}/>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <div style={{ height:9, borderRadius:4, background:'rgba(189,147,249,0.3)', width:40 }}/>
+                <div style={{ height:9, borderRadius:4, background:'rgba(80,250,123,0.3)', width:36 }}/>
+              </div>
+            </div>
+            {/* Scan beam */}
+            <div className="scan-line"/>
+            {/* Green overlay tint */}
+            <div style={{
+              position:'absolute', inset:0,
+              background:'linear-gradient(180deg, rgba(80,250,123,0.03) 0%, rgba(80,250,123,0.06) 50%, rgba(80,250,123,0.03) 100%)',
+              pointerEvents:'none',
+            }}/>
+          </div>
+
+          <h3 style={{ color:'#f8f8f2', fontSize:18, fontWeight:700 }}>Analizando ticket...</h3>
+          <p style={{ color:'#6272a4', fontSize:13, marginTop:8 }}>La IA está extrayendo los datos</p>
+          <div style={{ display:'flex', gap:8, justifyContent:'center', marginTop:20, flexWrap:'wrap', padding:'0 20px' }}>
+            {['Detectando texto','Clasificando','Extrayendo campos'].map((s,i) => (
+              <span key={s} className="pill" style={{ background:'rgba(189,147,249,0.1)', color:'#bd93f9', animation:`pulse-glow 1.5s ease ${i*0.4}s infinite` }}>{s}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {phase === 'result' && (
+        <div className="fade-in">
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+            <div style={{ width:24,height:24,borderRadius:8,background:'rgba(80,250,123,0.2)',display:'flex',alignItems:'center',justifyContent:'center' }}>
+              <Icon name="check" size={14} color="#50fa7b"/>
+            </div>
+            <span style={{ color:'#50fa7b', fontSize:13, fontWeight:700 }}>Extracción completada</span>
+          </div>
+          {/* JSON preview */}
+          <div style={{
+            background:'#1a1b26', border:'1.5px solid rgba(98,114,164,0.2)',
+            borderRadius:16, padding:16, fontFamily:'monospace',
+            fontSize:11.5, lineHeight:'1.8', maxHeight:240, overflowY:'auto',
+          }}>
+            <span style={{ color:'rgba(98,114,164,0.6)' }}>{'{'}</span>
+            {jsonLines.map((l, i) => (
+              <div key={i} className="json-line" style={{
+                color: l.includes(':') ? '#f8f8f2':'#6272a4',
+                animationDelay:`${i*0.05}s`,
+                paddingLeft: 8,
+              }}>
+                <span style={{ color:'#8be9fd' }}>{l.split(':')[0]}</span>
+                {l.includes(':') && <span style={{ color:'#6272a4' }}>:</span>}
+                <span style={{ color:'#f1fa8c' }}>{l.split(':').slice(1).join(':')}</span>
+              </div>
+            ))}
+            {jsonLines.length === JSON_LINES.length && <span style={{ color:'rgba(98,114,164,0.6)' }}>{'}'}</span>}
+          </div>
+          <div style={{ marginTop:16, display:'flex', flexDirection:'column', gap:10 }}>
+            <button className="btn-primary" onClick={onDone}>Guardar ticket</button>
+            <button className="btn-secondary" onClick={onBack}>Editar manualmente</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ManualForm({ onBack, onDone }) {
+  const [form, setForm] = React.useState({ comercio:'', fecha:'2026-04-21', total:'', categoria:'', notas:'', metodo:'' });
+  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  return (
+    <div className="screen active scroll-area" style={{ padding:'0 20px 32px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'16px 0' }}>
+        <button onClick={onBack} style={{ background:'rgba(98,114,164,0.15)', border:'none', borderRadius:10, width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <Icon name="x" size={18} color="#6272a4"/>
+        </button>
+        <h2 style={{ color:'#f8f8f2', fontSize:17, fontWeight:700 }}>Añadir manualmente</h2>
+      </div>
+
+      <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+        {/* Comercio */}
+        <div>
+          <label style={{ color:'#6272a4', fontSize:12, fontWeight:600, letterSpacing:0.4, textTransform:'uppercase', display:'block', marginBottom:6 }}>Comercio</label>
+          <div style={{ position:'relative' }}>
+            <div style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)' }}>
+              <Icon name="store" size={16} color="#6272a4"/>
+            </div>
+            <input type="text" placeholder="Ej: Mercadona" value={form.comercio} onChange={set('comercio')} style={{ paddingLeft:42 }}/>
+          </div>
+        </div>
+        {/* Fecha */}
+        <div>
+          <label style={{ color:'#6272a4', fontSize:12, fontWeight:600, letterSpacing:0.4, textTransform:'uppercase', display:'block', marginBottom:6 }}>Fecha</label>
+          <div style={{ position:'relative' }}>
+            <div style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)' }}>
+              <Icon name="calendar" size={16} color="#6272a4"/>
+            </div>
+            <input type="date" value={form.fecha} onChange={set('fecha')} style={{ paddingLeft:42, colorScheme:'dark' }}/>
+          </div>
+        </div>
+        {/* Total */}
+        <div>
+          <label style={{ color:'#6272a4', fontSize:12, fontWeight:600, letterSpacing:0.4, textTransform:'uppercase', display:'block', marginBottom:6 }}>Total (€)</label>
+          <div style={{ position:'relative' }}>
+            <div style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', color:'#6272a4', fontSize:16, fontWeight:700 }}>€</div>
+            <input type="number" step="0.01" placeholder="0,00" value={form.total} onChange={set('total')} style={{ paddingLeft:34 }}/>
+          </div>
+        </div>
+        {/* Categoría */}
+        <div>
+          <label style={{ color:'#6272a4', fontSize:12, fontWeight:600, letterSpacing:0.4, textTransform:'uppercase', display:'block', marginBottom:6 }}>Categoría</label>
+          <div style={{ position:'relative' }}>
+            <div style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)' }}>
+              <Icon name="tag" size={16} color="#6272a4"/>
+            </div>
+            <select value={form.categoria} onChange={set('categoria')} style={{ paddingLeft:42 }}>
+              <option value="">Selecciona una categoría</option>
+              {['Alimentación','Transporte','Ropa','Restaurantes','Suscripciones','Salud','Ocio','Hogar','Otro'].map(c => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+        </div>
+        {/* Método de pago */}
+        <div>
+          <label style={{ color:'#6272a4', fontSize:12, fontWeight:600, letterSpacing:0.4, textTransform:'uppercase', display:'block', marginBottom:6 }}>Método de pago</label>
+          <div style={{ position:'relative' }}>
+            <div style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)' }}>
+              <Icon name="credit_card" size={16} color="#6272a4"/>
+            </div>
+            <select value={form.metodo} onChange={set('metodo')} style={{ paddingLeft:42 }}>
+              <option value="">Selecciona método</option>
+              {['Tarjeta débito','Tarjeta crédito','Efectivo','Bizum','PayPal','Otro'].map(m => <option key={m}>{m}</option>)}
+            </select>
+          </div>
+        </div>
+        {/* Notas */}
+        <div>
+          <label style={{ color:'#6272a4', fontSize:12, fontWeight:600, letterSpacing:0.4, textTransform:'uppercase', display:'block', marginBottom:6 }}>Notas</label>
+          <textarea placeholder="Notas adicionales..." rows={3} value={form.notas} onChange={set('notas')} style={{ resize:'none' }}/>
+        </div>
+
+        <button className="btn-primary" onClick={onDone} style={{ marginTop:4, display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
+          <Icon name="check" size={18} color="#fff" strokeWidth={2.5}/>
+          Guardar ticket
+        </button>
+        <button className="btn-secondary" onClick={onBack}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+function SuccessScreen({ onDone }) {
+  return (
+    <div className="screen active" style={{ alignItems:'center', justifyContent:'center', padding:'0 32px', textAlign:'center' }}>
+      <div style={{ animation:'fadeInUp 0.5s ease' }}>
+        <div style={{
+          width:88, height:88, borderRadius:28,
+          background:'rgba(80,250,123,0.15)',
+          border:'2px solid rgba(80,250,123,0.3)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          margin:'0 auto 24px',
+        }}>
+          <Icon name="check" size={44} color="#50fa7b" strokeWidth={2.5}/>
+        </div>
+        <h2 style={{ color:'#f8f8f2', fontSize:24, fontWeight:800, letterSpacing:-0.5 }}>¡Ticket guardado!</h2>
+        <p style={{ color:'#6272a4', fontSize:15, marginTop:8, lineHeight:1.5 }}>Tu ticket ha sido procesado y añadido a tus finanzas</p>
+        <button className="btn-primary" onClick={onDone} style={{ marginTop:32 }}>Volver al inicio</button>
+      </div>
+    </div>
+  );
+}
+
+function ProfileScreen({ onLogout }) {
+  const [sub, setSub] = React.useState('main'); // main | datos | seguridad | pagos | ia | export
+  const [user, setUser] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem('cartera_user') || 'null') || { nombre:'Ana García', email:'ana.garcia@email.com', telefono:'+34 612 345 678', ciudad:'Madrid', divisa:'EUR' }; }
+    catch { return { nombre:'Ana García', email:'ana.garcia@email.com', telefono:'+34 612 345 678', ciudad:'Madrid', divisa:'EUR' }; }
+  });
+  const [editUser, setEditUser] = React.useState({ ...user });
+  const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+
+  const saveUser = () => {
+    setUser({ ...editUser });
+    localStorage.setItem('cartera_user', JSON.stringify(editUser));
+    setSaved(true);
+    setTimeout(() => { setSaved(false); setSub('main'); }, 1000);
+  };
+
+  const initials = user.nombre.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+
+  // ── Sub: Datos personales ──
+  if (sub === 'datos') return (
+    <div className="screen active scroll-area" style={{ padding:'0 20px 32px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'20px 0 20px' }}>
+        <button onClick={() => setSub('main')} style={{ background:'rgba(98,114,164,0.15)', border:'none', borderRadius:10, width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6272a4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+        <h2 style={{ color:'#f8f8f2', fontSize:18, fontWeight:700 }}>Datos personales</h2>
+      </div>
+
+      {/* Avatar editable */}
+      <div style={{ textAlign:'center', marginBottom:28 }}>
+        <div style={{ position:'relative', display:'inline-block' }}>
+          <div style={{ width:80,height:80,borderRadius:26,background:'linear-gradient(135deg,#bd93f9,#ff79c6)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 8px 24px rgba(189,147,249,0.3)', fontSize:26, fontWeight:800, color:'#fff' }}>
+            {initials}
+          </div>
+          <div style={{ position:'absolute', bottom:-4, right:-4, width:26, height:26, borderRadius:'50%', background:'#bd93f9', display:'flex', alignItems:'center', justifyContent:'center', border:'2px solid #282a36', cursor:'pointer' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+        </div>
+        <p style={{ color:'#6272a4', fontSize:12, marginTop:12 }}>Toca para cambiar foto</p>
+      </div>
+
+      <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+        {[
+          { label:'Nombre completo', key:'nombre', icon:'user', type:'text', placeholder:'Tu nombre' },
+          { label:'Correo electrónico', key:'email', icon:'mail', type:'email', placeholder:'tu@email.com' },
+          { label:'Teléfono', key:'telefono', icon:'phone', type:'tel', placeholder:'+34 000 000 000' },
+          { label:'Ciudad', key:'ciudad', icon:'home', type:'text', placeholder:'Tu ciudad' },
+        ].map(f => (
+          <div key={f.key}>
+            <label style={{ color:'#6272a4', fontSize:11, fontWeight:600, letterSpacing:0.5, textTransform:'uppercase', display:'block', marginBottom:6 }}>{f.label}</label>
+            <div style={{ position:'relative' }}>
+              <div style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)' }}>
+                <Icon name={f.icon} size={16} color="#6272a4"/>
+              </div>
+              <input type={f.type} value={editUser[f.key]} placeholder={f.placeholder}
+                onChange={e => setEditUser(u => ({ ...u, [f.key]: e.target.value }))}
+                style={{ paddingLeft:42 }}/>
+            </div>
+          </div>
+        ))}
+
+        {/* Divisa */}
+        <div>
+          <label style={{ color:'#6272a4', fontSize:11, fontWeight:600, letterSpacing:0.5, textTransform:'uppercase', display:'block', marginBottom:6 }}>Moneda preferida</label>
+          <div style={{ position:'relative' }}>
+            <div style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', color:'#6272a4', fontSize:15, fontWeight:700 }}>€</div>
+            <select value={editUser.divisa} onChange={e => setEditUser(u => ({ ...u, divisa: e.target.value }))} style={{ paddingLeft:36 }}>
+              {[['EUR','Euro (€)'],['USD','Dólar ($)'],['GBP','Libra (£)'],['JPY','Yen (¥)'],['MXN','Peso MX ($)']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <button className="btn-primary" onClick={saveUser} style={{ marginTop:8, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+          {saved
+            ? <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg> ¡Guardado!</>
+            : 'Guardar cambios'}
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Sub: Seguridad ──
+  if (sub === 'seguridad') return (
+    <div className="screen active scroll-area" style={{ padding:'0 20px 32px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'20px 0 20px' }}>
+        <button onClick={() => setSub('main')} style={{ background:'rgba(98,114,164,0.15)', border:'none', borderRadius:10, width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6272a4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+        <h2 style={{ color:'#f8f8f2', fontSize:18, fontWeight:700 }}>Seguridad y privacidad</h2>
+      </div>
+      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+        {/* Change password */}
+        <div className="card2" style={{ padding:'16px' }}>
+          <p style={{ color:'#f8f8f2', fontSize:14, fontWeight:600, marginBottom:14 }}>Cambiar contraseña</p>
+          {['Contraseña actual','Nueva contraseña','Confirmar contraseña'].map((pl,i) => (
+            <input key={i} type="password" placeholder={pl} style={{ marginBottom:10 }}/>
+          ))}
+          <button className="btn-primary" style={{ marginTop:4 }}>Actualizar contraseña</button>
+        </div>
+        {/* Toggles */}
+        {[
+          { label:'Autenticación biométrica', desc:'Usa Face ID o huella', on:true },
+          { label:'Notificaciones push', desc:'Alertas de nuevos tickets', on:true },
+          { label:'Compartir datos con IA', desc:'Mejora la extracción automática', on:false },
+        ].map((t,i) => (
+          <div key={i} className="card2" style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px' }}>
+            <div style={{ flex:1 }}>
+              <p style={{ color:'#f8f8f2', fontSize:14, fontWeight:600 }}>{t.label}</p>
+              <p style={{ color:'#6272a4', fontSize:12, marginTop:2 }}>{t.desc}</p>
+            </div>
+            <button className={`tweak-toggle ${t.on?'on':''}`}/>
+          </div>
+        ))}
+        {/* Delete account */}
+        <button className="btn-secondary" style={{ color:'#ff5555', borderColor:'rgba(255,85,85,0.2)', background:'rgba(255,85,85,0.06)', marginTop:8 }}>
+          Eliminar cuenta
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Sub: Métodos de pago ──
+  if (sub === 'pagos') return (
+    <div className="screen active scroll-area" style={{ padding:'0 20px 32px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'20px 0 20px' }}>
+        <button onClick={() => setSub('main')} style={{ background:'rgba(98,114,164,0.15)', border:'none', borderRadius:10, width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6272a4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+        <h2 style={{ color:'#f8f8f2', fontSize:18, fontWeight:700 }}>Métodos de pago</h2>
+      </div>
+      <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:16 }}>
+        {[
+          { tipo:'Visa', num:'•••• •••• •••• 4521', exp:'12/26', color:'#bd93f9' },
+          { tipo:'Mastercard', num:'•••• •••• •••• 8834', exp:'09/25', color:'#ffb86c' },
+          { tipo:'Bizum', num:'+34 612 345 678', exp:null, color:'#50fa7b' },
+        ].map((c,i) => (
+          <div key={i} className="card2" style={{ padding:'16px', position:'relative', overflow:'hidden' }}>
+            <div style={{ position:'absolute', top:-20, right:-20, width:80, height:80, borderRadius:'50%', background:`${c.color}10` }}/>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+              <div>
+                <span className="pill" style={{ background:`${c.color}20`, color:c.color, fontSize:11, marginBottom:8, display:'inline-block' }}>{c.tipo}</span>
+                <p style={{ color:'#f8f8f2', fontSize:15, fontWeight:700, letterSpacing:1 }}>{c.num}</p>
+                {c.exp && <p style={{ color:'#6272a4', fontSize:12, marginTop:4 }}>Caduca {c.exp}</p>}
+              </div>
+              <Icon name="credit_card" size={22} color={c.color}/>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button className="btn-secondary" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+        <Icon name="plus" size={16} color="#6272a4"/>
+        Añadir método de pago
+      </button>
+    </div>
+  );
+
+  // ── Sub: Preferencias IA ──
+  if (sub === 'ia') return (
+    <div className="screen active scroll-area" style={{ padding:'0 20px 32px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'20px 0 20px' }}>
+        <button onClick={() => setSub('main')} style={{ background:'rgba(98,114,164,0.15)', border:'none', borderRadius:10, width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6272a4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+        <h2 style={{ color:'#f8f8f2', fontSize:18, fontWeight:700 }}>Preferencias IA</h2>
+      </div>
+      <div style={{ background:'rgba(189,147,249,0.08)', border:'1.5px solid rgba(189,147,249,0.2)', borderRadius:16, padding:'14px 16px', marginBottom:16, display:'flex', gap:10, alignItems:'flex-start' }}>
+        <Icon name="cpu" size={18} color="#bd93f9"/>
+        <p style={{ color:'#6272a4', fontSize:13, lineHeight:1.5 }}>La IA analiza tus tickets para extraer datos automáticamente y sugerirte categorías. Puedes ajustar su comportamiento aquí.</p>
+      </div>
+      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+        {[
+          { label:'Categorización automática', desc:'La IA asigna categoría al guardar', on:true },
+          { label:'Sugerencias de ahorro', desc:'Detecta patrones de gasto', on:true },
+          { label:'OCR mejorado', desc:'Usa modelo avanzado (más lento)', on:false },
+          { label:'Alertas de duplicados', desc:'Avisa si detecta tickets similares', on:true },
+          { label:'Resumen semanal IA', desc:'Envía análisis por email', on:false },
+        ].map((t,i) => (
+          <div key={i} className="card2" style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px' }}>
+            <div style={{ flex:1 }}>
+              <p style={{ color:'#f8f8f2', fontSize:14, fontWeight:600 }}>{t.label}</p>
+              <p style={{ color:'#6272a4', fontSize:12, marginTop:2 }}>{t.desc}</p>
+            </div>
+            <button className={`tweak-toggle ${t.on?'on':''}`}/>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // ── Main profile ──
+  const menuItems = [
+    { id:'datos', icon:'user', label:'Datos personales', desc:'Nombre, email, teléfono', color:'#bd93f9' },
+    { id:'seguridad', icon:'shield', label:'Seguridad y privacidad', desc:'Contraseña, biometría', color:'#8be9fd' },
+    { id:'pagos', icon:'wallet', label:'Métodos de pago', desc:'Tarjetas y cuentas', color:'#50fa7b' },
+    { id:'ia', icon:'cpu', label:'Preferencias IA', desc:'Ajustes de extracción', color:'#ff79c6' },
+  ];
+
+  return (
+    <div className="screen active scroll-area" style={{ padding:'0 20px 32px' }}>
+      <div style={{ padding:'20px 0 8px' }}>
+        <h2 style={{ color:'#f8f8f2', fontSize:22, fontWeight:800, letterSpacing:-0.5 }}>Perfil</h2>
+      </div>
+
+      {/* Avatar hero */}
+      <div style={{ textAlign:'center', padding:'12px 0 24px' }}>
+        <div onClick={() => setSub('datos')} style={{
+          width:84, height:84, borderRadius:28,
+          background:'linear-gradient(135deg,#bd93f9,#ff79c6)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          margin:'0 auto 14px', cursor:'pointer',
+          boxShadow:'0 8px 28px rgba(189,147,249,0.35)',
+          fontSize:28, fontWeight:800, color:'#fff',
+          position:'relative',
+        }}>
+          {initials}
+          <div style={{ position:'absolute', bottom:-4, right:-4, width:26, height:26, borderRadius:'50%', background:'#bd93f9', display:'flex', alignItems:'center', justifyContent:'center', border:'2px solid #282a36' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+        </div>
+        <h3 style={{ color:'#f8f8f2', fontSize:19, fontWeight:700 }}>{user.nombre}</h3>
+        <p style={{ color:'#6272a4', fontSize:13, marginTop:3 }}>{user.email}</p>
+        {/* Stats */}
+        <div style={{ display:'flex', gap:0, justifyContent:'center', marginTop:16, background:'var(--card2)', borderRadius:16, overflow:'hidden' }}>
+          {[['126','Tickets'],['€652','Gastado'],['6','Meses']].map(([v,l],i,arr) => (
+            <div key={l} style={{ flex:1, padding:'12px 0', textAlign:'center', borderRight: i<arr.length-1 ? '1px solid rgba(98,114,164,0.15)':'none' }}>
+              <p style={{ color:'#f8f8f2', fontSize:17, fontWeight:800 }}>{v}</p>
+              <p style={{ color:'#6272a4', fontSize:11, marginTop:2 }}>{l}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Menu items */}
+      <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:14 }}>
+        {menuItems.map(it => (
+          <div key={it.id} onClick={() => setSub(it.id)} className="card2" style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', cursor:'pointer' }}>
+            <div style={{ width:42, height:42, borderRadius:13, background:`${it.color}18`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <Icon name={it.icon} size={18} color={it.color}/>
+            </div>
+            <div style={{ flex:1 }}>
+              <p style={{ color:'#f8f8f2', fontSize:14, fontWeight:600 }}>{it.label}</p>
+              <p style={{ color:'#6272a4', fontSize:12, marginTop:2 }}>{it.desc}</p>
+            </div>
+            <Icon name="arrow_right" size={14} color="#6272a4"/>
+          </div>
+        ))}
+      </div>
+
+      {/* App version */}
+      <div style={{ textAlign:'center', marginBottom:16 }}>
+        <p style={{ color:'rgba(98,114,164,0.5)', fontSize:11 }}>Cartera v1.0.0 · Nuxt 4</p>
+      </div>
+
+      {/* Logout */}
+      <button onClick={() => setShowLogoutConfirm(true)} style={{
+        width:'100%', padding:'15px', borderRadius:16, border:'1.5px solid rgba(255,85,85,0.25)',
+        background:'rgba(255,85,85,0.07)', cursor:'pointer',
+        color:'#ff5555', fontSize:15, fontWeight:700, fontFamily:'Inter, sans-serif',
+        display:'flex', alignItems:'center', justifyContent:'center', gap:10,
+        transition:'all 0.2s',
+      }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff5555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Cerrar sesión
+      </button>
+
+      {/* Logout confirm modal */}
+      <div className={`modal-overlay ${showLogoutConfirm?'':'hidden'}`}>
+        <div className="modal-sheet">
+          <div className="modal-handle"/>
+          <div style={{ textAlign:'center', padding:'8px 0 20px' }}>
+            <div style={{ width:56,height:56,borderRadius:18,background:'rgba(255,85,85,0.12)',border:'1.5px solid rgba(255,85,85,0.25)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px' }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff5555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </div>
+            <h3 style={{ color:'#f8f8f2', fontSize:18, fontWeight:700, marginBottom:8 }}>¿Cerrar sesión?</h3>
+            <p style={{ color:'#6272a4', fontSize:14, lineHeight:1.5 }}>Tendrás que volver a iniciar sesión para acceder a tus tickets</p>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            <button onClick={() => {
+              localStorage.removeItem('cartera_screen');
+              setShowLogoutConfirm(false);
+              onLogout();
+            }} style={{
+              width:'100%', padding:'15px', borderRadius:16, border:'none',
+              background:'rgba(255,85,85,0.15)', cursor:'pointer',
+              color:'#ff5555', fontSize:15, fontWeight:700, fontFamily:'Inter, sans-serif',
+            }}>Sí, cerrar sesión</button>
+            <button onClick={() => setShowLogoutConfirm(false)} className="btn-secondary">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Add Modal ────────────────────────────────────────────────
+function AddModal({ visible, onClose, onAI, onManual }) {
+  return (
+    <div className={`modal-overlay ${visible?'':'hidden'}`} onClick={e => { if(e.target === e.currentTarget) onClose(); }}>
+      <div className="modal-sheet">
+        <div className="modal-handle"/>
+        <h3 style={{ color:'#f8f8f2', fontSize:17, fontWeight:700, marginBottom:6 }}>Añadir ticket</h3>
+        <p style={{ color:'#6272a4', fontSize:13, marginBottom:20 }}>¿Cómo quieres registrar tu gasto?</p>
+
+        {/* AI option — hero */}
+        <div onClick={() => { onClose(); onAI(); }} style={{
+          background:'linear-gradient(135deg, rgba(189,147,249,0.2), rgba(255,121,198,0.15))',
+          border:'1.5px solid rgba(189,147,249,0.4)',
+          borderRadius:20, padding:20, marginBottom:12, cursor:'pointer',
+          display:'flex', alignItems:'center', gap:16,
+          transition:'transform 0.15s',
+        }}
+          onMouseEnter={e => e.currentTarget.style.transform='scale(1.01)'}
+          onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}
+        >
+          <div style={{ width:56,height:56,borderRadius:18,background:'linear-gradient(135deg,#bd93f9,#ff79c6)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'0 4px 16px rgba(189,147,249,0.4)' }}>
+            <Icon name="cpu" size={26} color="#fff" strokeWidth={1.8}/>
+          </div>
+          <div>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+              <span style={{ color:'#f8f8f2', fontSize:16, fontWeight:800 }}>Escanear con IA</span>
+              <span className="pill" style={{ background:'rgba(80,250,123,0.2)', color:'#50fa7b', fontSize:10 }}>RECOMENDADO</span>
+            </div>
+            <p style={{ color:'#6272a4', fontSize:13, lineHeight:1.4 }}>Fotografía o sube el ticket y la IA extrae todo automáticamente</p>
+          </div>
+        </div>
+
+        {/* Manual */}
+        <div onClick={() => { onClose(); onManual(); }} style={{
+          background:'rgba(98,114,164,0.1)', border:'1.5px solid rgba(98,114,164,0.2)',
+          borderRadius:20, padding:20, cursor:'pointer',
+          display:'flex', alignItems:'center', gap:16,
+        }}>
+          <div style={{ width:56,height:56,borderRadius:18,background:'rgba(98,114,164,0.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>
+            <Icon name="edit" size={24} color="#6272a4" strokeWidth={1.8}/>
+          </div>
+          <div>
+            <span style={{ color:'#f8f8f2', fontSize:16, fontWeight:700, display:'block', marginBottom:4 }}>Añadir manualmente</span>
+            <p style={{ color:'#6272a4', fontSize:13, lineHeight:1.4 }}>Rellena el formulario con los datos del ticket</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Stats Screen ─────────────────────────────────────────────
+
+// ── Stats data ───────────────────────────────────────────────
+const STATS_DATA = {
+  dia: {
+    total: 47.85, prev: 32.10, label: 'Hoy',
+    points: [0,0,0,2.5,0,8.9,0,0,12.3,0,4.2,0,0,15.8,0,0,4.15,0,0,0,0,0,0,0],
+    xlabels: ['0','','','3','','','6','','','9','','','12','','','15','','','18','','','21','',''],
+    topCats: [
+      { cat:'Alimentación', amount:47.85, pct:100, color:'#50fa7b' },
+    ],
+    topStores: [{ name:'Mercadona', amount:47.85, icon:'store', color:'#50fa7b' }],
+  },
+  semana: {
+    total: 215.04, prev: 189.50, label: 'Esta semana',
+    points: [32.1, 15.99, 0, 47.85, 62.0, 38.99, 18.12],
+    xlabels: ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],
+    topCats: [
+      { cat:'Alimentación', amount:89.20, pct:42, color:'#50fa7b' },
+      { cat:'Transporte', amount:62.00, pct:29, color:'#ffb86c' },
+      { cat:'Ropa', amount:38.99, pct:18, color:'#ff79c6' },
+      { cat:'Suscripciones', amount:15.99, pct:7, color:'#bd93f9' },
+      { cat:'Otros', amount:8.86, pct:4, color:'#6272a4' },
+    ],
+    topStores: [
+      { name:'Carrefour', amount:89.20, icon:'store', color:'#50fa7b' },
+      { name:'Repsol', amount:62.00, icon:'credit_card', color:'#ffb86c' },
+      { name:'El Corte Inglés', amount:38.99, icon:'tag', color:'#ff79c6' },
+      { name:'Netflix', amount:15.99, icon:'shield', color:'#bd93f9' },
+    ],
+  },
+  mes: {
+    total: 652.50, prev: 580.20, label: 'Abril',
+    points: [42,65,28,80,55,90,38,72,48,61,35,85,42,58,70,38,92,55,43,67,50,38,75,48,62,88,43,70,55,47],
+    xlabels: ['1','','','','5','','','','','10','','','','','15','','','','','20','','','','','25','','','','','30'],
+    topCats: [
+      { cat:'Alimentación', amount:238.40, pct:37, color:'#50fa7b' },
+      { cat:'Transporte', amount:143.55, pct:22, color:'#ffb86c' },
+      { cat:'Ropa', amount:117.45, pct:18, color:'#ff79c6' },
+      { cat:'Restaurantes', amount:78.30, pct:12, color:'#f1fa8c' },
+      { cat:'Suscripciones', amount:47.97, pct:7, color:'#bd93f9' },
+      { cat:'Salud', amount:27.83, pct:4, color:'#8be9fd' },
+    ],
+    topStores: [
+      { name:'Mercadona', amount:142.55, icon:'store', color:'#50fa7b' },
+      { name:'Repsol', amount:124.00, icon:'credit_card', color:'#ffb86c' },
+      { name:'El Corte Inglés', amount:89.90, icon:'tag', color:'#ff79c6' },
+      { name:'Netflix', amount:47.97, icon:'shield', color:'#bd93f9' },
+      { name:'Zara', amount:58.50, icon:'tag', color:'#ff79c6' },
+    ],
+  },
+  año: {
+    total: 7843.20, prev: 7120.50, label: '2026',
+    points: [580,620,490,652,0,0,0,0,0,0,0,0],
+    xlabels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+    topCats: [
+      { cat:'Alimentación', amount:2862.40, pct:37, color:'#50fa7b' },
+      { cat:'Transporte', amount:1725.50, pct:22, color:'#ffb86c' },
+      { cat:'Ropa', amount:1411.78, pct:18, color:'#ff79c6' },
+      { cat:'Restaurantes', amount:941.18, pct:12, color:'#f1fa8c' },
+      { cat:'Suscripciones', amount:549.02, pct:7, color:'#bd93f9' },
+      { cat:'Salud', amount:313.32, pct:4, color:'#8be9fd' },
+    ],
+    topStores: [
+      { name:'Mercadona', amount:1421.40, icon:'store', color:'#50fa7b' },
+      { name:'Repsol', amount:984.00, icon:'credit_card', color:'#ffb86c' },
+      { name:'El Corte Inglés', amount:756.30, icon:'tag', color:'#ff79c6' },
+      { name:'Netflix', amount:191.88, icon:'shield', color:'#bd93f9' },
+      { name:'Zara', amount:468.50, icon:'tag', color:'#ff79c6' },
+    ],
+  },
+};
+
+// Sparkline / bar chart component
+function MiniChart({ points, color, type = 'bar', height = 90 }) {
+  const max = Math.max(...points, 1);
+  const w = 330, h = height;
+  const n = points.length;
+  const barW = Math.max(2, (w / n) - 3);
+
+  if (type === 'line') {
+    const pts = points.map((v, i) => {
+      const x = (i / (n - 1)) * w;
+      const y = h - (v / max) * (h - 8) - 4;
+      return `${x},${y}`;
+    }).join(' ');
+    const area = `0,${h} ` + points.map((v, i) => {
+      const x = (i / (n - 1)) * w;
+      const y = h - (v / max) * (h - 8) - 4;
+      return `${x},${y}`;
+    }).join(' ') + ` ${w},${h}`;
+    return (
+      <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.25"/>
+            <stop offset="100%" stopColor={color} stopOpacity="0.01"/>
+          </linearGradient>
+        </defs>
+        <polygon points={area} fill="url(#lineGrad)"/>
+        <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        {/* last point dot */}
+        {(() => {
+          const lastNonZero = [...points].reverse().findIndex(v => v > 0);
+          const idx = lastNonZero >= 0 ? points.length - 1 - lastNonZero : points.length - 1;
+          const x = (idx / (n - 1)) * w;
+          const y = h - (points[idx] / max) * (h - 8) - 4;
+          return <circle cx={x} cy={y} r="4" fill={color} stroke="#282a36" strokeWidth="2"/>;
+        })()}
+      </svg>
+    );
+  }
+
+  // bar chart
+  return (
+    <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.9"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0.4"/>
+        </linearGradient>
+      </defs>
+      {points.map((v, i) => {
+        const x = i * (w / n) + 1;
+        const bh = v > 0 ? Math.max(3, (v / max) * (h - 6)) : 2;
+        const y = h - bh;
+        const isMax = v === max;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={bh}
+              rx="3"
+              fill={isMax ? `url(#barGrad)` : `${color}44`}
+            />
+            {isMax && <rect x={x} y={y} width={barW} height={bh} rx="3"
+              fill="none" stroke={color} strokeWidth="1" opacity="0.5"/>}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function StatsScreen() {
+  const PERIODS = ['dia','semana','mes','año'];
+  const PERIOD_LABELS = ['Día','Semana','Mes','Año'];
+  const [period, setPeriod] = React.useState('mes');
+  const [showFilters, setShowFilters] = React.useState(false);
+  const [groupBy, setGroupBy] = React.useState('categoria');
+  const [sortBy, setSortBy] = React.useState('importe');
+  const [compareMode, setCompareMode] = React.useState(false);
+  const [chartType, setChartType] = React.useState('bar');
+
+  const d = STATS_DATA[period];
+  const diff = d.total - d.prev;
+  const diffPct = ((diff / d.prev) * 100).toFixed(1);
+  const isUp = diff > 0;
+
+  return (
+    <div className="screen active scroll-area" style={{ paddingBottom:0 }}>
+      {/* Header */}
+      <div style={{ padding:'20px 20px 0', flexShrink:0 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
+          <h2 style={{ color:'#f8f8f2', fontSize:22, fontWeight:800, letterSpacing:-0.5 }}>Estadísticas</h2>
+          <button onClick={() => setShowFilters(true)} style={{
+            background:'rgba(98,114,164,0.15)', border:'none', borderRadius:10,
+            width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center',
+            cursor:'pointer', position:'relative',
+          }}>
+            {/* sliders icon */}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6272a4" strokeWidth="2" strokeLinecap="round">
+              <line x1="4" y1="6" x2="20" y2="6"/>
+              <line x1="4" y1="12" x2="20" y2="12"/>
+              <line x1="4" y1="18" x2="20" y2="18"/>
+              <circle cx="8" cy="6" r="2" fill="#1e2030" stroke="#bd93f9"/>
+              <circle cx="16" cy="12" r="2" fill="#1e2030" stroke="#bd93f9"/>
+              <circle cx="10" cy="18" r="2" fill="#1e2030" stroke="#bd93f9"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Period selector */}
+        <div style={{
+          display:'flex', background:'rgba(98,114,164,0.1)',
+          borderRadius:12, padding:3, marginBottom:18, marginTop:12,
+        }}>
+          {PERIODS.map((p, i) => (
+            <button key={p} onClick={() => setPeriod(p)} style={{
+              flex:1, padding:'8px 0', border:'none', cursor:'pointer',
+              borderRadius:9, fontSize:13, fontWeight:600,
+              background: period === p ? 'rgba(189,147,249,0.2)' : 'transparent',
+              color: period === p ? '#bd93f9' : '#6272a4',
+              transition:'all 0.2s',
+            }}>{PERIOD_LABELS[i]}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding:'0 20px', paddingBottom:100 }}>
+        {/* Hero total */}
+        <div style={{
+          borderRadius:22, padding:'20px 20px 16px',
+          background:'linear-gradient(135deg, rgba(189,147,249,0.12), rgba(255,121,198,0.08))',
+          border:'1.5px solid rgba(189,147,249,0.2)',
+          marginBottom:14, position:'relative', overflow:'hidden',
+        }}>
+          {/* bg glow */}
+          <div style={{ position:'absolute', top:-30, right:-20, width:120, height:120, borderRadius:'50%', background:'rgba(189,147,249,0.08)', pointerEvents:'none' }}/>
+
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16 }}>
+            <div>
+              <p style={{ color:'#6272a4', fontSize:12, fontWeight:500, textTransform:'uppercase', letterSpacing:0.5 }}>
+                Gastado · {d.label}
+              </p>
+              <h1 style={{ color:'#f8f8f2', fontSize:36, fontWeight:800, letterSpacing:-1, marginTop:2 }}>
+                €{d.total.toLocaleString('es', {minimumFractionDigits:2, maximumFractionDigits:2})}
+              </h1>
+            </div>
+            <div style={{
+              background: isUp ? 'rgba(255,85,85,0.15)' : 'rgba(80,250,123,0.15)',
+              border: `1px solid ${isUp ? 'rgba(255,85,85,0.3)' : 'rgba(80,250,123,0.3)'}`,
+              borderRadius:10, padding:'6px 10px', textAlign:'center',
+            }}>
+              <p style={{ color: isUp ? '#ff5555':'#50fa7b', fontSize:15, fontWeight:800 }}>
+                {isUp ? '↑':'↓'}{Math.abs(diffPct)}%
+              </p>
+              <p style={{ color:'#6272a4', fontSize:10, marginTop:1 }}>vs anterior</p>
+            </div>
+          </div>
+
+          {/* Chart type toggle */}
+          <div style={{ display:'flex', gap:6, marginBottom:10 }}>
+            {[['bar','Barras'],['line','Línea']].map(([t,l]) => (
+              <button key={t} onClick={() => setChartType(t)} style={{
+                padding:'4px 10px', borderRadius:7, border:'none', cursor:'pointer', fontSize:11, fontWeight:600,
+                background: chartType===t ? 'rgba(189,147,249,0.25)':'transparent',
+                color: chartType===t ? '#bd93f9':'#6272a4',
+                transition:'all 0.2s',
+              }}>{l}</button>
+            ))}
+          </div>
+
+          {/* Main chart */}
+          <div style={{ height:90 }}>
+            <MiniChart points={d.points} color="#bd93f9" type={chartType} height={90}/>
+          </div>
+
+          {/* X labels */}
+          <div style={{ display:'flex', justifyContent:'space-between', marginTop:6 }}>
+            {d.xlabels.filter((_,i) => d.xlabels.length <= 12 || i % Math.ceil(d.xlabels.length/8) === 0 || i === d.xlabels.length-1).map((l,i) => (
+              <span key={i} style={{ fontSize:9, color:'rgba(98,114,164,0.7)', fontWeight:500 }}>{l}</span>
+            ))}
+          </div>
+
+          {/* Compare vs previous */}
+          {compareMode && (
+            <div style={{ marginTop:12, paddingTop:12, borderTop:'1px solid rgba(98,114,164,0.2)', display:'flex', justifyContent:'space-between' }}>
+              <div>
+                <p style={{ color:'#6272a4', fontSize:11 }}>Periodo anterior</p>
+                <p style={{ color:'#6272a4', fontSize:18, fontWeight:700 }}>€{d.prev.toLocaleString('es', {minimumFractionDigits:2})}</p>
+              </div>
+              <div style={{ textAlign:'right' }}>
+                <p style={{ color:'#6272a4', fontSize:11 }}>Diferencia</p>
+                <p style={{ color: isUp ? '#ff5555':'#50fa7b', fontSize:18, fontWeight:700 }}>
+                  {isUp?'+':''}{diff.toFixed(2)} €
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Quick stats row */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:14 }}>
+          {[
+            { label:'Tickets', value: period==='dia'?'3': period==='semana'?'12': period==='mes'?'47':'183', color:'#8be9fd', icon:'receipt' },
+            { label:'Promedio', value:`€${(d.total / (period==='dia'?3:period==='semana'?7:period==='mes'?30:365)).toFixed(0)}/día`, color:'#f1fa8c', icon:'trending_up' },
+            { label:'Mayor gasto', value:`€${Math.max(...d.points).toFixed(0)}`, color:'#ff79c6', icon:'zap' },
+          ].map((s,i) => (
+            <div key={i} style={{
+              background:'var(--card2)', borderRadius:14, padding:'12px 12px',
+              border:`1px solid ${s.color}18`,
+            }}>
+              <div style={{ width:28,height:28,borderRadius:8,background:`${s.color}18`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:8 }}>
+                <Icon name={s.icon} size={14} color={s.color}/>
+              </div>
+              <p style={{ color:'#f8f8f2', fontSize:13, fontWeight:700 }}>{s.value}</p>
+              <p style={{ color:'#6272a4', fontSize:10, marginTop:2 }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Category breakdown */}
+        <div style={{ background:'var(--card2)', borderRadius:18, padding:'16px 16px', marginBottom:14 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+            <p style={{ color:'#f8f8f2', fontSize:14, fontWeight:700 }}>Por {groupBy === 'categoria' ? 'categoría' : groupBy === 'comercio' ? 'comercio' : 'método de pago'}</p>
+          </div>
+
+          {/* Mini donut + bars side by side */}
+          <div style={{ display:'flex', gap:16, alignItems:'center', marginBottom:14 }}>
+            {/* Donut */}
+            <div style={{ flexShrink:0 }}>
+              <DonutChart data={d.topCats.map(c => ({ value:c.amount, color:c.color }))} size={88}/>
+            </div>
+            {/* Legend */}
+            <div style={{ flex:1, display:'flex', flexDirection:'column', gap:6 }}>
+              {d.topCats.slice(0,4).map((c,i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <div style={{ width:7, height:7, borderRadius:'50%', background:c.color, flexShrink:0 }}/>
+                  <span style={{ color:'#6272a4', fontSize:11, flex:1 }}>{c.cat}</span>
+                  <span style={{ color:'#f8f8f2', fontSize:11, fontWeight:600 }}>{c.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Horizontal bars */}
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            {d.topCats.map((c,i) => (
+              <div key={i}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
+                  <span style={{ color:'#f8f8f2', fontSize:12, fontWeight:500 }}>{c.cat}</span>
+                  <span style={{ color:c.color, fontSize:12, fontWeight:700 }}>€{c.amount.toFixed(2)}</span>
+                </div>
+                <div style={{ height:6, borderRadius:3, background:'rgba(98,114,164,0.15)', overflow:'hidden' }}>
+                  <div style={{
+                    height:'100%', width:`${c.pct}%`, borderRadius:3,
+                    background:`linear-gradient(90deg, ${c.color}cc, ${c.color}66)`,
+                    transition:'width 0.6s cubic-bezier(0.34,1.56,0.64,1)',
+                  }}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top stores */}
+        <div style={{ marginBottom:14 }}>
+          <p style={{ color:'#f8f8f2', fontSize:14, fontWeight:700, marginBottom:12 }}>Top comercios</p>
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            {d.topStores.map((s,i) => (
+              <div key={i} style={{
+                display:'flex', alignItems:'center', gap:12,
+                background:'var(--card2)', borderRadius:14, padding:'12px 14px',
+              }}>
+                <div style={{
+                  width:36, height:36, borderRadius:10,
+                  background:`${s.color}18`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+                }}>
+                  <Icon name={s.icon} size={16} color={s.color}/>
+                </div>
+                <span style={{ flex:1, color:'#f8f8f2', fontSize:13, fontWeight:600 }}>{s.name}</span>
+                <div style={{ textAlign:'right' }}>
+                  <p style={{ color:'#ff5555', fontSize:13, fontWeight:700 }}>€{s.amount.toFixed(2)}</p>
+                  <p style={{ color:'#6272a4', fontSize:10 }}>{((s.amount/d.total)*100).toFixed(0)}% del total</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Filters bottom sheet */}
+      <div className={`modal-overlay ${showFilters?'':'hidden'}`} onClick={e => { if(e.target===e.currentTarget) setShowFilters(false); }}>
+        <div className="modal-sheet">
+          <div className="modal-handle"/>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+            <h3 style={{ color:'#f8f8f2', fontSize:17, fontWeight:700 }}>Filtros avanzados</h3>
+            <button onClick={() => setShowFilters(false)} style={{ background:'rgba(98,114,164,0.15)', border:'none', borderRadius:'50%', width:32,height:32, display:'flex',alignItems:'center',justifyContent:'center', cursor:'pointer' }}>
+              <Icon name="x" size={16} color="#6272a4"/>
+            </button>
+          </div>
+
+          {/* Agrupar por */}
+          <div style={{ marginBottom:20 }}>
+            <p style={{ color:'#6272a4', fontSize:12, fontWeight:600, textTransform:'uppercase', letterSpacing:0.5, marginBottom:10 }}>Agrupar por</p>
+            <div style={{ display:'flex', gap:8 }}>
+              {[['categoria','Categoría'],['comercio','Comercio'],['metodo','Método pago']].map(([id,label]) => (
+                <button key={id} onClick={() => setGroupBy(id)} style={{
+                  flex:1, padding:'10px 6px', borderRadius:12, border:'none', cursor:'pointer',
+                  background: groupBy===id ? 'rgba(189,147,249,0.2)' : 'var(--card2)',
+                  color: groupBy===id ? '#bd93f9' : '#6272a4',
+                  fontSize:11, fontWeight:600,
+                  border: groupBy===id ? '1.5px solid rgba(189,147,249,0.4)' : '1.5px solid transparent',
+                  transition:'all 0.2s',
+                }}>{label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Ordenar por */}
+          <div style={{ marginBottom:20 }}>
+            <p style={{ color:'#6272a4', fontSize:12, fontWeight:600, textTransform:'uppercase', letterSpacing:0.5, marginBottom:10 }}>Ordenar por</p>
+            <div style={{ display:'flex', gap:8 }}>
+              {[['importe','Mayor importe'],['frecuencia','Frecuencia'],['reciente','Más reciente']].map(([id,label]) => (
+                <button key={id} onClick={() => setSortBy(id)} style={{
+                  flex:1, padding:'10px 4px', borderRadius:12, border:'none', cursor:'pointer',
+                  background: sortBy===id ? 'rgba(139,233,253,0.15)' : 'var(--card2)',
+                  color: sortBy===id ? '#8be9fd' : '#6272a4',
+                  fontSize:10, fontWeight:600,
+                  border: sortBy===id ? '1.5px solid rgba(139,233,253,0.35)' : '1.5px solid transparent',
+                  transition:'all 0.2s',
+                }}>{label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Toggles */}
+          <div style={{ display:'flex', flexDirection:'column', gap:14, marginBottom:20 }}>
+            {[
+              { label:'Comparar con periodo anterior', key:'compare', val:compareMode, fn:setCompareMode },
+            ].map(({ label, val, fn }) => (
+              <div key={label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <span style={{ color:'#f8f8f2', fontSize:14 }}>{label}</span>
+                <button className={`tweak-toggle ${val?'on':''}`} onClick={() => fn(!val)}/>
+              </div>
+            ))}
+          </div>
+
+          <button className="btn-primary" onClick={() => setShowFilters(false)}>
+            Aplicar filtros
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Bottom Tab Bar ───────────────────────────────────────────
+function TabBar({ active, onNav, onAdd }) {
+  const tabs = [
+    { id:'dashboard', icon:'home', label:'Inicio' },
+    { id:'tickets', icon:'receipt', label:'Tickets' },
+    { id:'_add', icon:'plus', label:'Añadir' },
+    { id:'stats', icon:'chart', label:'Estadísticas' },
+    { id:'profile', icon:'user', label:'Perfil' },
+  ];
+  return (
+    <div className="tab-bar">
+      {tabs.map(t => {
+        if (t.id === '_add') return (
+          <div key="add" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+            <div className="fab" onClick={onAdd}>
+              <Icon name="plus" size={26} color="#fff" strokeWidth={2.5}/>
+            </div>
+          </div>
+        );
+        const isActive = active === t.id;
+        const iconColor = isActive ? '#bd93f9' : '#6272a4';
+        return (
+          <div key={t.id} className={`tab-item ${isActive?'active':''}`} onClick={() => onNav(t.id)}>
+            <Icon name={t.icon} size={22} color={iconColor} strokeWidth={isActive?2.2:1.8}/>
+            <span>{t.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── App ──────────────────────────────────────────────────────
+function App() {
+  const [screen, setScreen] = React.useState(() => {
+    const s = localStorage.getItem('cartera_screen') || 'login';
+    // detail needs selectedTicket — can't restore from localStorage, fall back to main
+    return s === 'detail' ? 'main' : s;
+  });
+  const [tab, setTab] = React.useState('dashboard');
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [selectedTicket, setSelectedTicket] = React.useState(null);
+
+  const openDetail = t => { setSelectedTicket(t); setScreen('detail'); };
+  const [tweaks, setTweaks] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem('cartera_tweaks') || 'null') || TWEAK_DEFAULTS; } catch { return TWEAK_DEFAULTS; }
+  });
+
+  React.useEffect(() => { localStorage.setItem('cartera_screen', screen); }, [screen]);
+
+  // Tweaks panel messaging
+  React.useEffect(() => {
+    const handler = e => {
+      if (e.data?.type === '__activate_edit_mode') {
+        document.getElementById('tweaks-panel')?.classList.add('visible');
+      } else if (e.data?.type === '__deactivate_edit_mode') {
+        document.getElementById('tweaks-panel')?.classList.remove('visible');
+      }
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  const updateTweak = (k, v) => {
+    const next = { ...tweaks, [k]: v };
+    setTweaks(next);
+    localStorage.setItem('cartera_tweaks', JSON.stringify(next));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+  };
+
+  const navToTab = t => { setTab(t); setScreen('main'); };
+
+  const mainContent = () => {
+    if (tab === 'dashboard') return <DashboardScreen onNav={navToTab} tweaks={tweaks} onDetail={openDetail} onProfile={() => navToTab('profile')}/>;
+    if (tab === 'tickets') return <TicketsScreen onDetail={openDetail}/>;
+    if (tab === 'profile') return <ProfileScreen onLogout={() => { setTab('dashboard'); setScreen('login'); }}/>;
+    if (tab === 'stats') return <StatsScreen/>;
+  };
+
+  return (
+    <div style={{ position:'relative', display:'inline-block' }}>
+      <PhoneFrame>
+        <div style={{ position:'relative', height:'100%', display:'flex', flexDirection:'column', background:'var(--bg)', overflow:'hidden' }}>
+
+          {/* Login */}
+          {screen === 'login' && <LoginScreen onLogin={() => setScreen('main')}/>}
+
+          {/* Main shell */}
+          {screen === 'main' && (
+            <>
+              <div style={{ flex:1, overflow:'hidden', position:'relative' }}>
+                {mainContent()}
+              </div>
+              <TabBar active={tab} onNav={navToTab} onAdd={() => setModalOpen(true)}/>
+            </>
+          )}
+
+          {/* Ticket detail */}
+          {screen === 'detail' && selectedTicket && (
+            <TicketDetail ticket={selectedTicket} onBack={() => setScreen('main')}/>
+          )}
+
+          {/* AI screen */}
+          {screen === 'ai' && <AIScreen onBack={() => setScreen('main')} onDone={() => setScreen('success')}/>}
+
+          {/* Manual form */}
+          {screen === 'manual' && <ManualForm onBack={() => setScreen('main')} onDone={() => setScreen('success')}/>}
+
+          {/* Success */}
+          {screen === 'success' && <SuccessScreen onDone={() => { setTab('dashboard'); setScreen('main'); }}/>}
+
+          {/* Add modal */}
+          {screen === 'main' && (
+            <AddModal
+              visible={modalOpen}
+              onClose={() => setModalOpen(false)}
+              onAI={() => setScreen('ai')}
+              onManual={() => setScreen('manual')}
+            />
+          )}
+        </div>
+      </PhoneFrame>
+
+      {/* Tweaks panel */}
+      <div id="tweaks-panel">
+        <h4>Tweaks</h4>
+        <div className="tweak-row">
+          <label>Mostrar saldo</label>
+          <button className={`tweak-toggle ${tweaks.showBalance?'on':''}`}
+            onClick={() => updateTweak('showBalance', !tweaks.showBalance)}/>
+        </div>
+        <div className="tweak-row">
+          <label>Modo compacto</label>
+          <button className={`tweak-toggle ${tweaks.compactMode?'on':''}`}
+            onClick={() => updateTweak('compactMode', !tweaks.compactMode)}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+<div id="root" style="display:flex;align-items:center;justify-content:center;min-height:100vh;"></div>
+</body>
+</html>

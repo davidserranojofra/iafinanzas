@@ -1,5 +1,7 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import fs from 'node:fs'
 import tailwindcss from '@tailwindcss/vite'
+
+const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf-8'))
 
 export default defineNuxtConfig({
     compatibilityDate: '2025-07-15',
@@ -13,6 +15,7 @@ export default defineNuxtConfig({
         vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
         vapidEmail: process.env.NUXT_VAPID_EMAIL || '',
         public: {
+            version: pkg.version || '0.1.0',
             vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || '',
         }
     },

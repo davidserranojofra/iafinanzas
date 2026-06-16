@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Cartera — Handoff Nuxt 4</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #282a36;
+      --bg2:    #1e2030;
+      --card:   #44475a;
+      --card2:  #383a4a;
+      --text:   #f8f8f2;
+      --muted:  #6272a4;
+      --purple: #bd93f9;
+      --pink:   #ff79c6;
+      --green:  #50fa7b;
+      --cyan:   #8be9fd;
+      --yellow: #f1fa8c;
+      --orange: #ffb86c;
+      --red:    #ff5555;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px; flex-shrink: 0;
+      background: var(--bg2);
+      border-right: 1px solid rgba(98,114,164,0.2);
+      padding: 24px 0;
+      position: sticky; top: 0; height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 20px 24px;
+      border-bottom: 1px solid rgba(98,114,164,0.15);
+      margin-bottom: 16px;
+    }
+    .sidebar-logo-icon {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sidebar-logo span { font-size: 16px; font-weight: 800; }
+    .sidebar-logo small { font-size: 11px; color: var(--muted); display: block; margin-top: -2px; }
+
+    .nav-section { padding: 0 12px; margin-bottom: 6px; }
+    .nav-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; padding: 0 8px; margin-bottom: 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: 9px; cursor: pointer;
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      text-decoration: none; transition: all 0.15s;
+      margin-bottom: 1px;
+    }
+    .nav-item:hover { background: rgba(98,114,164,0.12); color: var(--text); }
+    .nav-item.active { background: rgba(189,147,249,0.15); color: var(--purple); font-weight: 600; }
+    .nav-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Main content */
+    .main { flex: 1; padding: 40px 48px; max-width: 1100px; }
+
+    /* Sections */
+    .section { margin-bottom: 60px; scroll-margin-top: 32px; }
+    h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+    h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 16px; color: var(--text); }
+    h3 { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+    p { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 12px; }
+
+    /* Badge */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 99px;
+      font-size: 11px; font-weight: 700;
+    }
+
+    /* Card */
+    .card { background: var(--card2); border-radius: 16px; padding: 20px; border: 1px solid rgba(98,114,164,0.15); margin-bottom: 14px; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+
+    /* Code block */
+    pre {
+      background: var(--bg2); border: 1px solid rgba(98,114,164,0.2);
+      border-radius: 12px; padding: 16px 18px; overflow-x: auto;
+      font-family: 'Fira Code', monospace; font-size: 12.5px; line-height: 1.8;
+      margin-bottom: 14px;
+    }
+    .k { color: var(--pink); }
+    .t { color: var(--cyan); }
+    .s { color: var(--yellow); }
+    .c { color: var(--muted); font-style: italic; }
+    .f { color: var(--green); }
+    .p { color: var(--purple); }
+    .v { color: var(--orange); }
+    .n { color: var(--text); }
+
+    /* File tree */
+    .tree { font-family: 'Fira Code', monospace; font-size: 12px; line-height: 2; }
+    .tree-dir { color: var(--cyan); font-weight: 600; }
+    .tree-file { color: var(--text); }
+    .tree-comment { color: var(--muted); }
+    .tree-indent { padding-left: 20px; border-left: 1px solid rgba(98,114,164,0.15); margin-left: 7px; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+    th { text-align: left; padding: 8px 12px; color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(98,114,164,0.2); }
+    td { padding: 10px 12px; border-bottom: 1px solid rgba(98,114,164,0.1); vertical-align: top; }
+    td:first-child { font-family: 'Fira Code', monospace; font-size: 12px; color: var(--cyan); white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(98,114,164,0.05); }
+
+    /* Screen cards */
+    .screens-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 14px; }
+    .screen-card {
+      background: var(--card2); border-radius: 16px; padding: 18px;
+      border: 1px solid rgba(98,114,164,0.15);
+      border-left: 3px solid var(--c, var(--purple));
+    }
+    .screen-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .screen-card p { font-size: 12px; margin-bottom: 8px; }
+    .screen-card .route { font-family: 'Fira Code', monospace; font-size: 11px; color: var(--cyan); background: rgba(139,233,253,0.1); padding: 3px 8px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
+    .screen-card ul { padding-left: 16px; }
+    .screen-card li { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+
+    /* Composable card */
+    .composable-card { background: var(--card2); border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; border: 1px solid rgba(98,114,164,0.15); }
+    .composable-card h4 { font-family: 'Fira Code', monospace; font-size: 14px; color: var(--green); margin-bottom: 6px; }
+    .composable-card p { font-size: 13px; margin-bottom: 10px; }
+
+    /* Color swatch */
+    .swatches { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    .swatch { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .swatch-color { width: 48px; height: 48px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); }
+    .swatch-label { font-family: 'Fira Code', monospace; font-size: 10px; color: var(--muted); text-align: center; }
+
+    /* Divider */
+    .divider { height: 1px; background: rgba(98,114,164,0.15); margin: 40px 0; }
+
+    /* Hero banner */
+    .hero {
+      background: linear-gradient(135deg, rgba(189,147,249,0.12), rgba(255,121,198,0.08));
+      border: 1.5px solid rgba(189,147,249,0.2);
+      border-radius: 20px; padding: 28px 28px; margin-bottom: 40px;
+      display: flex; align-items: center; gap: 24px;
+    }
+    .hero-icon {
+      width: 64px; height: 64px; border-radius: 20px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px;
+    }
+
+    /* Inline code */
+    code { font-family: 'Fira Code', monospace; font-size: 12px; background: rgba(98,114,164,0.15); padding: 2px 7px; border-radius: 5px; color: var(--cyan); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(98,114,164,0.3); border-radius: 3px; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg>
+      </div>
+      <div>
+        <span>Cartera</span>
+        <small>Handoff Nuxt 4</small>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Proyecto</div>
+      <a href="#overview" class="nav-item active"><div class="nav-dot" style="background:var(--purple)"></div>Overview</a>
+      <a href="#stack" class="nav-item"><div class="nav-dot" style="background:var(--cyan)"></div>Tech Stack</a>
+      <a href="#estructura" class="nav-item"><div class="nav-dot" style="background:var(--green)"></div>Estructura de archivos</a>
+      <a href="#tokens" class="nav-item"><div class="nav-dot" style="background:var(--yellow)"></div>Design Tokens</a>
+    </div>
+
+    <div class="nav-section" style="margin-top:12px">
+      <div class="nav-label">Desarrollo</div>
+      <a href="#rutas" class="nav-item"><div class="nav-dot" style="background:var(--orange)"></div>Rutas & Páginas</a>
+      <a href="#componentes" class="nav-item"><div class="nav-dot" style="background:var(--pink)"></div>Componentes</a>
+      <a href="#composables" class="nav-item"><div class="nav-dot" style="background:var(--green)"></div>Composables</a>
+      <a href="#stores" class="nav-item"><div class="nav-dot" style="background:var(--cyan)"></div>Pinia Stores</a>
+      <a href="#types" class="nav-item"><div class="nav-dot" style="background:var(--purple)"></div>Types / Interfaces</a>
+      <a href="#api" class="nav-item"><div class="nav-dot" style="background:var(--orange)"></div>API Endpoints</a>
+    </div>
+
+    <div class="nav-section" style="margin-top:12px">
+      <div class="nav-label">Pantallas</div>
+      <a href="#screens" class="nav-item"><div class="nav-dot" style="background:var(--pink)"></div>Todas las pantallas</a>
+      <a href="#flujo" class="nav-item"><div class="nav-dot" style="background:var(--muted)"></div>Flujo de navegación</a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-icon">💳</div>
+      <div>
+        <h1>Cartera — Handoff Nuxt 4</h1>
+        <p style="margin:4px 0 10px; font-size:15px;">App mobile-first de digitalización de tickets y finanzas personales. Este documento es la referencia técnica completa para implementar el prototipo en producción con <strong style="color:var(--green)">Nuxt 4</strong>.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="badge" style="background:rgba(80,250,123,0.15);color:var(--green)">● Alta Fidelidad</span>
+          <span class="badge" style="background:rgba(189,147,249,0.15);color:var(--purple)">Nuxt 4</span>
+          <span class="badge" style="background:rgba(139,233,253,0.15);color:var(--cyan)">Vue 3 Composition API</span>
+          <span class="badge" style="background:rgba(255,184,108,0.15);color:var(--orange)">Pinia</span>
+          <span class="badge" style="background:rgba(255,121,198,0.15);color:var(--pink)">Mobile-first PWA</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overview -->
+    <section class="section" id="overview">
+      <h2>📋 Overview</h2>
+      <p>Cartera permite a los usuarios fotografiar tickets físicos (con extracción automática por IA), añadirlos manualmente, consultar estadísticas de gasto por periodo/categoría y gestionar su perfil. Diseñada como PWA mobile-first con soporte offline.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="card">
+          <h3>Pantallas principales</h3>
+          <ul style="padding-left:16px">
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Login / Registro</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Dashboard con gráficos</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Lista de tickets</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Detalle del ticket</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Escaneo IA / Formulario manual</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Estadísticas</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Perfil + subpantallas</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Funcionalidades clave</h3>
+          <ul style="padding-left:16px">
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">OCR + extracción IA (OpenAI Vision)</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Categorización automática</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Gráficos día/semana/mes/año</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Descarga de tickets como imagen</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">Auth con email + OAuth (Google/Apple)</li>
+            <li style="color:var(--muted);font-size:13px;margin-bottom:4px">PWA con soporte offline</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Tech Stack -->
+    <section class="section" id="stack">
+      <h2>🛠 Tech Stack</h2>
+      <table>
+        <tr><th>Capa</th><th>Tecnología</th><th>Motivo</th></tr>
+        <tr><td>nuxt@4</td><td style="color:var(--text)">Nuxt 4</td><td style="color:var(--muted)">Framework principal, SSR + PWA</td></tr>
+        <tr><td>@pinia/nuxt</td><td style="color:var(--text)">Pinia</td><td style="color:var(--muted)">Estado global (user, tickets, stats)</td></tr>
+        <tr><td>@nuxt/ui</td><td style="color:var(--text)">NuxtUI v3</td><td style="color:var(--muted)">Componentes headless accesibles</td></tr>
+        <tr><td>tailwindcss</td><td style="color:var(--text)">Tailwind CSS 4</td><td style="color:var(--muted)">Utilidades + CSS variables Dracula</td></tr>
+        <tr><td>vee-validate + zod</td><td style="color:var(--text)">VeeValidate + Zod</td><td style="color:var(--muted)">Validación de formularios tipada</td></tr>
+        <tr><td>nuxt-auth-utils</td><td style="color:var(--text)">nuxt-auth-utils</td><td style="color:var(--muted)">Auth sessions + OAuth providers</td></tr>
+        <tr><td>@vite-pwa/nuxt</td><td style="color:var(--text)">VitePWA</td><td style="color:var(--muted)">Service worker + instalación offline</td></tr>
+        <tr><td>openai</td><td style="color:var(--text)">OpenAI SDK</td><td style="color:var(--muted)">Extracción IA de tickets (Vision API)</td></tr>
+        <tr><td>@supabase/supabase-js</td><td style="color:var(--text)">Supabase</td><td style="color:var(--muted)">Base de datos + Storage para imágenes</td></tr>
+        <tr><td>chart.js / vue-chartjs</td><td style="color:var(--text)">vue-chartjs</td><td style="color:var(--muted)">Gráficos de estadísticas</td></tr>
+      </table>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Estructura de archivos -->
+    <section class="section" id="estructura">
+      <h2>📁 Estructura de archivos</h2>
+      <pre><span class="tree-dir">cartera/</span>
+├── <span class="tree-dir">app/</span>                         <span class="c"># Nuxt 4 app directory</span>
+│   ├── <span class="tree-dir">pages/</span>
+│   │   ├── <span class="tree-file">index.vue</span>              <span class="c"># Redirect → /dashboard o /login</span>
+│   │   ├── <span class="tree-file">login.vue</span>              <span class="c"># Pantalla de login/registro</span>
+│   │   ├── <span class="tree-dir">dashboard/</span>
+│   │   │   └── <span class="tree-file">index.vue</span>          <span class="c"># Dashboard principal</span>
+│   │   ├── <span class="tree-dir">tickets/</span>
+│   │   │   ├── <span class="tree-file">index.vue</span>          <span class="c"># Lista de tickets</span>
+│   │   │   ├── <span class="tree-file">nuevo.vue</span>          <span class="c"># Modal selección: IA / Manual</span>
+│   │   │   ├── <span class="tree-file">escanear.vue</span>       <span class="c"># Flujo OCR + extracción IA</span>
+│   │   │   ├── <span class="tree-file">manual.vue</span>         <span class="c"># Formulario manual</span>
+│   │   │   └── <span class="tree-file">[id].vue</span>           <span class="c"># Detalle del ticket</span>
+│   │   ├── <span class="tree-dir">estadisticas/</span>
+│   │   │   └── <span class="tree-file">index.vue</span>          <span class="c"># Pantalla de estadísticas</span>
+│   │   └── <span class="tree-dir">perfil/</span>
+│   │       ├── <span class="tree-file">index.vue</span>          <span class="c"># Perfil principal</span>
+│   │       ├── <span class="tree-file">datos.vue</span>          <span class="c"># Editar datos personales</span>
+│   │       ├── <span class="tree-file">seguridad.vue</span>      <span class="c"># Seguridad y privacidad</span>
+│   │       ├── <span class="tree-file">pagos.vue</span>          <span class="c"># Métodos de pago</span>
+│   │       └── <span class="tree-file">ia.vue</span>             <span class="c"># Preferencias IA</span>
+│   │
+│   ├── <span class="tree-dir">components/</span>
+│   │   ├── <span class="tree-dir">ui/</span>                      <span class="c"># Componentes base</span>
+│   │   │   ├── <span class="tree-file">AppButton.vue</span>
+│   │   │   ├── <span class="tree-file">AppInput.vue</span>
+│   │   │   ├── <span class="tree-file">AppCard.vue</span>
+│   │   │   ├── <span class="tree-file">AppBadge.vue</span>
+│   │   │   └── <span class="tree-file">AppBottomSheet.vue</span>
+│   │   ├── <span class="tree-dir">layout/</span>
+│   │   │   ├── <span class="tree-file">BottomNav.vue</span>
+│   │   │   └── <span class="tree-file">MobileHeader.vue</span>
+│   │   ├── <span class="tree-dir">tickets/</span>
+│   │   │   ├── <span class="tree-file">TicketRow.vue</span>
+│   │   │   ├── <span class="tree-file">TicketDetail.vue</span>
+│   │   │   ├── <span class="tree-file">CategoryIllustration.vue</span>
+│   │   │   ├── <span class="tree-file">ReceiptPreview.vue</span>
+│   │   │   └── <span class="tree-file">AIScanProgress.vue</span>
+│   │   ├── <span class="tree-dir">stats/</span>
+│   │   │   ├── <span class="tree-file">PeriodSelector.vue</span>
+│   │   │   ├── <span class="tree-file">BarChart.vue</span>
+│   │   │   ├── <span class="tree-file">LineChart.vue</span>
+│   │   │   ├── <span class="tree-file">DonutChart.vue</span>
+│   │   │   ├── <span class="tree-file">CategoryBars.vue</span>
+│   │   │   └── <span class="tree-file">StatsFiltersSheet.vue</span>
+│   │   └── <span class="tree-dir">dashboard/</span>
+│   │       ├── <span class="tree-file">BalanceCard.vue</span>
+│   │       └── <span class="tree-file">WeeklyChart.vue</span>
+│   │
+│   ├── <span class="tree-dir">composables/</span>
+│   │   ├── <span class="tree-file">useTickets.ts</span>
+│   │   ├── <span class="tree-file">useAIExtraction.ts</span>
+│   │   ├── <span class="tree-file">useStats.ts</span>
+│   │   ├── <span class="tree-file">useUser.ts</span>
+│   │   └── <span class="tree-file">useDownload.ts</span>
+│   │
+│   ├── <span class="tree-dir">stores/</span>
+│   │   ├── <span class="tree-file">auth.ts</span>
+│   │   ├── <span class="tree-file">tickets.ts</span>
+│   │   └── <span class="tree-file">user.ts</span>
+│   │
+│   ├── <span class="tree-dir">middleware/</span>
+│   │   └── <span class="tree-file">auth.ts</span>                <span class="c"># Redirect si no hay sesión</span>
+│   │
+│   └── <span class="tree-dir">types/</span>
+│       └── <span class="tree-file">index.ts</span>               <span class="c"># Interfaces globales</span>
+│
+├── <span class="tree-dir">server/</span>
+│   └── <span class="tree-dir">api/</span>
+│       ├── <span class="tree-file">tickets/</span>               <span class="c"># CRUD tickets</span>
+│       ├── <span class="tree-file">ai/extract.post.ts</span>    <span class="c"># OCR + extracción IA</span>
+│       └── <span class="tree-file">auth/</span>                  <span class="c"># Login / OAuth</span>
+│
+├── <span class="tree-file">nuxt.config.ts</span>
+├── <span class="tree-file">tailwind.config.ts</span>
+└── <span class="tree-file">app.config.ts</span></pre>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Design Tokens -->
+    <section class="section" id="tokens">
+      <h2>🎨 Design Tokens</h2>
+      <h3>Colores (paleta Dracula)</h3>
+      <div class="swatches">
+        <div class="swatch"><div class="swatch-color" style="background:#282a36"></div><div class="swatch-label">--bg<br>#282a36</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#44475a"></div><div class="swatch-label">--card<br>#44475a</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#383a4a"></div><div class="swatch-label">--card2<br>#383a4a</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#6272a4"></div><div class="swatch-label">--muted<br>#6272a4</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#bd93f9"></div><div class="swatch-label">--purple<br>#bd93f9</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#ff79c6"></div><div class="swatch-label">--pink<br>#ff79c6</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#50fa7b"></div><div class="swatch-label">--green<br>#50fa7b</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#8be9fd"></div><div class="swatch-label">--cyan<br>#8be9fd</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#f1fa8c"></div><div class="swatch-label">--yellow<br>#f1fa8c</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#ffb86c"></div><div class="swatch-label">--orange<br>#ffb86c</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#ff5555"></div><div class="swatch-label">--red<br>#ff5555</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#f8f8f2"></div><div class="swatch-label">--text<br>#f8f8f2</div></div>
+      </div>
+
+      <h3 style="margin-top:20px">tailwind.config.ts</h3>
+      <pre><span class="k">export default</span> <span class="f">defineConfig</span>({
+  theme: {
+    extend: {
+      colors: {
+        dracula: {
+          bg:     <span class="s">'#282a36'</span>,
+          card:   <span class="s">'#44475a'</span>,
+          card2:  <span class="s">'#383a4a'</span>,
+          text:   <span class="s">'#f8f8f2'</span>,
+          muted:  <span class="s">'#6272a4'</span>,
+          purple: <span class="s">'#bd93f9'</span>,
+          pink:   <span class="s">'#ff79c6'</span>,
+          green:  <span class="s">'#50fa7b'</span>,
+          cyan:   <span class="s">'#8be9fd'</span>,
+          yellow: <span class="s">'#f1fa8c'</span>,
+          orange: <span class="s">'#ffb86c'</span>,
+          red:    <span class="s">'#ff5555'</span>,
+        }
+      },
+      fontFamily: {
+        sans: [<span class="s">'Inter'</span>, <span class="s">'system-ui'</span>, <span class="s">'sans-serif'</span>],
+        mono: [<span class="s">'Fira Code'</span>, <span class="s">'monospace'</span>],
+      },
+      borderRadius: {
+        <span class="s">'2xl'</span>: <span class="s">'16px'</span>,
+        <span class="s">'3xl'</span>: <span class="s">'20px'</span>,
+        <span class="s">'4xl'</span>: <span class="s">'24px'</span>,
+      }
+    }
+  }
+})</pre>
+
+      <h3>Espaciado y tipografía</h3>
+      <table>
+        <tr><th>Token</th><th>Valor</th><th>Uso</th></tr>
+        <tr><td>text-xs</td><td style="color:var(--text)">10–11px</td><td style="color:var(--muted)">Labels, badges, meta</td></tr>
+        <tr><td>text-sm</td><td style="color:var(--text)">12–13px</td><td style="color:var(--muted)">Subtítulos, descripciones</td></tr>
+        <tr><td>text-base</td><td style="color:var(--text)">14–15px</td><td style="color:var(--muted)">Cuerpo, listas</td></tr>
+        <tr><td>text-lg</td><td style="color:var(--text)">17–18px</td><td style="color:var(--muted)">Títulos de pantalla</td></tr>
+        <tr><td>text-xl</td><td style="color:var(--text)">20–22px</td><td style="color:var(--muted)">Headings H2</td></tr>
+        <tr><td>text-3xl</td><td style="color:var(--text)">28–34px</td><td style="color:var(--muted)">Balance hero, totales</td></tr>
+        <tr><td>rounded-2xl</td><td style="color:var(--text)">16px</td><td style="color:var(--muted)">Tarjetas, inputs</td></tr>
+        <tr><td>rounded-3xl</td><td style="color:var(--text)">20–24px</td><td style="color:var(--muted)">Tarjetas hero, modales</td></tr>
+        <tr><td>min-touch</td><td style="color:var(--text)">44px</td><td style="color:var(--muted)">Mínimo tap target mobile</td></tr>
+      </table>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Rutas -->
+    <section class="section" id="rutas">
+      <h2>🗺 Rutas & Páginas</h2>
+      <table>
+        <tr><th>Ruta</th><th>Archivo</th><th>Auth</th><th>Descripción</th></tr>
+        <tr><td>/</td><td style="color:var(--text)">pages/index.vue</td><td><span class="badge" style="background:rgba(98,114,164,0.2);color:var(--muted)">redirect</span></td><td style="color:var(--muted)">Redirige a /dashboard o /login</td></tr>
+        <tr><td>/login</td><td style="color:var(--text)">pages/login.vue</td><td><span class="badge" style="background:rgba(80,250,123,0.15);color:var(--green)">público</span></td><td style="color:var(--muted)">Login, registro y OAuth</td></tr>
+        <tr><td>/dashboard</td><td style="color:var(--text)">pages/dashboard/index.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Dashboard con balance, gráficos y últimos tickets</td></tr>
+        <tr><td>/tickets</td><td style="color:var(--text)">pages/tickets/index.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Listado de todos los tickets con filtros</td></tr>
+        <tr><td>/tickets/nuevo</td><td style="color:var(--text)">pages/tickets/nuevo.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Bottom sheet: escanear IA o manual</td></tr>
+        <tr><td>/tickets/escanear</td><td style="color:var(--text)">pages/tickets/escanear.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Cámara + upload + progress IA</td></tr>
+        <tr><td>/tickets/manual</td><td style="color:var(--text)">pages/tickets/manual.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Formulario de entrada manual</td></tr>
+        <tr><td>/tickets/:id</td><td style="color:var(--text)">pages/tickets/[id].vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Detalle del ticket con tabs Info / Imagen</td></tr>
+        <tr><td>/estadisticas</td><td style="color:var(--text)">pages/estadisticas/index.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Gráficos y filtros por periodo</td></tr>
+        <tr><td>/perfil</td><td style="color:var(--text)">pages/perfil/index.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Perfil principal con menú de secciones</td></tr>
+        <tr><td>/perfil/datos</td><td style="color:var(--text)">pages/perfil/datos.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Editar datos personales</td></tr>
+        <tr><td>/perfil/seguridad</td><td style="color:var(--text)">pages/perfil/seguridad.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Contraseña y toggles de privacidad</td></tr>
+        <tr><td>/perfil/pagos</td><td style="color:var(--text)">pages/perfil/pagos.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Métodos de pago</td></tr>
+        <tr><td>/perfil/ia</td><td style="color:var(--text)">pages/perfil/ia.vue</td><td><span class="badge" style="background:rgba(255,85,85,0.15);color:var(--red)">privado</span></td><td style="color:var(--muted)">Preferencias del motor IA</td></tr>
+      </table>
+
+      <h3 style="margin-top:20px">Middleware de auth</h3>
+      <pre><span class="c">// app/middleware/auth.ts</span>
+<span class="k">export default</span> <span class="f">defineNuxtRouteMiddleware</span>((to) => {
+  <span class="k">const</span> { <span class="n">loggedIn</span> } = <span class="f">useUserSession</span>()
+  <span class="k">const</span> <span class="n">publicRoutes</span> = [<span class="s">'/login'</span>]
+
+  <span class="k">if</span> (!<span class="n">loggedIn</span>.<span class="n">value</span> && !<span class="n">publicRoutes</span>.<span class="f">includes</span>(<span class="n">to</span>.<span class="n">path</span>)) {
+    <span class="k">return</span> <span class="f">navigateTo</span>(<span class="s">'/login'</span>)
+  }
+})</pre>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Componentes -->
+    <section class="section" id="componentes">
+      <h2>🧩 Componentes clave</h2>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 style="margin:0">TicketRow.vue</h3>
+          <span class="badge" style="background:rgba(189,147,249,0.15);color:var(--purple)">tickets/</span>
+        </div>
+        <pre><span class="c">// Props</span>
+<span class="k">interface</span> <span class="t">Props</span> {
+  ticket: <span class="t">Ticket</span>
+  <span class="n">compact</span>?: <span class="t">boolean</span>  <span class="c">// modo compacto para dashboard</span>
+}
+
+<span class="c">// Emits</span>
+<span class="k">const</span> <span class="n">emit</span> = <span class="f">defineEmits</span>&lt;{
+  <span class="n">click</span>: [<span class="n">ticket</span>: <span class="t">Ticket</span>]
+}&gt;()</pre>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 style="margin:0">CategoryIllustration.vue</h3>
+          <span class="badge" style="background:rgba(189,147,249,0.15);color:var(--purple)">tickets/</span>
+        </div>
+        <pre><span class="c">// Props — renderiza SVG ilustrado por categoría</span>
+<span class="k">interface</span> <span class="t">Props</span> {
+  categoria: <span class="t">TicketCategoria</span>  <span class="c">// 'Alimentación' | 'Transporte' | etc.</span>
+  size?: <span class="t">number</span>               <span class="c">// default: 90</span>
+}
+<span class="c">// Categorías con ilustración: Alimentación, Transporte, Ropa,
+// Suscripciones, Salud, Restaurantes, Hogar, Ocio</span></pre>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 style="margin:0">AIScanProgress.vue</h3>
+          <span class="badge" style="background:rgba(189,147,249,0.15);color:var(--purple)">tickets/</span>
+        </div>
+        <pre><span class="c">// 3 fases: 'scan' | 'loading' | 'result'</span>
+<span class="k">interface</span> <span class="t">Props</span> {
+  phase: <span class="t">'scan' | 'loading' | 'result'</span>
+  extractedData?: <span class="t">ExtractedTicket</span>
+  progress?: <span class="t">number</span>  <span class="c">// 0-100</span>
+}
+<span class="k">const</span> <span class="n">emit</span> = <span class="f">defineEmits</span>&lt;{
+  <span class="n">upload</span>: [<span class="n">file</span>: <span class="t">File</span>]
+  <span class="n">confirm</span>: [<span class="n">data</span>: <span class="t">ExtractedTicket</span>]
+  <span class="n">editManual</span>: []
+}&gt;()</pre>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 style="margin:0">BottomNav.vue</h3>
+          <span class="badge" style="background:rgba(139,233,253,0.15);color:var(--cyan)">layout/</span>
+        </div>
+        <pre><span class="c">// Nav fija inferior con FAB central (+)</span>
+<span class="c">// Tabs: dashboard | tickets | [fab] | estadisticas | perfil</span>
+<span class="k">const</span> <span class="n">route</span> = <span class="f">useRoute</span>()
+<span class="k">const</span> <span class="n">activeTab</span> = <span class="f">computed</span>(() => {
+  <span class="k">if</span> (<span class="n">route</span>.<span class="n">path</span>.<span class="f">startsWith</span>(<span class="s">'/tickets'</span>)) <span class="k">return</span> <span class="s">'tickets'</span>
+  <span class="k">if</span> (<span class="n">route</span>.<span class="n">path</span>.<span class="f">startsWith</span>(<span class="s">'/estadisticas'</span>)) <span class="k">return</span> <span class="s">'estadisticas'</span>
+  <span class="k">if</span> (<span class="n">route</span>.<span class="n">path</span>.<span class="f">startsWith</span>(<span class="s">'/perfil'</span>)) <span class="k">return</span> <span class="s">'perfil'</span>
+  <span class="k">return</span> <span class="s">'dashboard'</span>
+})</pre>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 style="margin:0">DonutChart.vue / BarChart.vue / LineChart.vue</h3>
+          <span class="badge" style="background:rgba(80,250,123,0.15);color:var(--green)">stats/</span>
+        </div>
+        <pre><span class="c">// Usar vue-chartjs con Chart.js — configuración dark theme</span>
+<span class="c">// DonutChart: datos por categoría</span>
+<span class="k">interface</span> <span class="t">ChartData</span> {
+  label: <span class="t">string</span>
+  value: <span class="t">number</span>
+  color: <span class="t">string</span>
+}
+<span class="k">interface</span> <span class="t">Props</span> {
+  data: <span class="t">ChartData[]</span>
+  size?: <span class="t">number</span>
+}
+
+<span class="c">// BarChart / LineChart: serie temporal</span>
+<span class="k">interface</span> <span class="t">Props</span> {
+  points: <span class="t">number[]</span>
+  labels: <span class="t">string[]</span>
+  color?: <span class="t">string</span>    <span class="c">// default: '#bd93f9'</span>
+  type: <span class="t">'bar' | 'line'</span>
+}</pre>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Composables -->
+    <section class="section" id="composables">
+      <h2>⚡ Composables</h2>
+
+      <div class="composable-card">
+        <h4>useTickets()</h4>
+        <p>CRUD completo de tickets. Fetching con <code>useFetch</code>, caché automática y optimistic updates.</p>
+        <pre><span class="k">export function</span> <span class="f">useTickets</span>() {
+  <span class="k">const</span> <span class="n">store</span> = <span class="f">useTicketsStore</span>()
+
+  <span class="k">const</span> { <span class="n">data</span>: <span class="n">tickets</span>, <span class="n">pending</span>, <span class="n">refresh</span> } = <span class="f">useFetch</span>&lt;<span class="t">Ticket[]</span>&gt;(<span class="s">'/api/tickets'</span>, {
+    default: () => [],
+  })
+
+  <span class="k">const</span> <span class="f">createTicket</span> = <span class="k">async</span> (<span class="n">data</span>: <span class="t">CreateTicketDto</span>) => {
+    <span class="k">const</span> <span class="n">ticket</span> = <span class="k">await</span> $<span class="f">fetch</span>(<span class="s">'/api/tickets'</span>, {
+      method: <span class="s">'POST'</span>, body: <span class="n">data</span>
+    })
+    <span class="k">await</span> <span class="f">refresh</span>()
+    <span class="k">return</span> <span class="n">ticket</span>
+  }
+
+  <span class="k">const</span> <span class="f">deleteTicket</span> = <span class="k">async</span> (<span class="n">id</span>: <span class="t">string</span>) => {
+    <span class="k">await</span> $<span class="f">fetch</span>(<span class="s">`/api/tickets/${id}`</span>, { method: <span class="s">'DELETE'</span> })
+    <span class="k">await</span> <span class="f">refresh</span>()
+  }
+
+  <span class="k">return</span> { tickets, pending, createTicket, deleteTicket, refresh }
+}</pre>
+      </div>
+
+      <div class="composable-card">
+        <h4>useAIExtraction()</h4>
+        <p>Gestiona el flujo de extracción IA: upload de imagen → llamada a OpenAI Vision → parsing de JSON.</p>
+        <pre><span class="k">export function</span> <span class="f">useAIExtraction</span>() {
+  <span class="k">const</span> <span class="n">phase</span> = <span class="f">ref</span>&lt;<span class="t">'idle' | 'uploading' | 'extracting' | 'done' | 'error'</span>&gt;(<span class="s">'idle'</span>)
+  <span class="k">const</span> <span class="n">progress</span> = <span class="f">ref</span>(<span class="v">0</span>)
+  <span class="k">const</span> <span class="n">result</span> = <span class="f">ref</span>&lt;<span class="t">ExtractedTicket | null</span>&gt;(<span class="k">null</span>)
+
+  <span class="k">const</span> <span class="f">extract</span> = <span class="k">async</span> (<span class="n">file</span>: <span class="t">File</span>) => {
+    <span class="n">phase</span>.<span class="n">value</span> = <span class="s">'uploading'</span>
+    <span class="k">const</span> <span class="n">formData</span> = <span class="k">new</span> <span class="t">FormData</span>()
+    <span class="n">formData</span>.<span class="f">append</span>(<span class="s">'image'</span>, <span class="n">file</span>)
+
+    <span class="n">phase</span>.<span class="n">value</span> = <span class="s">'extracting'</span>
+    <span class="c">// Simula progreso mientras espera la IA</span>
+    <span class="k">const</span> <span class="n">interval</span> = <span class="f">setInterval</span>(() => {
+      <span class="k">if</span> (<span class="n">progress</span>.<span class="n">value</span> &lt; <span class="v">90</span>) <span class="n">progress</span>.<span class="n">value</span> += <span class="v">8</span>
+    }, <span class="v">200</span>)
+
+    <span class="k">try</span> {
+      <span class="n">result</span>.<span class="n">value</span> = <span class="k">await</span> $<span class="f">fetch</span>(<span class="s">'/api/ai/extract'</span>, {
+        method: <span class="s">'POST'</span>, body: <span class="n">formData</span>
+      })
+      <span class="n">progress</span>.<span class="n">value</span> = <span class="v">100</span>
+      <span class="n">phase</span>.<span class="n">value</span> = <span class="s">'done'</span>
+    } <span class="k">catch</span> {
+      <span class="n">phase</span>.<span class="n">value</span> = <span class="s">'error'</span>
+    } <span class="k">finally</span> {
+      <span class="f">clearInterval</span>(<span class="n">interval</span>)
+    }
+  }
+
+  <span class="k">return</span> { phase, progress, result, extract }
+}</pre>
+      </div>
+
+      <div class="composable-card">
+        <h4>useStats()</h4>
+        <p>Agrega tickets por periodo y categoría para las visualizaciones.</p>
+        <pre><span class="k">export function</span> <span class="f">useStats</span>(<span class="n">period</span>: <span class="t">Ref&lt;'dia' | 'semana' | 'mes' | 'año'&gt;</span>) {
+  <span class="k">const</span> { <span class="n">tickets</span> } = <span class="f">useTickets</span>()
+
+  <span class="k">const</span> <span class="n">filtered</span> = <span class="f">computed</span>(() =>
+    <span class="n">tickets</span>.<span class="n">value</span>.<span class="f">filter</span>(<span class="n">t</span> => <span class="f">isInPeriod</span>(<span class="n">t</span>.<span class="n">fecha</span>, <span class="n">period</span>.<span class="n">value</span>))
+  )
+
+  <span class="k">const</span> <span class="n">total</span> = <span class="f">computed</span>(() =>
+    <span class="n">filtered</span>.<span class="n">value</span>.<span class="f">reduce</span>((<span class="n">s</span>, <span class="n">t</span>) => <span class="n">s</span> + <span class="n">t</span>.<span class="n">total</span>, <span class="v">0</span>)
+  )
+
+  <span class="k">const</span> <span class="n">byCategory</span> = <span class="f">computed</span>(() =>
+    <span class="f">groupBy</span>(<span class="n">filtered</span>.<span class="n">value</span>, <span class="s">'categoria'</span>)
+  )
+
+  <span class="k">const</span> <span class="n">chartPoints</span> = <span class="f">computed</span>(() =>
+    <span class="f">buildTimeSeries</span>(<span class="n">filtered</span>.<span class="n">value</span>, <span class="n">period</span>.<span class="n">value</span>)
+  )
+
+  <span class="k">return</span> { total, byCategory, chartPoints, filtered }
+}</pre>
+      </div>
+
+      <div class="composable-card">
+        <h4>useDownload()</h4>
+        <p>Genera y descarga el ticket como SVG o PDF desde el cliente.</p>
+        <pre><span class="k">export function</span> <span class="f">useDownload</span>() {
+  <span class="k">const</span> <span class="f">downloadTicketSVG</span> = (<span class="n">ticket</span>: <span class="t">Ticket</span>, <span class="n">el</span>: <span class="t">HTMLElement</span>) => {
+    <span class="k">const</span> <span class="n">data</span> = <span class="k">new</span> <span class="t">XMLSerializer</span>().<span class="f">serializeToString</span>(<span class="n">el</span>)
+    <span class="k">const</span> <span class="n">blob</span> = <span class="k">new</span> <span class="t">Blob</span>([<span class="n">data</span>], { type: <span class="s">'image/svg+xml'</span> })
+    <span class="k">const</span> <span class="n">url</span> = <span class="t">URL</span>.<span class="f">createObjectURL</span>(<span class="n">blob</span>)
+    <span class="k">const</span> <span class="n">a</span> = document.<span class="f">createElement</span>(<span class="s">'a'</span>)
+    <span class="n">a</span>.<span class="n">href</span> = <span class="n">url</span>
+    <span class="n">a</span>.<span class="n">download</span> = <span class="s">`ticket-${ticket.comercio}-${ticket.fecha}.svg`</span>
+    <span class="n">a</span>.<span class="f">click</span>()
+    <span class="t">URL</span>.<span class="f">revokeObjectURL</span>(<span class="n">url</span>)
+  }
+  <span class="k">return</span> { downloadTicketSVG }
+}</pre>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Stores -->
+    <section class="section" id="stores">
+      <h2>🗄 Pinia Stores</h2>
+
+      <div class="card">
+        <h3>stores/auth.ts</h3>
+        <pre><span class="k">export const</span> <span class="f">useAuthStore</span> = <span class="f">defineStore</span>(<span class="s">'auth'</span>, () => {
+  <span class="k">const</span> { <span class="n">loggedIn</span>, <span class="n">user</span>, <span class="n">clear</span> } = <span class="f">useUserSession</span>()
+
+  <span class="k">const</span> <span class="f">login</span> = <span class="k">async</span> (<span class="n">email</span>: <span class="t">string</span>, <span class="n">password</span>: <span class="t">string</span>) => {
+    <span class="k">await</span> $<span class="f">fetch</span>(<span class="s">'/api/auth/login'</span>, { method: <span class="s">'POST'</span>, body: { email, password } })
+  }
+
+  <span class="k">const</span> <span class="f">logout</span> = <span class="k">async</span> () => {
+    <span class="k">await</span> $<span class="f">fetch</span>(<span class="s">'/api/auth/logout'</span>, { method: <span class="s">'POST'</span> })
+    <span class="k">await</span> <span class="f">clear</span>()
+    <span class="k">await</span> <span class="f">navigateTo</span>(<span class="s">'/login'</span>)
+  }
+
+  <span class="k">return</span> { loggedIn, user, login, logout }
+})</pre>
+      </div>
+
+      <div class="card">
+        <h3>stores/tickets.ts</h3>
+        <pre><span class="k">export const</span> <span class="f">useTicketsStore</span> = <span class="f">defineStore</span>(<span class="s">'tickets'</span>, () => {
+  <span class="k">const</span> <span class="n">tickets</span> = <span class="f">ref</span>&lt;<span class="t">Ticket[]</span>&gt;([])
+  <span class="k">const</span> <span class="n">activeFilter</span> = <span class="f">ref</span>&lt;<span class="t">TicketCategoria | null</span>&gt;(<span class="k">null</span>)
+
+  <span class="k">const</span> <span class="n">filtered</span> = <span class="f">computed</span>(() =>
+    <span class="n">activeFilter</span>.<span class="n">value</span>
+      ? <span class="n">tickets</span>.<span class="n">value</span>.<span class="f">filter</span>(<span class="n">t</span> => <span class="n">t</span>.<span class="n">categoria</span> === <span class="n">activeFilter</span>.<span class="n">value</span>)
+      : <span class="n">tickets</span>.<span class="n">value</span>
+  )
+
+  <span class="k">return</span> { tickets, activeFilter, filtered }
+})</pre>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Types -->
+    <section class="section" id="types">
+      <h2>📐 Types / Interfaces</h2>
+      <pre><span class="c">// app/types/index.ts</span>
+
+<span class="k">export type</span> <span class="t">TicketCategoria</span> =
+  | <span class="s">'Alimentación'</span> | <span class="s">'Transporte'</span> | <span class="s">'Ropa'</span>
+  | <span class="s">'Restaurantes'</span> | <span class="s">'Suscripciones'</span> | <span class="s">'Salud'</span>
+  | <span class="s">'Hogar'</span> | <span class="s">'Ocio'</span> | <span class="s">'Tecnología'</span> | <span class="s">'Otro'</span>
+
+<span class="k">export interface</span> <span class="t">Ticket</span> {
+  id:          <span class="t">string</span>
+  userId:      <span class="t">string</span>
+  comercio:    <span class="t">string</span>
+  fecha:       <span class="t">string</span>          <span class="c">// ISO 8601</span>
+  total:       <span class="t">number</span>
+  iva?:        <span class="t">number</span>
+  categoria:   <span class="t">TicketCategoria</span>
+  metodoPago?: <span class="t">string</span>
+  notas?:      <span class="t">string</span>
+  imageUrl?:   <span class="t">string</span>         <span class="c">// URL Supabase Storage</span>
+  items?:      <span class="t">TicketItem[]</span>
+  extractedByAI: <span class="t">boolean</span>
+  aiConfidence?: <span class="t">number</span>      <span class="c">// 0–1</span>
+  createdAt:   <span class="t">string</span>
+}
+
+<span class="k">export interface</span> <span class="t">TicketItem</span> {
+  nombre:  <span class="t">string</span>
+  precio:  <span class="t">number</span>
+  cantidad?: <span class="t">number</span>
+}
+
+<span class="k">export interface</span> <span class="t">ExtractedTicket</span> {
+  comercio:    <span class="t">string</span>
+  fecha:       <span class="t">string</span>
+  total:       <span class="t">number</span>
+  iva?:        <span class="t">number</span>
+  items:       <span class="t">TicketItem[]</span>
+  metodoPago?: <span class="t">string</span>
+  categoria:   <span class="t">TicketCategoria</span>
+  confianza:   <span class="t">number</span>
+}
+
+<span class="k">export interface</span> <span class="t">CreateTicketDto</span> <span class="k">extends</span> <span class="t">Omit</span>&lt;<span class="t">Ticket</span>, <span class="s">'id' | 'userId' | 'createdAt'</span>&gt; {}
+
+<span class="k">export interface</span> <span class="t">UserProfile</span> {
+  id:        <span class="t">string</span>
+  nombre:    <span class="t">string</span>
+  email:     <span class="t">string</span>
+  telefono?: <span class="t">string</span>
+  ciudad?:   <span class="t">string</span>
+  divisa:    <span class="t">'EUR' | 'USD' | 'GBP' | 'JPY' | 'MXN'</span>
+  avatarUrl?: <span class="t">string</span>
+  createdAt: <span class="t">string</span>
+}
+
+<span class="k">export type</span> <span class="t">StatsPeriod</span> = <span class="s">'dia'</span> | <span class="s">'semana'</span> | <span class="s">'mes'</span> | <span class="s">'año'</span>
+
+<span class="k">export interface</span> <span class="t">CategoryStat</span> {
+  categoria: <span class="t">TicketCategoria</span>
+  amount:    <span class="t">number</span>
+  pct:       <span class="t">number</span>
+  color:     <span class="t">string</span>
+}</pre>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- API -->
+    <section class="section" id="api">
+      <h2>🔌 API Endpoints (server/api/)</h2>
+      <table>
+        <tr><th>Método + Ruta</th><th>Archivo</th><th>Body / Params</th><th>Respuesta</th></tr>
+        <tr><td>POST /api/auth/login</td><td style="color:var(--text)">auth/login.post.ts</td><td style="color:var(--muted)">{ email, password }</td><td style="color:var(--muted)">session</td></tr>
+        <tr><td>POST /api/auth/logout</td><td style="color:var(--text)">auth/logout.post.ts</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">200 OK</td></tr>
+        <tr><td>GET /api/tickets</td><td style="color:var(--text)">tickets/index.get.ts</td><td style="color:var(--muted)">?period, ?categoria</td><td style="color:var(--muted)">Ticket[]</td></tr>
+        <tr><td>POST /api/tickets</td><td style="color:var(--text)">tickets/index.post.ts</td><td style="color:var(--muted)">CreateTicketDto</td><td style="color:var(--muted)">Ticket</td></tr>
+        <tr><td>GET /api/tickets/:id</td><td style="color:var(--text)">tickets/[id].get.ts</td><td style="color:var(--muted)">id: string</td><td style="color:var(--muted)">Ticket</td></tr>
+        <tr><td>PUT /api/tickets/:id</td><td style="color:var(--text)">tickets/[id].put.ts</td><td style="color:var(--muted)">Partial&lt;Ticket&gt;</td><td style="color:var(--muted)">Ticket</td></tr>
+        <tr><td>DELETE /api/tickets/:id</td><td style="color:var(--text)">tickets/[id].delete.ts</td><td style="color:var(--muted)">id: string</td><td style="color:var(--muted)">204</td></tr>
+        <tr><td>POST /api/ai/extract</td><td style="color:var(--text)">ai/extract.post.ts</td><td style="color:var(--muted)">FormData (image)</td><td style="color:var(--muted)">ExtractedTicket</td></tr>
+        <tr><td>GET /api/stats</td><td style="color:var(--text)">stats/index.get.ts</td><td style="color:var(--muted)">?period</td><td style="color:var(--muted)">StatsResponse</td></tr>
+        <tr><td>GET /api/user</td><td style="color:var(--text)">user/index.get.ts</td><td style="color:var(--muted)">—</td><td style="color:var(--muted)">UserProfile</td></tr>
+        <tr><td>PUT /api/user</td><td style="color:var(--text)">user/index.put.ts</td><td style="color:var(--muted)">Partial&lt;UserProfile&gt;</td><td style="color:var(--muted)">UserProfile</td></tr>
+      </table>
+
+      <h3 style="margin-top:20px">Extracción IA — server handler</h3>
+      <pre><span class="c">// server/api/ai/extract.post.ts</span>
+<span class="k">import</span> <span class="t">OpenAI</span> <span class="k">from</span> <span class="s">'openai'</span>
+
+<span class="k">export default</span> <span class="f">defineEventHandler</span>(<span class="k">async</span> (<span class="n">event</span>) => {
+  <span class="k">const</span> <span class="n">formData</span> = <span class="k">await</span> <span class="f">readFormData</span>(<span class="n">event</span>)
+  <span class="k">const</span> <span class="n">image</span> = <span class="n">formData</span>.<span class="f">get</span>(<span class="s">'image'</span>) <span class="k">as</span> <span class="t">File</span>
+  <span class="k">const</span> <span class="n">base64</span> = <span class="k">await</span> <span class="f">fileToBase64</span>(<span class="n">image</span>)
+
+  <span class="k">const</span> <span class="n">openai</span> = <span class="k">new</span> <span class="t">OpenAI</span>({ apiKey: <span class="f">useRuntimeConfig</span>().<span class="n">openaiKey</span> })
+
+  <span class="k">const</span> <span class="n">response</span> = <span class="k">await</span> <span class="n">openai</span>.<span class="n">chat</span>.<span class="n">completions</span>.<span class="f">create</span>({
+    model: <span class="s">'gpt-4o'</span>,
+    messages: [{
+      role: <span class="s">'user'</span>,
+      content: [
+        { type: <span class="s">'text'</span>, text: <span class="s">`Extrae los datos de este ticket de compra como JSON con:
+          { comercio, fecha (ISO), total, iva, items:[{nombre,precio}],
+            metodoPago, categoria, confianza (0-1) }`</span> },
+        { type: <span class="s">'image_url'</span>, image_url: { url: <span class="s">`data:image/jpeg;base64,${base64}`</span> } }
+      ]
+    }],
+    response_format: { type: <span class="s">'json_object'</span> },
+  })
+
+  <span class="k">return</span> <span class="t">JSON</span>.<span class="f">parse</span>(<span class="n">response</span>.<span class="n">choices</span>[<span class="v">0</span>].<span class="n">message</span>.<span class="n">content</span>!)
+})</pre>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Screens -->
+    <section class="section" id="screens">
+      <h2>📱 Todas las pantallas</h2>
+      <div class="screens-grid">
+        <div class="screen-card" style="--c:var(--purple)">
+          <div class="route">/login</div>
+          <h4>Login</h4>
+          <p>Email/password + OAuth Google/Apple. Enlace a recuperar contraseña.</p>
+          <ul>
+            <li>Logo + nombre app centrado</li>
+            <li>Inputs email y password con iconos</li>
+            <li>Botón primario degradado purple→pink</li>
+            <li>Divider "o continúa con" + botones OAuth</li>
+          </ul>
+        </div>
+        <div class="screen-card" style="--c:var(--cyan)">
+          <div class="route">/dashboard</div>
+          <h4>Dashboard</h4>
+          <p>Visión general: saldo, gráficos semanales, últimos 4 tickets y CTA de escaneo.</p>
+          <ul>
+            <li>Saludo + avatar (→ /perfil)</li>
+            <li>Card de saldo con ingresos/gastos</li>
+            <li>Grid: bar chart semanal + donut por categoría</li>
+            <li>Lista últimos tickets (clickable → detalle)</li>
+          </ul>
+        </div>
+        <div class="screen-card" style="--c:var(--green)">
+          <div class="route">/tickets</div>
+          <h4>Lista Tickets</h4>
+          <p>Todos los tickets con filtros por categoría.</p>
+          <ul>
+            <li>Pills de filtro (scrollable)</li>
+            <li>Lista de TicketRow con categoría pill</li>
+            <li>Tap → /tickets/:id</li>
+          </ul>
+        </div>
+        <div class="screen-card" style="--c:var(--pink)">
+          <div class="route">/tickets/:id</div>
+          <h4>Detalle Ticket</h4>
+          <p>Hero con ilustración SVG de categoría. Tabs: Detalles / Imagen ticket.</p>
+          <ul>
+            <li>Ilustración SVG según categoría</li>
+            <li>Badge "Verificado por IA"</li>
+            <li>Todos los campos + líneas de productos</li>
+            <li>Previsualización SVG del ticket</li>
+            <li>Botón descargar como SVG</li>
+          </ul>
+        </div>
+        <div class="screen-card" style="--c:var(--purple)">
+          <div class="route">/tickets/escanear</div>
+          <h4>Escanear IA</h4>
+          <p>3 fases: scan → loading (scan-line animado) → result (JSON animado).</p>
+          <ul>
+            <li>Visor de cámara con guías de esquina</li>
+            <li>Upload zone con hover state</li>
+            <li>Animación scan-line verde sobre ticket</li>
+            <li>JSON revelado línea a línea</li>
+          </ul>
+        </div>
+        <div class="screen-card" style="--c:var(--cyan)">
+          <div class="route">/tickets/manual</div>
+          <h4>Formulario Manual</h4>
+          <p>Formulario completo con validación Zod.</p>
+          <ul>
+            <li>Campos: comercio, fecha, total, categoría, método, notas</li>
+            <li>Inputs con iconos y labels uppercase</li>
+            <li>Botón desactivado hasta campos requeridos</li>
+          </ul>
+        </div>
+        <div class="screen-card" style="--c:var(--orange)">
+          <div class="route">/estadisticas</div>
+          <h4>Estadísticas</h4>
+          <p>Gráficos y análisis por periodo con filtros avanzados.</p>
+          <ul>
+            <li>Period selector: Día/Semana/Mes/Año</li>
+            <li>Chart barras o línea con toggle</li>
+            <li>Donut + barras horizontales por categoría</li>
+            <li>Top comercios</li>
+            <li>Filtros: agrupar, ordenar, comparar</li>
+          </ul>
+        </div>
+        <div class="screen-card" style="--c:var(--pink)">
+          <div class="route">/perfil</div>
+          <h4>Perfil</h4>
+          <p>Menú de secciones + cerrar sesión con confirmación modal.</p>
+          <ul>
+            <li>Avatar con iniciales (editable)</li>
+            <li>Stats: tickets, gastado, meses</li>
+            <li>4 secciones navegables</li>
+            <li>Logout con modal de confirmación</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Flujo -->
+    <section class="section" id="flujo">
+      <h2>🔀 Flujo de navegación</h2>
+      <pre><span class="c">Login ──────────────────────────────────────────────────────────────────</span>
+  <span class="s">/login</span>  →  <span class="f">onLogin()</span>  →  <span class="s">/dashboard</span>
+
+<span class="c">Tab bar (siempre visible en rutas privadas) ────────────────────────────</span>
+  🏠 Inicio     →  <span class="s">/dashboard</span>
+  🧾 Tickets    →  <span class="s">/tickets</span>
+  ＋ FAB        →  bottom sheet  →  <span class="s">/tickets/escanear</span> | <span class="s">/tickets/manual</span>
+  📊 Estadísticas →  <span class="s">/estadisticas</span>
+  👤 Perfil     →  <span class="s">/perfil</span>
+
+<span class="c">Dashboard ──────────────────────────────────────────────────────────────</span>
+  Avatar (arriba derecha)  →  <span class="s">/perfil</span>
+  TicketRow tap            →  <span class="s">/tickets/:id</span>
+  Banner "Escanea"         →  bottom sheet
+
+<span class="c">Tickets ────────────────────────────────────────────────────────────────</span>
+  TicketRow tap  →  <span class="s">/tickets/:id</span>
+
+<span class="c">Ticket Detail ──────────────────────────────────────────────────────────</span>
+  Tab "Detalles"  →  campos + productos
+  Tab "Imagen"    →  SVG preview + descargar
+  ← back          →  <span class="s">/tickets</span>
+
+<span class="c">Perfil ─────────────────────────────────────────────────────────────────</span>
+  Datos personales   →  <span class="s">/perfil/datos</span>   (guardar → vuelve a /perfil)
+  Seguridad          →  <span class="s">/perfil/seguridad</span>
+  Métodos de pago    →  <span class="s">/perfil/pagos</span>
+  Preferencias IA    →  <span class="s">/perfil/ia</span>
+  Cerrar sesión      →  modal confirm  →  <span class="f">logout()</span>  →  <span class="s">/login</span></pre>
+
+      <p style="margin-top:16px; font-size:13px">El prototipo de referencia completo se encuentra en <code>Cartera.html</code> — ábrelo para ver todas las interacciones, animaciones y estados.</p>
+    </section>
+
+    <!-- Footer -->
+    <div style="text-align:center; padding: 40px 0 20px; color:var(--muted); font-size:12px">
+      Cartera — Handoff Nuxt 4 · Diseñado en HTML · <span style="color:var(--purple)">Dracula palette</span>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Sidebar active link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const active = document.querySelector(`.nav-item[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>

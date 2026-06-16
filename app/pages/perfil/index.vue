@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
+const config = useRuntimeConfig()
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 const loggingOut = ref(false)
@@ -126,8 +127,11 @@ async function handleLogout() {
       </NuxtLink>
     </div>
 
+    <!-- Versión -->
+    <p class="text-center text-xs text-dracula-muted/50 mt-6">v{{ config.public.version }}</p>
+
     <!-- Logout -->
-    <div class="px-4 mt-6">
+    <div class="px-4 mt-4">
       <button
         class="w-full py-4 rounded-2xl text-sm font-semibold text-dracula-red bg-dracula-red/10 border border-dracula-red/20 transition-opacity"
         :class="loggingOut ? 'opacity-50 cursor-not-allowed' : 'active:opacity-70'"
@@ -137,7 +141,5 @@ async function handleLogout() {
         {{ loggingOut ? 'Cerrando sesión...' : 'Cerrar sesión' }}
       </button>
     </div>
-
-    <p class="text-center text-xs text-dracula-muted/50 mt-6">Cartera v0.1.0</p>
   </div>
 </template>
