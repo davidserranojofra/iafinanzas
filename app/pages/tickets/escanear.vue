@@ -24,7 +24,7 @@ const sugerirNotas = ref(true)
 
 const categorias: CreateTicketDto['categoria'][] = [
   'Alimentación', 'Transporte', 'Ropa', 'Restaurantes',
-  'Suscripciones', 'Salud', 'Hogar', 'Ocio', 'Tecnología', 'Otro',
+  'Suscripciones', 'Salud', 'Hogar', 'Ocio', 'Tecnología', 'Cuidado Personal', 'Otro',
 ]
 
 const TODOS_LOS_METODOS = ['Efectivo', 'Tarjeta débito', 'Tarjeta crédito', 'Transferencia', 'Otro']

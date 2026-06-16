@@ -8,6 +8,7 @@ const DARK: Record<string, string> = {
   'Hogar':         '#f1fa8c',
   'Ocio':          '#bd93f9',
   'Tecnología':    '#8be9fd',
+  'Cuidado Personal': '#ff79c6',
   'Otro':          '#6272a4',
 }
 
@@ -22,6 +23,7 @@ const LIGHT: Record<string, string> = {
   'Hogar':         '#b5a500',
   'Ocio':          '#7c4dce',
   'Tecnología':    '#3aabcc',
+  'Cuidado Personal': '#c44d96',
   'Otro':          '#5a6890',
 }
 
@@ -35,6 +37,7 @@ export const CATEGORY_ICONS: Record<string, string> = {
   'Hogar':         '🏠',
   'Ocio':          '🎮',
   'Tecnología':    '💻',
+  'Cuidado Personal': '🧴',
   'Otro':          '📄',
 }
 

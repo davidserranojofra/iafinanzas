@@ -20,12 +20,13 @@ const categoriasSeleccionadas = ref<Record<string, boolean>>({
   'Hogar': true,
   'Ocio': true,
   'Tecnología': true,
+  'Cuidado Personal': true,
   'Otro': true,
 })
 
 const categorias: TicketCategoria[] = [
   'Alimentación', 'Transporte', 'Ropa', 'Restaurantes',
-  'Suscripciones', 'Salud', 'Hogar', 'Ocio', 'Tecnología', 'Otro',
+  'Suscripciones', 'Salud', 'Hogar', 'Ocio', 'Tecnología', 'Cuidado Personal', 'Otro',
 ]
 
 const presetsIntervalo = [

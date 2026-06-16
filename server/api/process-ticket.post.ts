@@ -7,7 +7,7 @@ Analizá la imagen del ticket y devolvé ÚNICAMENTE un objeto JSON válido con 
 - comercio: nombre del comercio o establecimiento (string)
 - fecha: fecha de la compra en formato YYYY-MM-DD (string)
 - total: importe total pagado como número decimal (number)
-- categoria: categoría del gasto — elegí una de: "alimentación", "transporte", "salud", "tecnología", "ropa", "hogar", "entretenimiento", "restaurante", "otro"
+- categoria: categoría del gasto — elegí una de: "alimentación", "transporte", "salud", "tecnología", "ropa", "hogar", "entretenimiento", "restaurante", "cuidado_personal", "otro"
 - iva: importe del IVA si aparece explícitamente en el ticket como número decimal, o null si no está indicado (number | null)
 - notas: redactá una frase corta y natural describiendo la compra (ej: "Compra de supermercado con varios productos frescos" o "Cena en restaurante para dos personas"). Nunca dejes este campo en null. (string)
 - metodo_pago: medio de pago detectado — elegí uno de: "efectivo", "tarjeta_debito", "tarjeta_credito", "transferencia", "desconocido"

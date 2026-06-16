@@ -14,6 +14,12 @@ const CATEGORIA_MAP: Record<string, TicketCategoria> = {
   'restaurante':  'Restaurantes',
   'restaurantes': 'Restaurantes',
   'suscripciones':'Suscripciones',
+  'cuidado personal': 'Cuidado Personal',
+  'cuidado_personal': 'Cuidado Personal',
+  'estética': 'Cuidado Personal',
+  'estetica': 'Cuidado Personal',
+  'peluquería': 'Cuidado Personal',
+  'peluqueria': 'Cuidado Personal',
   'otro':         'Otro',
 }
 

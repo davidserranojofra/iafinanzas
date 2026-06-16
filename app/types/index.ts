@@ -8,6 +8,7 @@ export type TicketCategoria =
   | 'Hogar'
   | 'Ocio'
   | 'Tecnología'
+  | 'Cuidado Personal'
   | 'Otro'
 
 export interface TicketItem {

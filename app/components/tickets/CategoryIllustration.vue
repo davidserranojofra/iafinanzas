@@ -108,14 +108,28 @@ defineProps<{
       <line x1="29" y1="51" x2="40" y2="51" stroke="#bd93f9" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
 
+    <!-- Cuidado Personal -->
+    <svg v-else-if="categoria === 'Cuidado Personal'" :width="size ?? 90" :height="size ?? 90" viewBox="0 0 90 90" fill="none">
+      <circle cx="45" cy="45" r="40" fill="#ff79c6" fill-opacity="0.12"/>
+      <rect x="33" y="38" width="24" height="32" rx="6" fill="#ff79c6" fill-opacity="0.3" stroke="#ff79c6" stroke-width="2"/>
+      <rect x="40" y="30" width="10" height="8" rx="2" fill="#ff79c6" fill-opacity="0.5" stroke="#ff79c6" stroke-width="2"/>
+      <path d="M38 27 L48 27 M45 27 L45 30" stroke="#ff79c6" stroke-width="2" stroke-linecap="round"/>
+      <path d="M38 27 Q34 29 32 32" stroke="#ff79c6" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="28" cy="27" r="1.5" fill="#ff79c6"/>
+      <circle cx="31" cy="22" r="2" fill="#ff79c6"/>
+      <circle cx="48" cy="19" r="1.5" fill="#ff79c6"/>
+    </svg>
+
     <!-- Otro -->
     <svg v-else :width="size ?? 90" :height="size ?? 90" viewBox="0 0 90 90" fill="none">
       <circle cx="45" cy="45" r="40" fill="#6272a4" fill-opacity="0.15"/>
-      <rect x="28" y="25" width="34" height="44" rx="5" fill="#6272a4" fill-opacity="0.25" stroke="#6272a4" stroke-width="2"/>
-      <line x1="34" y1="36" x2="56" y2="36" stroke="#6272a4" stroke-width="2" stroke-linecap="round"/>
-      <line x1="34" y1="44" x2="56" y2="44" stroke="#6272a4" stroke-width="2" stroke-linecap="round"/>
-      <line x1="34" y1="52" x2="48" y2="52" stroke="#6272a4" stroke-width="2" stroke-linecap="round"/>
-      <path d="M30 22 L30 18 L60 18 L60 22" stroke="#6272a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="28" y="42" width="34" height="26" rx="4" fill="#6272a4" fill-opacity="0.25" stroke="#6272a4" stroke-width="2"/>
+      <path d="M28 42 L20 32 L36 32 L40 42" stroke="#6272a4" stroke-width="2" stroke-linejoin="round" fill="#6272a4" fill-opacity="0.1"/>
+      <path d="M62 42 L70 32 L54 32 L50 42" stroke="#6272a4" stroke-width="2" stroke-linejoin="round" fill="#6272a4" fill-opacity="0.1"/>
+      <path d="M42 22 C42 17 48 17 48 22 C48 25 45 26 45 28" stroke="#6272a4" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <circle cx="45" cy="33" r="1.5" fill="#6272a4"/>
+      <circle cx="34" cy="24" r="1.5" fill="#6272a4"/>
+      <circle cx="56" cy="24" r="1" fill="#6272a4"/>
     </svg>
   </div>
 </template>

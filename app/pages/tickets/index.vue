@@ -8,7 +8,7 @@ const router = useRouter()
 
 const categorias: TicketCategoria[] = [
   'Alimentación', 'Transporte', 'Ropa', 'Restaurantes',
-  'Suscripciones', 'Salud', 'Hogar', 'Ocio', 'Tecnología', 'Otro',
+  'Suscripciones', 'Salud', 'Hogar', 'Ocio', 'Tecnología', 'Cuidado Personal', 'Otro',
 ]
 
 const filtroActivo = ref<TicketCategoria | null>(null)
