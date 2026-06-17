@@ -60,8 +60,9 @@ export default defineEventHandler(async (event) => {
       debeNotificar = true // Primera notificación o forzado manual de testeo
     } else {
       const diferenciaMs = ahora.getTime() - lastNotified.getTime()
-      const diferenciaDias = diferenciaMs / (1000 * 60 * 60 * 24)
-      if (diferenciaDias >= perfil.notif_interval_days) {
+      const margenGraciaMs = 2 * 60 * 60 * 1000 // 2 horas de margen de gracia para evitar desajustes en el trigger del cron
+      const intervaloMs = (perfil.notif_interval_days * 24 * 60 * 60 * 1000) - margenGraciaMs
+      if (diferenciaMs >= intervaloMs) {
         debeNotificar = true
       }
     }
@@ -125,11 +126,6 @@ export default defineEventHandler(async (event) => {
 
     if (subsError || !suscripciones?.length) {
       console.log(`Usuario ${perfil.id} no tiene suscripciones push activas.`)
-      // Aún así actualizamos la fecha de notificación para no saturar al configurar el dispositivo más tarde
-      await supabase
-        .from('profiles')
-        .update({ last_notified_at: ahora.toISOString() })
-        .eq('id', perfil.id)
       continue
     }
 
