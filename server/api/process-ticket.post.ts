@@ -5,7 +5,7 @@ Eres un sistema especializado en extracción de datos de tickets y facturas.
 Analizá la imagen del ticket y devolvé ÚNICAMENTE un objeto JSON válido con exactamente estas claves:
 
 - comercio: nombre del comercio o establecimiento (string)
-- fecha: fecha de la compra en formato YYYY-MM-DD (string)
+- fecha: fecha de la compra en formato YYYY-MM-DD (string). Prestá especial atención a etiquetas de fecha en otros idiomas como "data" (en catalán), "date" (en inglés) o "fecha" (en español). Si el año se expresa con dos dígitos (por ejemplo, "26" o "/26"), correspondé al año 2026. El año de referencia actual es 2026.
 - total: importe total pagado como número decimal (number)
 - categoria: categoría del gasto — elegí una de: "alimentación", "transporte", "salud", "tecnología", "ropa", "hogar", "entretenimiento", "restaurante", "cuidado_personal", "otro"
 - iva: importe del IVA si aparece explícitamente en el ticket como número decimal, o null si no está indicado (number | null)
@@ -22,7 +22,7 @@ Reglas estrictas:
 1. Devolvé SOLO el JSON. Sin markdown, sin bloques de código, sin explicaciones.
 2. Si un dato no está visible o no podés determinarlo con certeza, usá null.
 3. El campo "total" debe ser un número (no un string).
-4. La fecha siempre en formato YYYY-MM-DD.
+4. La fecha siempre en formato YYYY-MM-DD. Si aparece "data: 20/06/26" o similar, recordá que "data" significa fecha en catalán y "26" representa el año 2026. Evitá a toda costa extraer años incorrectos (como 2024).
 5. Los precios de "items" deben ser números, nunca strings.
 `.trim()
 

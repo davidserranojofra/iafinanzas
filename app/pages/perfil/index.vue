@@ -127,9 +127,6 @@ async function handleLogout() {
       </NuxtLink>
     </div>
 
-    <!-- Versión -->
-    <p class="text-center text-xs text-dracula-muted/50 mt-6">v{{ config.public.version }}</p>
-
     <!-- Logout -->
     <div class="px-4 mt-4">
       <button
@@ -141,5 +138,8 @@ async function handleLogout() {
         {{ loggingOut ? 'Cerrando sesión...' : 'Cerrar sesión' }}
       </button>
     </div>
+
+    <!-- Versión -->
+    <p class="text-center text-xs text-dracula-muted/50 mt-6">v{{ config.public.version }}</p>
   </div>
 </template>
