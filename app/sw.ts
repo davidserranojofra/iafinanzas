@@ -17,7 +17,12 @@ const ETIQUETA_SYNC = 'sincronizar-cola-tickets'
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
 clientsClaim()
-self.skipWaiting()
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
 
 self.addEventListener('sync', (event: Event) => {
   const eventoSync = event as EventoSync

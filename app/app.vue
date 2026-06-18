@@ -3,6 +3,19 @@ const route = useRoute()
 const showNav = computed(() => route.path !== '/login')
 
 const { $pwa } = useNuxtApp()
+
+onMounted(() => {
+  if (import.meta.client && $pwa) {
+    // Verificar si hay actualizaciones cuando el usuario vuelve a enfocar la app
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        navigator.serviceWorker.getRegistration().then((reg) => {
+          reg?.update()
+        })
+      }
+    })
+  }
+})
 </script>
 
 <template>
