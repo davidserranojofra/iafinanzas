@@ -125,8 +125,8 @@ const handleClearError = () => {
         <Transition name="expand">
           <div v-if="showStack" class="mt-3 overflow-hidden rounded-xl border border-dracula-muted/30 bg-dracula-bg/90 p-4 shadow-inner">
             <div class="mb-2 flex items-center justify-between text-[10px] text-dracula-muted uppercase tracking-wider font-mono">
-              <span>Error Stack Trace</span>
-              <span class="text-dracula-pink">Dev Mode</span>
+              <span>Traza del error</span>
+              <span class="text-dracula-pink">Modo Desarrollo</span>
             </div>
             <pre class="max-h-60 overflow-auto text-left text-xs font-mono text-dracula-pink whitespace-pre scrollbar-thin scrollbar-thumb-dracula-muted scrollbar-track-transparent">{{ error.stack }}</pre>
           </div>
