@@ -1,5 +1,35 @@
 import { serverSupabaseClient } from '#supabase/server'
 
+const DOMINIOS_PUSH_PERMITIDOS = [
+  'android.googleapis.com',
+  'fcm.googleapis.com',
+  'updates.push.services.mozilla.com',
+  'updates-autopush.stage.mozaws.net',
+  'updates-autopush.prod.mozaws.net',
+  'apple.com',
+  'push.apple.com',
+  'notify.windows.com'
+]
+
+function esSuscripcionValida(sub: any): boolean {
+  if (!sub || typeof sub !== 'object') return false
+  if (typeof sub.endpoint !== 'string') return false
+  if (!sub.keys || typeof sub.keys !== 'object') return false
+  if (typeof sub.keys.p256dh !== 'string' || !sub.keys.p256dh.trim()) return false
+  if (typeof sub.keys.auth !== 'string' || !sub.keys.auth.trim()) return false
+
+  try {
+    const url = new URL(sub.endpoint)
+    if (url.protocol !== 'https:') return false
+    const hostname = url.hostname.toLowerCase()
+    return DOMINIOS_PUSH_PERMITIDOS.some(dom => 
+      hostname === dom || hostname.endsWith('.' + dom)
+    )
+  } catch {
+    return false
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient(event)
   const { data: { user } } = await supabase.auth.getUser()
@@ -11,7 +41,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<{ subscription?: any }>(event)
   const subscription = body?.subscription
 
-  if (!subscription || !subscription.endpoint) {
+  if (!esSuscripcionValida(subscription)) {
     throw createError({ statusCode: 400, statusMessage: 'Se requiere una suscripción push válida.' })
   }
 

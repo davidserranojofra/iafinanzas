@@ -1,4 +1,11 @@
 import Groq from 'groq-sdk'
+import { serverSupabaseUser } from '#supabase/server'
+
+const MODELOS_IA_PERMITIDOS = [
+    'meta-llama/llama-4-scout-17b-16e-instruct',
+    'llama-3.2-11b-vision-preview',
+    'llama-3.2-90b-vision-preview'
+]
 
 const EXTRACTION_PROMPT = `
 Eres un sistema especializado en extracción de datos de tickets y facturas.
@@ -27,8 +34,25 @@ Reglas estrictas:
 `.trim()
 
 export default defineEventHandler(async (event) => {
-    const {groqApiKey} = useRuntimeConfig(event)
+    // 1. Validar autenticación
+    const user = await serverSupabaseUser(event)
+    if (!user) {
+        throw createError({ statusCode: 401, message: 'No autorizado. Debes iniciar sesión.' })
+    }
 
+    // 2. Prevenir DoS por tamaño de payload
+    const contentLength = getHeader(event, 'content-length')
+    if (contentLength && parseInt(contentLength) > 7 * 1024 * 1024) {
+        throw createError({ statusCode: 413, message: 'El archivo es demasiado grande. Límite: 7MB.' })
+    }
+
+    // 3. Validar modelo de IA solicitado
+    const selectedModel = getHeader(event, 'x-ia-model') || 'meta-llama/llama-4-scout-17b-16e-instruct'
+    if (!MODELOS_IA_PERMITIDOS.includes(selectedModel)) {
+        throw createError({ statusCode: 400, message: 'Modelo de IA no permitido.' })
+    }
+
+    const {groqApiKey} = useRuntimeConfig(event)
     const groq = new Groq({apiKey: groqApiKey})
 
     const form = await readMultipartFormData(event)
@@ -39,9 +63,6 @@ export default defineEventHandler(async (event) => {
 
     const mimeType = (imageField.type ?? 'image/jpeg').split(';')[0]
     const base64 = Buffer.from(imageField.data).toString('base64')
-
-    // Obtener modelo seleccionado desde cabeceras
-    const selectedModel = getHeader(event, 'x-ia-model') || 'meta-llama/llama-4-scout-17b-16e-instruct'
 
     try {
         const response = await groq.chat.completions.create({

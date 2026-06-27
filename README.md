@@ -2,7 +2,7 @@
 
 **IAFinanzas** es una app mobile-first PWA de gestión de gastos personales. Permite registrar tickets y facturas de dos formas: escaneando la imagen con IA (extrae automáticamente el comercio, fecha, total, IVA, productos, categoría, método de pago y una nota descriptiva) o rellenando un formulario manual. Los gastos se organizan por categoría, se visualizan con gráficos y se almacenan de forma segura en la nube.
 
-Pensada para usarse desde el móvil como una PWA instalable, con una interfaz limpia basada en el tema Dracula.
+Pensada para usarse desde el móvil como una PWA instalable, con una interfaz limpia basada en el tema Dracula de VS Code.
 
 ---
 
@@ -45,14 +45,14 @@ npm run preview   # previsualizar el build de producción
 
 ### Stack
 
-| Capa | Tecnología |
-|------|-----------|
-| Framework | Nuxt 4 (Vue 3, Composition API) |
-| Estilos | Tailwind CSS v4 con tema Dracula |
-| Base de datos y auth | Supabase (PostgreSQL + GoTrue) |
-| IA | Groq — modelo `meta-llama/llama-4-scout-17b-16e-instruct` |
-| Estado global | Pinia + `useState` de Nuxt |
-| Tipado | TypeScript estricto |
+| Capa                 | Tecnología                                                |
+| -------------------- | --------------------------------------------------------- |
+| Framework            | Nuxt 4 (Vue 3, Composition API)                           |
+| Estilos              | Tailwind CSS v4 con tema Dracula                          |
+| Base de datos y auth | Supabase (PostgreSQL + GoTrue)                            |
+| IA                   | Groq — modelo `meta-llama/llama-4-scout-17b-16e-instruct` |
+| Estado global        | Pinia + `useState` de Nuxt                                |
+| Tipado               | TypeScript estricto                                       |
 
 ### Estructura de directorios
 
@@ -119,48 +119,48 @@ El endpoint vive exclusivamente en el servidor (`server/api/`) y nunca expone la
 
 **Tabla `tickets`**
 
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| `id` | uuid | PK generado por DB |
-| `user_id` | uuid | FK a `auth.users` |
-| `comercio` | text | Nombre del comercio |
-| `fecha` | date | Fecha de la compra |
-| `total` | numeric | Importe total |
-| `iva` | numeric | IVA (opcional) |
-| `categoria` | text | Enum de categorías |
-| `metodo_pago` | text | Método de pago |
-| `notas` | text | Observaciones |
-| `image_url` | text | URL en Supabase Storage |
-| `items` | jsonb | Líneas de productos |
-| `extracted_by_ai` | boolean | Si fue extraído por IA |
-| `ai_confidence` | numeric | Confianza del modelo (0–1) |
-| `created_at` | timestamptz | Timestamp automático |
+| Columna           | Tipo        | Descripción                |
+| ----------------- | ----------- | -------------------------- |
+| `id`              | uuid        | PK generado por DB         |
+| `user_id`         | uuid        | FK a `auth.users`          |
+| `comercio`        | text        | Nombre del comercio        |
+| `fecha`           | date        | Fecha de la compra         |
+| `total`           | numeric     | Importe total              |
+| `iva`             | numeric     | IVA (opcional)             |
+| `categoria`       | text        | Enum de categorías         |
+| `metodo_pago`     | text        | Método de pago             |
+| `notas`           | text        | Observaciones              |
+| `image_url`       | text        | URL en Supabase Storage    |
+| `items`           | jsonb       | Líneas de productos        |
+| `extracted_by_ai` | boolean     | Si fue extraído por IA     |
+| `ai_confidence`   | numeric     | Confianza del modelo (0–1) |
+| `created_at`      | timestamptz | Timestamp automático       |
 
 **Tabla `profiles`**
 
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| `id` | uuid | FK a `auth.users` |
-| `nombre` | text | Nombre del usuario |
+| Columna        | Tipo   | Descripción                            |
+| -------------- | ------ | -------------------------------------- |
+| `id`           | uuid   | FK a `auth.users`                      |
+| `nombre`       | text   | Nombre del usuario                     |
 | `metodos_pago` | text[] | Métodos activos (filtra el formulario) |
-| `divisa` | text | Divisa preferida |
-| `avatar_url` | text | URL del avatar |
+| `divisa`       | text   | Divisa preferida                       |
+| `avatar_url`   | text   | URL del avatar                         |
 
 ### Design system — Paleta Dracula
 
 Los tokens están definidos en `app/assets/css/main.css` bajo `@theme {}` y se usan como clases de Tailwind v4 (`bg-dracula-bg`, `text-dracula-purple`, etc.). **Nunca usar `tailwind.config.ts`** — todo va en el CSS.
 
-| Token | Valor | Uso |
-|-------|-------|-----|
-| `dracula-bg` | `#282a36` | Fondo principal |
-| `dracula-card` | `#44475a` | Tarjetas |
-| `dracula-card2` | `#383a4a` | Tarjetas secundarias / sheets |
-| `dracula-text` | `#f8f8f2` | Texto principal |
-| `dracula-muted` | `#6272a4` | Texto secundario |
-| `dracula-purple` | `#bd93f9` | Acento principal |
-| `dracula-pink` | `#ff79c6` | Acento secundario |
-| `dracula-green` | `#50fa7b` | Éxito, IA |
-| `dracula-cyan` | `#8be9fd` | Info, monospace |
+| Token            | Valor     | Uso                           |
+| ---------------- | --------- | ----------------------------- |
+| `dracula-bg`     | `#282a36` | Fondo principal               |
+| `dracula-card`   | `#44475a` | Tarjetas                      |
+| `dracula-card2`  | `#383a4a` | Tarjetas secundarias / sheets |
+| `dracula-text`   | `#f8f8f2` | Texto principal               |
+| `dracula-muted`  | `#6272a4` | Texto secundario              |
+| `dracula-purple` | `#bd93f9` | Acento principal              |
+| `dracula-pink`   | `#ff79c6` | Acento secundario             |
+| `dracula-green`  | `#50fa7b` | Éxito, IA                     |
+| `dracula-cyan`   | `#8be9fd` | Info, monospace               |
 
 Gradiente de acento: `linear-gradient(135deg, #bd93f9, #ff79c6)` — FAB, botones primarios, avatares.
 
@@ -168,14 +168,14 @@ Gradiente de acento: `linear-gradient(135deg, #bd93f9, #ff79c6)` — FAB, botone
 
 Iconos generados con `@vite-pwa/assets-generator` desde `public/logo_IAFianza.png`. Configuración en `nuxt.config.ts` — display `standalone` (muestra barra de estado del SO, oculta la UI del browser).
 
-| Archivo | Uso |
-|---|---|
-| `favicon.ico` | Browser tab |
-| `pwa-64x64.png` | Manifest pequeño |
-| `pwa-192x192.png` | Android home screen |
-| `pwa-512x512.png` | Android splash + install |
-| `maskable-icon-512x512.png` | Android adaptive icon |
-| `apple-touch-icon-180x180.png` | iOS "Añadir a inicio" |
+| Archivo                        | Uso                      |
+| ------------------------------ | ------------------------ |
+| `favicon.ico`                  | Browser tab              |
+| `pwa-64x64.png`                | Manifest pequeño         |
+| `pwa-192x192.png`              | Android home screen      |
+| `pwa-512x512.png`              | Android splash + install |
+| `maskable-icon-512x512.png`    | Android adaptive icon    |
+| `apple-touch-icon-180x180.png` | iOS "Añadir a inicio"    |
 
 Para regenerar iconos:
 
@@ -197,19 +197,19 @@ npx pwa-assets-generator --config pwa-assets.config.ts
 
 ### Rutas
 
-| Ruta | Auth | Descripción |
-|------|------|-------------|
-| `/login` | público | Login + OAuth |
-| `/dashboard` | privado | Balance y últimos tickets |
-| `/tickets` | privado | Lista con filtros |
-| `/tickets/escanear` | privado | Escaneo con IA |
-| `/tickets/manual` | privado | Formulario manual |
-| `/tickets/[id]` | privado | Detalle, edición y eliminación |
-| `/estadisticas` | privado | Gráficos por período |
-| `/perfil` | privado | Configuración del usuario |
-| `/perfil/datos` | privado | Datos personales |
-| `/perfil/pagos` | privado | Métodos de pago activos |
-| `/perfil/ia` | privado | Preferencias del motor IA |
+| Ruta                | Auth    | Descripción                    |
+| ------------------- | ------- | ------------------------------ |
+| `/login`            | público | Login + OAuth                  |
+| `/dashboard`        | privado | Balance y últimos tickets      |
+| `/tickets`          | privado | Lista con filtros              |
+| `/tickets/escanear` | privado | Escaneo con IA                 |
+| `/tickets/manual`   | privado | Formulario manual              |
+| `/tickets/[id]`     | privado | Detalle, edición y eliminación |
+| `/estadisticas`     | privado | Gráficos por período           |
+| `/perfil`           | privado | Configuración del usuario      |
+| `/perfil/datos`     | privado | Datos personales               |
+| `/perfil/pagos`     | privado | Métodos de pago activos        |
+| `/perfil/ia`        | privado | Preferencias del motor IA      |
 
 ---
 

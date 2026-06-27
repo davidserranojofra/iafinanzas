@@ -1,5 +1,5 @@
 import webpush from 'web-push'
-import { serverSupabaseClient } from '#supabase/server'
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 interface FilaPerfil {
   id: string
@@ -13,11 +13,11 @@ interface FilaPerfil {
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
-  const runtimeConfig = useRuntimeConfig()
+  const runtimeConfig = useRuntimeConfig(event)
   
-  // Guard de seguridad por Secret (se puede configurar en .env si se quiere más secreto)
+  // Guard de seguridad por Secret configurado en runtime config
   const cronSecret = query.secret
-  if (!cronSecret || cronSecret !== 'super-cron-secret') {
+  if (!cronSecret || cronSecret !== runtimeConfig.cronSecret) {
     throw createError({ statusCode: 401, statusMessage: 'No autorizado. Se requiere un secret válido.' })
   }
 
@@ -32,8 +32,8 @@ export default defineEventHandler(async (event) => {
 
   webpush.setVapidDetails(email, publicKey, privateKey)
 
-  // Cliente de Supabase en el servidor
-  const supabase = await serverSupabaseClient(event)
+  // Cliente de Supabase en el servidor con rol de servicio (bypassa RLS)
+  const supabase = await serverSupabaseServiceRole(event)
 
   // 1. Obtener todos los perfiles que tienen las notificaciones activas
   const { data: perfiles, error: profilesError } = await supabase

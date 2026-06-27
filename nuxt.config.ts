@@ -14,6 +14,7 @@ export default defineNuxtConfig({
         groqApiKey: process.env.NUXT_GROQ_API_KEY || '',
         vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
         vapidEmail: process.env.NUXT_VAPID_EMAIL || '',
+        cronSecret: process.env.NUXT_CRON_SECRET || 'super-cron-secret',
         public: {
             version: pkg.version || '0.1.0',
             vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || '',
