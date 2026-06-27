@@ -19,7 +19,7 @@ export default defineNuxtConfig({
         public: {
             version: pkg.version || '0.1.0',
             vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || '',
-        }
+        },
     },
     pwa: {
         strategies: 'injectManifest',
