@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf-8'))
 
 export default defineNuxtConfig({
+    ssr: false,
     compatibilityDate: '2025-07-15',
     devtools: {enabled: true},
     modules: ['@nuxtjs/supabase', '@vite-pwa/nuxt'],
