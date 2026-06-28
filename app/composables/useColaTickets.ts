@@ -128,6 +128,15 @@ export function useColaTickets() {
       return { sincronizados: 0 }
     }
 
+    // Si hay exactamente 1 lectura por procesar y ningún ticket manual,
+    // redirigimos a la pantalla de escanear para que el usuario lo confirme interactivamente.
+    if (lecturas.length === 1 && pendientes.length === 0) {
+      const lectura = lecturas[0]
+      sincronizandoCola.value = false
+      await navigateTo(`/tickets/escanear?from_offline_id=${lectura.id}`)
+      return { sincronizados: 0 }
+    }
+
     sincronizandoCola.value = true
     let sincronizadosTotal = 0
 
@@ -217,7 +226,7 @@ export function useColaTickets() {
                 iva: raw.iva != null ? Number(raw.iva) : undefined,
                 categoria: raw.categoria || 'Otro',
                 metodoPago: raw.metodo_pago ?? raw.metodoPago ?? undefined,
-                notas: raw.notas ?? 'Procesado automáticamente desde la cola offline.',
+                notas: `🤖 [Auto] ` + (raw.notas ?? 'Procesado automáticamente desde la cola offline.'),
                 imageUrl,
                 items: Array.isArray(raw.items) ? raw.items : [],
                 extractedByAI: true,
@@ -295,6 +304,13 @@ export function useColaTickets() {
       estadoRed.value = 'offline'
     }
 
+    const manejarVisibilidad = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        estadoRed.value = 'online'
+        void sincronizarCola()
+      }
+    }
+
     const manejarMensajeWorker = (event: MessageEvent<{ type?: string }>) => {
       if (event.data?.type === 'cola-tickets-actualizada') {
         void actualizarTicketsPendientes()
@@ -306,6 +322,7 @@ export function useColaTickets() {
 
     window.addEventListener('online', manejarOnline)
     window.addEventListener('offline', manejarOffline)
+    document.addEventListener('visibilitychange', manejarVisibilidad)
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', manejarMensajeWorker)

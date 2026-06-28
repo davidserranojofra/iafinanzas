@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import type { CreateTicketDto } from '~/types'
+import { eliminarLecturaPendiente, listarLecturasPendientes } from '~/composables/useColaLecturasDb'
 
 definePageMeta({ middleware: 'auth' })
 
 const { phase, progress, result, errorMsg, extract, reset } = useAIExtraction()
 const { createTicket } = useTickets()
-const { encolarTicket, estadoRed } = useColaTickets()
+const { encolarTicket, estadoRed, actualizarTicketsPendientes } = useColaTickets()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
+const route = useRoute()
 
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
 const preview = ref<string | null>(null)
@@ -53,6 +55,29 @@ const { pending: loadingMetodos } = useAsyncData(
 )
 
 onMounted(async () => {
+  if (import.meta.client) {
+    const savedAuto = localStorage.getItem('ia_auto_categoria')
+    if (savedAuto !== null) autoCategoria.value = savedAuto === 'true'
+
+    const savedConfianza = localStorage.getItem('ia_min_confidence')
+    if (savedConfianza !== null) confianzaMinima.value = parseFloat(savedConfianza)
+
+    const savedNotas = localStorage.getItem('ia_sugerir_notas')
+    if (savedNotas !== null) sugerirNotas.value = savedNotas === 'true'
+  }
+
+  const fromOfflineId = route.query.from_offline_id as string | undefined
+  if (fromOfflineId) {
+    const lecturas = await listarLecturasPendientes()
+    const lectura = lecturas.find(l => l.id === fromOfflineId)
+    if (lectura) {
+      selectedFile.value = lectura.file as File
+      preview.value = URL.createObjectURL(lectura.file)
+      extract(lectura.file as File)
+    }
+    return
+  }
+
   if (pendingFile.value) {
     const file = pendingFile.value
     pendingFile.value = null
@@ -75,17 +100,6 @@ onMounted(async () => {
     selectedFile.value = file
     preview.value = URL.createObjectURL(file)
     extract(file)
-  }
-
-  if (import.meta.client) {
-    const savedAuto = localStorage.getItem('ia_auto_categoria')
-    if (savedAuto !== null) autoCategoria.value = savedAuto === 'true'
-
-    const savedConfianza = localStorage.getItem('ia_min_confidence')
-    if (savedConfianza !== null) confianzaMinima.value = parseFloat(savedConfianza)
-
-    const savedNotas = localStorage.getItem('ia_sugerir_notas')
-    if (savedNotas !== null) sugerirNotas.value = savedNotas === 'true'
   }
 })
 
@@ -188,6 +202,11 @@ async function save() {
       extractedByAI:  true,
       aiConfidence:   result.value.confianza,
     })
+
+    if (route.query.from_offline_id) {
+      await eliminarLecturaPendiente(String(route.query.from_offline_id))
+      await actualizarTicketsPendientes()
+    }
 
     await navigateTo(`/tickets/${ticket.id}`, { replace: true })
   } catch (e: unknown) {

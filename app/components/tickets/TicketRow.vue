@@ -48,7 +48,8 @@ const formattedDate = computed(() => {
     <!-- Total -->
     <div class="flex flex-col items-end shrink-0">
       <span class="text-sm font-bold text-dracula-text">{{ ticket.total.toFixed(2) }} €</span>
-      <span v-if="ticket.extractedByAI" class="text-xs text-dracula-green mt-0.5">IA ✓</span>
+      <span v-if="ticket.notas?.includes('[Auto]')" class="text-xs text-dracula-purple mt-0.5">Auto ✓</span>
+      <span v-else-if="ticket.extractedByAI" class="text-xs text-dracula-green mt-0.5">IA ✓</span>
     </div>
   </button>
 </template>
