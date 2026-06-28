@@ -10,6 +10,11 @@ export default defineNuxtConfig({
     modules: ['@nuxtjs/supabase', '@vite-pwa/nuxt'],
     supabase: {
         redirect: false,
+        cookieOptions: {
+            maxAge: 60 * 60 * 24 * 30, // 30 días
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+        }
     },
     runtimeConfig: {
         groqApiKey: process.env.NUXT_GROQ_API_KEY || '',

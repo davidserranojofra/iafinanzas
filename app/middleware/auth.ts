@@ -6,12 +6,18 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
+  let sessionExists = false
   if (!user.value) {
     const supabase = useSupabaseClient()
-    await supabase.auth.getSession()
+    const { data } = await supabase.auth.getSession()
+    if (data?.session) {
+      sessionExists = true
+    }
+  } else {
+    sessionExists = true
   }
 
-  if (!user.value) {
+  if (!sessionExists) {
     return navigateTo('/login')
   }
 })
