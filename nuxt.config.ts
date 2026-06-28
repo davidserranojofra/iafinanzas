@@ -7,7 +7,10 @@ export default defineNuxtConfig({
     ssr: false,
     compatibilityDate: '2025-07-15',
     devtools: {enabled: true},
-    modules: ['@nuxtjs/supabase', '@vite-pwa/nuxt'],
+    modules: [
+        '@nuxtjs/supabase',
+        ...(!process.env.VITEST ? ['@vite-pwa/nuxt'] : [])
+    ],
     supabase: {
         redirect: false,
         cookieOptions: {

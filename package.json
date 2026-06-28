@@ -9,7 +9,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@google/genai": "^1.50.1",
@@ -30,10 +32,15 @@
     "workbox-routing": "^7.4.1"
   },
   "devDependencies": {
+    "@nuxt/test-utils": "^4.0.3",
     "@types/web-push": "^3.6.4",
     "@vite-pwa/assets-generator": "^1.0.2",
     "@vite-pwa/nuxt": "^1.1.1",
     "@vue/language-core": "^3.2.8",
-    "pinia": "^3.0.4"
+    "@vue/test-utils": "^2.4.11",
+    "fake-indexeddb": "^6.2.5",
+    "happy-dom": "^20.10.6",
+    "pinia": "^3.0.4",
+    "vitest": "^4.1.9"
   }
 }
