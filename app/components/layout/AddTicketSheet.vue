@@ -2,6 +2,7 @@
 const show = useState('show-nuevo-sheet', () => false)
 const pendingFile = useState<File | null>('pending-scan-file', () => null)
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
+const isAndroid = useState('is-android', () => false)
 
 function close() {
   show.value = false
@@ -12,7 +13,18 @@ function goTo(path: string) {
   navigateTo(path)
 }
 
+function triggerPicker(useCamera: boolean) {
+  if (!fileInput.value) return
+  if (useCamera) {
+    fileInput.value.setAttribute('capture', 'environment')
+  } else {
+    fileInput.value.removeAttribute('capture')
+  }
+  fileInput.value.click()
+}
+
 function openCamera() {
+  fileInput.value?.removeAttribute('capture')
   fileInput.value?.click()
 }
 
@@ -44,25 +56,66 @@ function onFileSelected(e: Event) {
         <p class="text-sm text-dracula-muted mb-6">¿Cómo querés registrarlo?</p>
 
         <div class="flex flex-col gap-3">
-          <button
-            class="flex items-center gap-4 p-4 rounded-2xl border w-full text-left transition-colors active:opacity-80"
-            style="background: rgba(80,250,123,0.08); border-color: rgba(80,250,123,0.3)"
-            @click="openCamera"
-          >
-            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0" style="background: rgba(80,250,123,0.15)">
-              📸
-            </div>
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <p class="text-sm font-semibold text-dracula-text">Escanear con IA</p>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-dracula-green/20 text-dracula-green">RECOMENDADO</span>
+          <template v-if="isAndroid">
+            <button
+              class="flex items-center gap-4 p-4 rounded-2xl border w-full text-left transition-colors active:opacity-80"
+              style="background: rgba(80,250,123,0.08); border-color: rgba(80,250,123,0.3)"
+              @click="triggerPicker(true)"
+            >
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0" style="background: rgba(80,250,123,0.15)">
+                📸
               </div>
-              <p class="text-xs text-dracula-muted mt-0.5">Sacá una foto y la IA extrae los datos automáticamente</p>
-            </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-green shrink-0">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-semibold text-dracula-text">Sacar foto con cámara (IA)</p>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-dracula-green/20 text-dracula-green">RECOMENDADO</span>
+                </div>
+                <p class="text-xs text-dracula-muted mt-0.5">Sacá una foto y la IA extrae los datos automáticamente</p>
+              </div>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-green shrink-0">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+
+            <button
+              class="flex items-center gap-4 p-4 rounded-2xl border w-full text-left transition-colors active:opacity-80"
+              style="background: rgba(80,250,123,0.08); border-color: rgba(80,250,123,0.3)"
+              @click="triggerPicker(false)"
+            >
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0" style="background: rgba(80,250,123,0.15)">
+                🖼️
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-dracula-text">Subir de galería (IA)</p>
+                <p class="text-xs text-dracula-muted mt-0.5">Seleccioná una imagen de tu galería para procesar con IA</p>
+              </div>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-green shrink-0">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </template>
+
+          <template v-else>
+            <button
+              class="flex items-center gap-4 p-4 rounded-2xl border w-full text-left transition-colors active:opacity-80"
+              style="background: rgba(80,250,123,0.08); border-color: rgba(80,250,123,0.3)"
+              @click="openCamera"
+            >
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0" style="background: rgba(80,250,123,0.15)">
+                📸
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-semibold text-dracula-text">Escanear con IA</p>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-dracula-green/20 text-dracula-green">RECOMENDADO</span>
+                </div>
+                <p class="text-xs text-dracula-muted mt-0.5">Sacá una foto y la IA extrae los datos automáticamente</p>
+              </div>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dracula-green shrink-0">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </template>
 
           <button
             class="flex items-center gap-4 p-4 rounded-2xl bg-dracula-card border border-dracula-muted/20 w-full text-left transition-colors active:opacity-80"
