@@ -146,5 +146,6 @@ const router = useRouter()
       </div>
 
     </div>
+    <LayoutAvisoInstalacion />
   </div>
 </template>

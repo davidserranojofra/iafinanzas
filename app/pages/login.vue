@@ -197,5 +197,6 @@ async function loginWithGoogle() {
         </button>
       </p>
     </div>
+    <LayoutAvisoInstalacion />
   </div>
 </template>
