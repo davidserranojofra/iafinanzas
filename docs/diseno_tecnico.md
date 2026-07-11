@@ -86,6 +86,19 @@ El sistema implementa de forma prioritaria el soporte dinámico para Modo Oscuro
 #### Controles de Usuario
 *   Ubicados en la cabecera de la sección Perfil (`/perfil`), representados por un switch de botones con iconos de Sol (Sun) y Luna (Moon) con transiciones suaves de color.
 
+### Flujo de Instalación PWA Híbrido (Android/iOS)
+La aplicación implementa un sistema inteligente para incitar la instalación de la PWA según el sistema operativo del usuario, evitando molestar a quienes ya la tienen instalada.
+
+#### Mecánica de Detección e Instalación
+1.  **Detección de Instalación (Standalone):** El composable [usePwaInstaller.ts](file:///C:/Users/david/Documents/Icnea/cartera/app/composables/usePwaInstaller.ts) verifica si el entorno de visualización ya está en modo autónomo (`display-mode: standalone` o `navigator.standalone` en iOS). Si se cumple, oculta cualquier aviso.
+2.  **Android (Instalación Nativa):** Intercepta el evento `beforeinstallprompt` provisto por Chrome, almacenando la llamada reactivamente y habilitando el botón **"Instalar aplicación"** en la interfaz para abrir el diálogo nativo del sistema.
+3.  **iOS / iPhone (Instalación Guiada):** Al no disponer de eventos de instalación programáticos en iOS, se detecta el User Agent de Apple y se muestra un panel guía al pie que indica los pasos de Safari: pulsar el botón de compartir e indicar **"Añadir a la pantalla de inicio"**.
+4.  **Control de Molestias (Fricción):** El descarte del aviso (click en cerrar) almacena el timestamp actual en `localStorage` bajo la clave `pwa-install-dismissed`, bloqueando el aviso durante las siguientes 24 horas para mantener la experiencia de usuario limpia.
+
+#### Componente e Inyección
+*   **Componente:** [AvisoInstalacion.vue](file:///C:/Users/david/Documents/Icnea/cartera/app/components/layout/AvisoInstalacion.vue) envuelto en `<ClientOnly>` para eludir fallos de hydration.
+*   **Ubicación:** Inyectado de manera fija en [login.vue](file:///C:/Users/david/Documents/Icnea/cartera/app/pages/login.vue) (posición inferior `bottom-6`) y en [index.vue](file:///C:/Users/david/Documents/Icnea/cartera/app/pages/dashboard/index.vue) (posición flotante `bottom-24` para no solaparse con la barra de navegación).
+
 ---
 
 ## 5. Componentes Técnicos y Estructura del Código
