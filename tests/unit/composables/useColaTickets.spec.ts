@@ -72,6 +72,24 @@ describe('useColaTickets', () => {
       error: null
     })
 
+    // En el beforeEach, añade stubs de Supabase Storage:
+    mockSupabase.storage = {
+      from: vi.fn(() => ({
+        upload: vi.fn().mockResolvedValue({ data: { path: 'path' }, error: null }),
+        getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://supabase.co/storage/v1/object/public/tickets/mock-path.jpg' } })),
+      }))
+    } as any
+
+    // Stub global de $fetch:
+    const mockDollarFetch = vi.fn().mockResolvedValue({
+      comercio: 'Mercadona',
+      total: 25.5,
+      categoria: 'alimentacion',
+      confianza: 0.95,
+      idsSincronizados: ['l-100']
+    })
+    vi.stubGlobal('$fetch', mockDollarFetch)
+
     // Reseteamos estados compartidos de Nuxt (useState)
     const { estadoRed, ticketsPendientes, lecturasPendientes, sincronizandoCola, mensajeCola } = useColaTickets()
     estadoRed.value = 'online'
@@ -172,5 +190,36 @@ describe('useColaTickets', () => {
 
     // Debe mostrarse el aviso correspondiente
     expect(mensajeCola.value).toContain('Tu sesión venció')
+  })
+
+  it('debería encolar una lectura de imagen offline y procesarla/sincronizarla exitosamente en segundo plano al estar online', async () => {
+    const { encolarLectura, sincronizarCola, lecturasPendientes } = useColaTickets()
+
+    // 1. Encolar offline
+    vi.stubGlobal('navigator', { ...navigator, onLine: false })
+    const { estadoRed } = useColaTickets()
+    estadoRed.value = 'offline'
+
+    const mockFile = new File(['image-bytes'], 'recibo.png', { type: 'image/png' })
+    const id = 'l-100'
+
+    await encolarLectura(mockFile, 'user-123', id)
+
+    // Comprobar que está encolado
+    const { contarLecturasPendientes } = await import('~/composables/useColaLecturasDb')
+    expect(await contarLecturasPendientes()).toBe(1)
+    expect(lecturasPendientes.value).toBe(1)
+
+    // 2. Simular recuperación de conexión
+    vi.stubGlobal('navigator', { ...navigator, onLine: true })
+    estadoRed.value = 'online'
+
+    // Ejecutar sincronización
+    const result = await sincronizarCola()
+    expect(result.sincronizados).toBe(1)
+
+    // La lectura debió ser eliminada de la cola local tras éxito
+    expect(await contarLecturasPendientes()).toBe(0)
+    expect(lecturasPendientes.value).toBe(0)
   })
 })

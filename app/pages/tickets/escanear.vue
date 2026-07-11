@@ -6,7 +6,7 @@ definePageMeta({ middleware: 'auth' })
 
 const { phase, progress, result, errorMsg, extract, reset } = useAIExtraction()
 const { createTicket } = useTickets()
-const { encolarTicket, estadoRed, actualizarTicketsPendientes } = useColaTickets()
+const { encolarTicket, encolarLectura, estadoRed, actualizarTicketsPendientes } = useColaTickets()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const route = useRoute()
@@ -83,10 +83,15 @@ onMounted(async () => {
     pendingFile.value = null
     
     if (estadoRed.value === 'offline') {
-      if (user.value?.id) {
+      let userId = user.value?.id
+      if (!userId) {
+        const { data } = await supabase.auth.getSession()
+        userId = data?.session?.user?.id
+      }
+      if (userId) {
         saving.value = true
         try {
-          await encolarLectura(file, user.value.id)
+          await encolarLectura(file, userId)
           await navigateTo('/tickets', { replace: true })
         } catch (err) {
           console.error('[escanear] Error encolando lectura offline en onMounted:', err)
@@ -143,10 +148,15 @@ async function onFileSelected(e: Event) {
   if (!file) return
 
   if (estadoRed.value === 'offline') {
-    if (!user.value?.id) return
+    let userId = user.value?.id
+    if (!userId) {
+      const { data } = await supabase.auth.getSession()
+      userId = data?.session?.user?.id
+    }
+    if (!userId) return
     saving.value = true
     try {
-      await encolarLectura(file, user.value.id)
+      await encolarLectura(file, userId)
       await navigateTo('/tickets', { replace: true })
     } catch (err) {
       console.error('[escanear] Error encolando lectura offline en onFileSelected:', err)

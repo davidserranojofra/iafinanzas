@@ -1,7 +1,7 @@
 import { openDB } from 'idb'
 
 export const NOMBRE_DB_OFFLINE = 'iafianza-offline-db'
-export const VERSION_DB_OFFLINE = 4
+export const VERSION_DB_OFFLINE = 5
 export const ALMACEN_TICKETS_PENDIENTES = 'tickets-pendientes'
 export const ALMACEN_SNAPSHOTS_TICKETS = 'tickets-snapshots'
 export const ALMACEN_LECTURAS_PENDIENTES = 'lecturas-pendientes'

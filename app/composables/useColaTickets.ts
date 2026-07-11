@@ -88,9 +88,12 @@ export function useColaTickets() {
   }
 
   async function encolarLectura(file: File | Blob, userId: string, id = crypto.randomUUID()) {
+    // Convertir File a Blob plano para evitar DataCloneError al serializar en IndexedDB (iOS/Android)
+    const fileBlob = file instanceof File ? new Blob([file], { type: file.type }) : file
+
     await guardarLecturaPendiente({
       id,
-      file,
+      file: fileBlob,
       fileName: file instanceof File ? file.name : `ticket-${id}.jpg`,
       fileType: file.type || 'image/jpeg',
       creadoEn: new Date().toISOString(),
@@ -290,21 +293,9 @@ export function useColaTickets() {
   async function inicializarCola() {
     if (!import.meta.client || colaInicializada.value) return
 
-    let timerOnline: ReturnType<typeof setTimeout> | null = null
-
     const manejarOnline = () => {
       estadoRed.value = 'online'
-      if (timerOnline) clearTimeout(timerOnline)
-      
-      mensajeCola.value = 'Conexión recuperada. Sincronizando en 2 segundos...'
-      
-      timerOnline = setTimeout(() => {
-        if (navigator.onLine) {
-          void sincronizarCola()
-        } else {
-          mensajeCola.value = null
-        }
-      }, 2000)
+      void sincronizarCola()
     }
 
     const manejarOffline = () => {
