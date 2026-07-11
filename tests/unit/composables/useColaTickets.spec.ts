@@ -9,6 +9,7 @@ const mockSupabase = {
   auth: {
     getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
     getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    refreshSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
     onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
   },
   storage: {
@@ -63,6 +64,10 @@ describe('useColaTickets', () => {
     })
 
     // Valores por defecto para Supabase
+    mockSupabase.auth.refreshSession.mockResolvedValue({
+      data: { session: { user: { id: 'user-123' } } },
+      error: null
+    })
     mockSupabase.auth.getSession.mockResolvedValue({
       data: { session: { user: { id: 'user-123' } } },
       error: null
@@ -166,6 +171,10 @@ describe('useColaTickets', () => {
 
   it('no debería eliminar el ticket de la cola local si la sesión de Supabase ha caducado', async () => {
     // Simulamos sesión vencida en Supabase
+    mockSupabase.auth.refreshSession.mockResolvedValue({
+      data: { session: null },
+      error: null
+    })
     mockSupabase.auth.getSession.mockResolvedValue({
       data: { session: null },
       error: null

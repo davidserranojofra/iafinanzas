@@ -135,12 +135,24 @@ export function useColaTickets() {
     let sincronizadosTotal = 0
 
     try {
-      const { data: sesionData, error: sesionError } = await supabase.auth.getSession()
+      // Intentar refrescar la sesión para forzar la actualización de las cookies en el navegador
+      let session = null
+      try {
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
+        if (!refreshError && refreshData.session) {
+          session = refreshData.session
+        }
+      } catch (err) {
+        console.warn('[useColaTickets] Error al refrescar sesión, intentando getSession:', err)
+      }
 
-      if (sesionError) throw sesionError
-      if (!sesionData.session) {
-        mensajeCola.value = 'Tu sesión venció. Volvé a iniciar sesión para sincronizar los tickets pendientes.'
-        return { sincronizados: 0, requiereSesion: true }
+      if (!session) {
+        const { data: sesionData, error: sesionError } = await supabase.auth.getSession()
+        if (sesionError) throw sesionError
+        if (!sesionData.session) {
+          mensajeCola.value = 'Tu sesión venció. Volvé a iniciar sesión para sincronizar los tickets pendientes.'
+          return { sincronizados: 0, requiereSesion: true }
+        }
       }
 
       // 1. Sincronizar primero los tickets ya procesados
@@ -249,8 +261,11 @@ export function useColaTickets() {
               sincronizadosTotal++
             }
 
-          } catch (procError) {
+          } catch (procError: any) {
             console.error('[useColaTickets] Error en proceso de lectura offline:', procError)
+            const errorMsg = procError instanceof Error ? procError.message : String(procError)
+            mensajeCola.value = `Error en sincronización: ${errorMsg}`
+            
             if (esErrorDeRed(procError)) {
               await registrarSincronizacionBackground()
               break // Detenemos la cola temporalmente si hay error de red
@@ -276,12 +291,13 @@ export function useColaTickets() {
       }
 
       return { sincronizados: sincronizadosTotal }
-    } catch (error) {
+    } catch (error: any) {
+      const errorMsg = error instanceof Error ? error.message : String(error)
       if (esErrorDeRed(error)) {
         await registrarSincronizacionBackground()
         mensajeCola.value = 'Conexión inestable. Se reintentará al recuperar cobertura.'
       } else {
-        mensajeCola.value = 'Error al sincronizar. Volvé a intentar.'
+        mensajeCola.value = `Error al sincronizar: ${errorMsg}`
       }
 
       return { sincronizados: 0, error }
