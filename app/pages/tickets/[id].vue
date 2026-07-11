@@ -491,8 +491,9 @@ function downloadPNG() {
 
         <div class="overflow-y-auto flex-1 px-4 pb-10 flex flex-col gap-4">
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Comercio</label>
+            <label for="edit-comercio-input" class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Comercio</label>
             <input
+              id="edit-comercio-input"
               v-model="editForm.comercio"
               type="text"
               class="w-full bg-dracula-bg rounded-2xl px-4 py-3.5 text-sm text-dracula-text border border-dracula-muted/20 focus:border-dracula-purple focus:outline-none transition-colors"
@@ -500,8 +501,9 @@ function downloadPNG() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Fecha</label>
+            <label for="edit-fecha-input" class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Fecha</label>
             <input
+              id="edit-fecha-input"
               v-model="editForm.fecha"
               type="date"
               class="w-full bg-dracula-bg rounded-2xl px-4 py-3.5 text-sm text-dracula-text border border-dracula-muted/20 focus:border-dracula-purple focus:outline-none transition-colors appearance-none"
@@ -509,10 +511,11 @@ function downloadPNG() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Total</label>
+            <label for="edit-total-input" class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Total</label>
             <div class="relative">
               <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-dracula-muted">€</span>
               <input
+                id="edit-total-input"
                 v-model="editForm.total"
                 type="number"
                 min="0"
@@ -531,6 +534,7 @@ function downloadPNG() {
                 type="button"
                 class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
                 :class="editForm.categoria === cat ? 'bg-dracula-purple text-dracula-bg' : 'bg-dracula-bg text-dracula-muted'"
+                :aria-pressed="editForm.categoria === cat ? 'true' : 'false'"
                 @click="editForm.categoria = cat"
               >
                 {{ cat }}
@@ -550,6 +554,7 @@ function downloadPNG() {
                 type="button"
                 class="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
                 :class="editForm.metodoPago === m ? 'bg-dracula-muted text-dracula-text' : 'bg-dracula-bg text-dracula-muted'"
+                :aria-pressed="editForm.metodoPago === m ? 'true' : 'false'"
                 @click="editForm.metodoPago = editForm.metodoPago === m ? '' : m"
               >
                 {{ m }}
@@ -558,8 +563,9 @@ function downloadPNG() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Notas</label>
+            <label for="edit-notas-input" class="text-xs font-semibold uppercase tracking-wider text-dracula-muted">Notas</label>
             <textarea
+              id="edit-notas-input"
               v-model="editForm.notas"
               rows="3"
               class="w-full bg-dracula-bg rounded-2xl px-4 py-3.5 text-sm text-dracula-text border border-dracula-muted/20 focus:border-dracula-purple focus:outline-none transition-colors resize-none"

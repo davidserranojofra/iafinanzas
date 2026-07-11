@@ -8,8 +8,8 @@ defineProps<{
 
 <template>
   <header class="flex items-center justify-between px-4 pt-safe pb-3 min-h-[56px]">
-    <button v-if="showBack" class="flex items-center justify-center w-10 h-10 rounded-2xl bg-dracula-card2 text-dracula-text" @click="$router.back()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <button v-if="showBack" aria-label="Volver" class="flex items-center justify-center w-10 h-10 rounded-2xl bg-dracula-card2 text-dracula-text" @click="$router.back()">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"/>
       </svg>
     </button>
