@@ -5,9 +5,10 @@ interface TicketSincronizable extends CreateTicketDto {
   id: string
 }
 
-function aFilaTicket(ticket: TicketSincronizable) {
+function aFilaTicket(ticket: TicketSincronizable, userId: string) {
   return {
     id: ticket.id,
+    user_id: userId,
     comercio: ticket.comercio,
     fecha: ticket.fecha,
     total: ticket.total,
@@ -53,7 +54,7 @@ export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient(event)
   const { data, error } = await supabase
     .from('tickets')
-    .upsert(tickets.map(aFilaTicket) as never, { onConflict: 'id' })
+    .upsert(tickets.map(t => aFilaTicket(t, user.id)) as never, { onConflict: 'id' })
     .select('id')
 
   if (error) {
