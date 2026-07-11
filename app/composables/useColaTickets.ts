@@ -12,6 +12,35 @@ import {
   eliminarLecturaPendiente,
 } from './useColaLecturasDb'
 
+const CATEGORIA_MAP: Record<string, any> = {
+  'alimentación': 'Alimentación',
+  'alimentacion': 'Alimentación',
+  'transporte':   'Transporte',
+  'salud':        'Salud',
+  'tecnología':   'Tecnología',
+  'tecnologia':   'Tecnología',
+  'ropa':         'Ropa',
+  'hogar':        'Hogar',
+  'entretenimiento': 'Ocio',
+  'ocio':         'Ocio',
+  'restaurante':  'Restaurantes',
+  'restaurantes': 'Restaurantes',
+  'suscripciones':'Suscripciones',
+  'cuidado personal': 'Cuidado Personal',
+  'cuidado_personal': 'Cuidado Personal',
+  'estética': 'Cuidado Personal',
+  'estetica': 'Cuidado Personal',
+  'peluquería': 'Cuidado Personal',
+  'peluqueria': 'Cuidado Personal',
+  'otro':         'Otro',
+}
+
+function mapCategoria(raw: unknown): string {
+  if (!raw) return 'Otro'
+  const key = String(raw).toLowerCase().trim()
+  return CATEGORIA_MAP[key] ?? 'Otro'
+}
+
 type EstadoRed = 'online' | 'offline'
 
 interface RegistroConSync extends ServiceWorkerRegistration {
@@ -225,7 +254,7 @@ export function useColaTickets() {
                 fecha: String(raw.fecha ?? new Date().toISOString().slice(0, 10)),
                 total: Number(raw.total ?? 0),
                 iva: raw.iva != null ? Number(raw.iva) : undefined,
-                categoria: raw.categoria || 'Otro',
+                categoria: mapCategoria(raw.categoria),
                 metodoPago: raw.metodo_pago ?? raw.metodoPago ?? undefined,
                 notas: `🤖 [Auto] ` + (raw.notas ?? 'Procesado automáticamente desde la cola offline.'),
                 imageUrl,
@@ -353,6 +382,18 @@ export function useColaTickets() {
     mensajeCola.value = null
   }
 
+  async function vaciarCola() {
+    if (!import.meta.client) return
+    const { abrirBaseOffline } = await import('./useOfflineDb')
+    const db = await abrirBaseOffline()
+    await db.clear('tickets-pendientes')
+    await db.clear('lecturas-pendientes')
+    db.close()
+    
+    await actualizarTicketsPendientes()
+    mensajeCola.value = null
+  }
+
   return {
     estadoRed,
     ticketsPendientes,
@@ -365,5 +406,6 @@ export function useColaTickets() {
     encolarTicket,
     encolarLectura,
     sincronizarCola,
+    vaciarCola,
   }
 }

@@ -7,6 +7,7 @@ const {
   mensajeCola,
   limpiarMensajeCola,
   sincronizarCola,
+  vaciarCola,
 } = useColaTickets()
 
 const route = useRoute()
@@ -56,6 +57,12 @@ const descripcion = computed(() => {
 
   return 'Todo sincronizado.'
 })
+
+function handleDescartar() {
+  if (confirm('¿Estás seguro de que quieres borrar todos los tickets y fotos de la cola offline? Estos cambios se perderán.')) {
+    void vaciarCola()
+  }
+}
 </script>
 
 <template>
@@ -79,13 +86,21 @@ const descripcion = computed(() => {
             {{ descripcion }}
           </p>
 
-          <div v-if="estadoRed === 'online' && (ticketsPendientes > 0 || (lecturasPendientes ?? 0) > 0)" class="mt-3">
+          <div v-if="ticketsPendientes > 0 || (lecturasPendientes ?? 0) > 0" class="mt-3 flex items-center gap-2">
             <button
+              v-if="estadoRed === 'online'"
               class="min-h-[44px] rounded-xl bg-dracula-cyan px-3 py-2 text-xs font-semibold text-dracula-bg transition-opacity disabled:opacity-50"
               :disabled="sincronizandoCola"
               @click="sincronizarCola"
             >
               {{ sincronizandoCola ? 'Sincronizando...' : 'Sincronizar ahora' }}
+            </button>
+            <button
+              class="min-h-[44px] rounded-xl bg-dracula-red/20 border border-dracula-red/35 px-3 py-2 text-xs font-semibold text-dracula-red transition-opacity disabled:opacity-50"
+              :disabled="sincronizandoCola"
+              @click="handleDescartar"
+            >
+              Descartar cola
             </button>
           </div>
         </div>
