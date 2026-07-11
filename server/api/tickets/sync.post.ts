@@ -35,8 +35,10 @@ function esTicketValido(ticket: Partial<TicketSincronizable>): ticket is TicketS
 
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
+  // serverSupabaseUser devuelve los claims del JWT: el id del usuario es `sub`, no `id`
+  const userId = typeof user?.sub === 'string' ? user.sub : null
 
-  if (!user) {
+  if (!userId) {
     throw createError({ statusCode: 401, statusMessage: 'Sesión inválida o expirada.' })
   }
 
@@ -54,7 +56,7 @@ export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient(event)
   const { data, error } = await supabase
     .from('tickets')
-    .upsert(tickets.map(t => aFilaTicket(t, user.id)) as never, { onConflict: 'id' })
+    .upsert(tickets.map(t => aFilaTicket(t, userId)) as never, { onConflict: 'id' })
     .select('id')
 
   if (error) {

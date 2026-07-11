@@ -292,7 +292,11 @@ export function useColaTickets() {
 
           } catch (procError: any) {
             console.error('[useColaTickets] Error en proceso de lectura offline:', procError)
-            const errorMsg = procError instanceof Error ? procError.message : String(procError)
+            // El motivo real del fallo viaja en el body de la respuesta (statusMessage),
+            // no en el mensaje del FetchError, que solo trae "[POST] url: 500"
+            const errorMsg = procError?.data?.statusMessage
+              ?? procError?.data?.message
+              ?? (procError instanceof Error ? procError.message : String(procError))
             mensajeCola.value = `Error en sincronización: ${errorMsg}`
             
             if (esErrorDeRed(procError)) {
