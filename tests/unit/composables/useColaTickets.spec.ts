@@ -128,6 +128,8 @@ describe('useColaTickets', () => {
       categoria: 'Alimentación'
     }
 
+    const { mensajeCola } = useColaTickets()
+
     const id = await encolarTicket(ticket)
     expect(id).toBeDefined()
 
@@ -137,6 +139,9 @@ describe('useColaTickets', () => {
 
     // Verificar que no se llamó a la API remota
     expect(fetchSpy).not.toHaveBeenCalled()
+
+    // El feedback de encolado pasa a ser el chip contador, no un mensaje
+    expect(mensajeCola.value).toBeNull()
   })
 
   it('debería llamar a la API y vaciar la cola local si está online y el servidor responde exitoso', async () => {
@@ -198,7 +203,8 @@ describe('useColaTickets', () => {
     expect(count).toBe(1)
 
     // Debe mostrarse el aviso correspondiente
-    expect(mensajeCola.value).toContain('Tu sesión venció')
+    expect(mensajeCola.value?.tipo).toBe('error')
+    expect(mensajeCola.value?.texto).toContain('Tu sesión venció')
   })
 
   it('debería encolar una lectura de imagen offline y procesarla/sincronizarla exitosamente en segundo plano al estar online', async () => {

@@ -1,4 +1,4 @@
-import type { CreateTicketDto } from '~/types'
+import type { CreateTicketDto, MensajeCola } from '~/types'
 import {
   contarTicketsPendientes,
   guardarTicketPendiente,
@@ -69,7 +69,7 @@ export function useColaTickets() {
   const ticketsPendientes = useState<number>('tickets-pendientes', () => 0)
   const lecturasPendientes = useState<number>('lecturas-pendientes', () => 0)
   const sincronizandoCola = useState<boolean>('sincronizando-cola', () => false)
-  const mensajeCola = useState<string | null>('mensaje-cola', () => null)
+  const mensajeCola = useState<MensajeCola | null>('mensaje-cola', () => null)
   const colaInicializada = useState<boolean>('cola-inicializada', () => false)
 
   async function actualizarTicketsPendientes() {
@@ -105,7 +105,6 @@ export function useColaTickets() {
     })
 
     await actualizarTicketsPendientes()
-    mensajeCola.value = 'Ticket guardado sin conexión. Se va a sincronizar automáticamente.'
 
     await registrarSincronizacionBackground()
 
@@ -130,7 +129,6 @@ export function useColaTickets() {
     })
 
     await actualizarTicketsPendientes()
-    mensajeCola.value = 'Imagen guardada sin conexión. Se procesará automáticamente con IA al recuperar cobertura.'
 
     await registrarSincronizacionBackground()
 
@@ -179,7 +177,7 @@ export function useColaTickets() {
         const { data: sesionData, error: sesionError } = await supabase.auth.getSession()
         if (sesionError) throw sesionError
         if (!sesionData.session) {
-          mensajeCola.value = 'Tu sesión venció. Volvé a iniciar sesión para sincronizar los tickets pendientes.'
+          mensajeCola.value = { tipo: 'error', texto: 'Tu sesión venció. Volvé a iniciar sesión para sincronizar los tickets pendientes.' }
           return { sincronizados: 0, requiereSesion: true }
         }
       }
@@ -198,7 +196,7 @@ export function useColaTickets() {
         })
 
         if (response.status === 401) {
-          mensajeCola.value = 'Tu sesión ya no es válida. Iniciá sesión de nuevo para sincronizar los tickets pendientes.'
+          mensajeCola.value = { tipo: 'error', texto: 'Tu sesión ya no es válida. Iniciá sesión de nuevo para sincronizar los tickets pendientes.' }
           return { sincronizados: 0, requiereSesion: true }
         }
 
@@ -217,7 +215,7 @@ export function useColaTickets() {
       if (lecturas.length > 0) {
         let index = 0
         for (const lectura of lecturas) {
-          mensajeCola.value = `Procesando ticket ${index + 1} de ${lecturas.length} con IA...`
+          mensajeCola.value = { tipo: 'progreso', texto: `Procesando ticket ${index + 1} de ${lecturas.length} con IA...` }
           try {
             // Subir imagen a Supabase Storage
             const ext = lectura.fileName ? (lectura.fileName.split('.').pop() ?? 'jpg') : 'jpg'
@@ -297,7 +295,7 @@ export function useColaTickets() {
             const errorMsg = procError?.data?.statusMessage
               ?? procError?.data?.message
               ?? (procError instanceof Error ? procError.message : String(procError))
-            mensajeCola.value = `Error en sincronización: ${errorMsg}`
+            mensajeCola.value = { tipo: 'error', texto: `Error en sincronización: ${errorMsg}` }
             
             if (esErrorDeRed(procError)) {
               await registrarSincronizacionBackground()
@@ -313,9 +311,12 @@ export function useColaTickets() {
       if (sincronizadosTotal > 0) {
         clearNuxtData('tickets')
         const totalRestantes = ticketsPendientes.value + lecturasPendientes.value
-        mensajeCola.value = totalRestantes > 0
-          ? `Se sincronizaron ${pluralizarTickets(sincronizadosTotal)}. Quedan ${pluralizarTickets(totalRestantes)} pendientes.`
-          : 'Todos los tickets y lecturas pendientes ya se sincronizaron.'
+        mensajeCola.value = {
+          tipo: 'exito',
+          texto: totalRestantes > 0
+            ? `Se sincronizaron ${pluralizarTickets(sincronizadosTotal)}. Quedan ${pluralizarTickets(totalRestantes)} pendientes.`
+            : 'Todos los tickets y lecturas pendientes ya se sincronizaron.',
+        }
       } else {
         const totalRestantes = ticketsPendientes.value + lecturasPendientes.value
         if (totalRestantes === 0) {
@@ -328,9 +329,9 @@ export function useColaTickets() {
       const errorMsg = error instanceof Error ? error.message : String(error)
       if (esErrorDeRed(error)) {
         await registrarSincronizacionBackground()
-        mensajeCola.value = 'Conexión inestable. Se reintentará al recuperar cobertura.'
+        mensajeCola.value = { tipo: 'info', texto: 'Conexión inestable. Se reintentará al recuperar cobertura.' }
       } else {
-        mensajeCola.value = `Error al sincronizar: ${errorMsg}`
+        mensajeCola.value = { tipo: 'error', texto: `Error al sincronizar: ${errorMsg}` }
       }
 
       return { sincronizados: 0, error }

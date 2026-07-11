@@ -75,3 +75,8 @@ export interface ChartDataPoint {
   value: number
   color: string
 }
+
+export interface MensajeCola {
+  tipo: 'progreso' | 'exito' | 'info' | 'error'
+  texto: string
+}
