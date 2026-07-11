@@ -128,15 +128,6 @@ export function useColaTickets() {
       return { sincronizados: 0 }
     }
 
-    // Si hay exactamente 1 lectura por procesar y ningún ticket manual,
-    // redirigimos a la pantalla de escanear para que el usuario lo confirme interactivamente.
-    if (lecturas.length === 1 && pendientes.length === 0) {
-      const lectura = lecturas[0]
-      sincronizandoCola.value = false
-      await navigateTo(`/tickets/escanear?from_offline_id=${lectura.id}`)
-      return { sincronizados: 0 }
-    }
-
     sincronizandoCola.value = true
     let sincronizadosTotal = 0
 
@@ -187,10 +178,12 @@ export function useColaTickets() {
 
       // 2. Procesar lecturas de imágenes offline pendientes con la IA
       if (lecturas.length > 0) {
+        let index = 0
         for (const lectura of lecturas) {
+          mensajeCola.value = `Procesando ticket ${index + 1} de ${lecturas.length} con IA...`
           try {
             // Subir imagen a Supabase Storage
-            const ext = lectura.fileName.split('.').pop() ?? 'jpg'
+            const ext = lectura.fileName ? (lectura.fileName.split('.').pop() ?? 'jpg') : 'jpg'
             const path = `${lectura.userId}/${Date.now()}-${lectura.id}.${ext}`
             const { error: uploadError } = await supabase.storage.from('tickets').upload(path, lectura.file, {
               contentType: lectura.fileType,
@@ -267,6 +260,7 @@ export function useColaTickets() {
               break // Detenemos la cola temporalmente si hay error de red
             }
           }
+          index++
         }
       }
 
@@ -278,6 +272,11 @@ export function useColaTickets() {
         mensajeCola.value = totalRestantes > 0
           ? `Se sincronizaron ${pluralizarTickets(sincronizadosTotal)}. Quedan ${pluralizarTickets(totalRestantes)} pendientes.`
           : 'Todos los tickets y lecturas pendientes ya se sincronizaron.'
+      } else {
+        const totalRestantes = ticketsPendientes.value + lecturasPendientes.value
+        if (totalRestantes === 0) {
+          mensajeCola.value = null
+        }
       }
 
       return { sincronizados: sincronizadosTotal }
@@ -295,9 +294,21 @@ export function useColaTickets() {
   async function inicializarCola() {
     if (!import.meta.client || colaInicializada.value) return
 
+    let timerOnline: ReturnType<typeof setTimeout> | null = null
+
     const manejarOnline = () => {
       estadoRed.value = 'online'
-      void sincronizarCola()
+      if (timerOnline) clearTimeout(timerOnline)
+      
+      mensajeCola.value = 'Conexión recuperada. Sincronizando en 2 segundos...'
+      
+      timerOnline = setTimeout(() => {
+        if (navigator.onLine) {
+          void sincronizarCola()
+        } else {
+          mensajeCola.value = null
+        }
+      }, 2000)
     }
 
     const manejarOffline = () => {

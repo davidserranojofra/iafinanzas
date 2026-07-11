@@ -179,7 +179,7 @@ async function save() {
   try {
     const file = selectedFile.value ?? fileInput.value?.files?.[0]
     if (file && user.value) {
-      const ext = file.name.split('.').pop() ?? 'jpg'
+      const ext = file.name ? (file.name.split('.').pop() ?? 'jpg') : 'jpg'
       const path = `${user.value.id}/${Date.now()}.${ext}`
       const { error } = await supabase.storage.from('tickets').upload(path, file)
       if (!error) {
