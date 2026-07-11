@@ -1,14 +1,15 @@
 <script setup lang="ts">
-const { estadoRed, ticketsPendientes } = useColaTickets()
+const { estadoRed, ticketsPendientes, lecturasPendientes } = useColaTickets()
 
 const visible = computed(() => estadoRed.value === 'offline')
 
 const descripcion = computed(() => {
-  if (ticketsPendientes.value > 0) {
-    return `${ticketsPendientes.value} ticket${ticketsPendientes.value === 1 ? '' : 's'} en cola`
+  const total = ticketsPendientes.value + (lecturasPendientes?.value ?? 0)
+  if (total > 0) {
+    return `${total} cambio${total === 1 ? '' : 's'} guardado${total === 1 ? '' : 's'} en cola`
   }
 
-  return 'guardando cambios localmente'
+  return 'Modo offline activo'
 })
 </script>
 

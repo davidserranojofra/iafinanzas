@@ -140,13 +140,6 @@ export function useColaTickets() {
         return { sincronizados: 0, requiereSesion: true }
       }
 
-      const { data: usuarioData, error: usuarioError } = await supabase.auth.getUser()
-
-      if (usuarioError || !usuarioData.user) {
-        mensajeCola.value = 'No pudimos validar tu sesión. Volvé a iniciar sesión para sincronizar la cola.'
-        return { sincronizados: 0, requiereSesion: true }
-      }
-
       // 1. Sincronizar primero los tickets ya procesados
       if (pendientes.length > 0) {
         const response = await fetch('/api/tickets/sync', {
@@ -283,6 +276,9 @@ export function useColaTickets() {
     } catch (error) {
       if (esErrorDeRed(error)) {
         await registrarSincronizacionBackground()
+        mensajeCola.value = 'Conexión inestable. Se reintentará al recuperar cobertura.'
+      } else {
+        mensajeCola.value = 'Error al sincronizar. Volvé a intentar.'
       }
 
       return { sincronizados: 0, error }
