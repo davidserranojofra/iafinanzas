@@ -6,7 +6,6 @@ const DOMINIOS_PUSH_PERMITIDOS = [
   'updates.push.services.mozilla.com',
   'updates-autopush.stage.mozaws.net',
   'updates-autopush.prod.mozaws.net',
-  'apple.com',
   'push.apple.com',
   'notify.windows.com'
 ]

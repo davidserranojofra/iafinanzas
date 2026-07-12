@@ -23,7 +23,10 @@ export default defineNuxtConfig({
         groqApiKey: process.env.NUXT_GROQ_API_KEY || '',
         vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
         vapidEmail: process.env.NUXT_VAPID_EMAIL || '',
-        cronSecret: process.env.NUXT_CRON_SECRET || 'super-cron-secret',
+        // Vercel Cron solo adjunta el header 'Authorization: Bearer <valor>' si existe
+        // una env var llamada exactamente CRON_SECRET; se lee como fallback para que
+        // una sola variable baste y ambos lados usen siempre el mismo valor
+        cronSecret: process.env.NUXT_CRON_SECRET || process.env.CRON_SECRET || '',
         public: {
             version: pkg.version || '0.1.0',
             vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || '',

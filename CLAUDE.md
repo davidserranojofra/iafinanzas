@@ -21,9 +21,16 @@ Crear un archivo `.env` en la raíz del proyecto:
 NUXT_GROQ_API_KEY=tu_clave_aqui
 SUPABASE_URL=tu_supabase_url
 SUPABASE_KEY=tu_supabase_anon_key
+SUPABASE_SERVICE_KEY=tu_supabase_service_role_key
+NUXT_PUBLIC_VAPID_PUBLIC_KEY=tu_vapid_public_key
+NUXT_VAPID_PRIVATE_KEY=tu_vapid_private_key
+NUXT_VAPID_EMAIL=mailto:tu@email.com
+NUXT_CRON_SECRET=un_secret_aleatorio_largo
 ```
 
-`NUXT_GROQ_API_KEY` se mapea a `runtimeConfig.groqApiKey` (solo servidor). Las variables de Supabase las toma automáticamente `@nuxtjs/supabase`.
+`NUXT_GROQ_API_KEY` se mapea a `runtimeConfig.groqApiKey` (solo servidor). Las variables de Supabase las toma automáticamente `@nuxtjs/supabase` (`SUPABASE_SERVICE_KEY` la usa `serverSupabaseServiceRole` en el cron — nunca exponerla en `runtimeConfig.public`).
+
+Las claves VAPID son para Web Push (`npx web-push generate-vapid-keys`). `NUXT_VAPID_EMAIL` admite email pelado (el servidor le antepone `mailto:`). El secret del cron protege `/api/notifications/send-summary-cron`, que solo acepta el header `Authorization: Bearer <secret>` (nunca por query string). `runtimeConfig.cronSecret` lee `NUXT_CRON_SECRET` o, como fallback, `CRON_SECRET` — en Vercel basta con definir `CRON_SECRET` (es la variable que Vercel Cron adjunta automáticamente como header Bearer).
 
 ## Arquitectura
 

@@ -1,4 +1,4 @@
-import webpush from 'web-push'
+import { createHash, timingSafeEqual } from 'node:crypto'
 import { serverSupabaseServiceRole } from '#supabase/server'
 
 interface FilaPerfil {
@@ -7,30 +7,68 @@ interface FilaPerfil {
   notif_interval_days: number
   notif_summary_type: 'total' | 'categorias'
   notif_categories: Record<string, boolean>
+  notif_hour: number
+  notif_timezone: string
   last_notified_at: string | null
   divisa: string
+}
+
+const TIMEZONE_FALLBACK = 'Europe/Madrid'
+
+// Comparación en tiempo constante sobre digests SHA-256 de ambos valores
+// (evita ataques de timing y el problema de longitudes distintas)
+function compararSecretoSeguro(recibido: string, esperado: string): boolean {
+  const digestRecibido = createHash('sha256').update(recibido).digest()
+  const digestEsperado = createHash('sha256').update(esperado).digest()
+  return timingSafeEqual(digestRecibido, digestEsperado)
+}
+
+// Calcula la hora actual (0-23) en la zona horaria del usuario.
+// Si la timezone guardada es inválida, usa el fallback.
+function horaActualEnTimezone(timezone: string): number {
+  try {
+    return Number(new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric',
+      hour12: false,
+      hourCycle: 'h23'
+    }).format(new Date()))
+  } catch {
+    return Number(new Intl.DateTimeFormat('en-US', {
+      timeZone: TIMEZONE_FALLBACK,
+      hour: 'numeric',
+      hour12: false,
+      hourCycle: 'h23'
+    }).format(new Date()))
+  }
 }
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const runtimeConfig = useRuntimeConfig(event)
-  
-  // Guard de seguridad por Secret configurado en runtime config
-  const cronSecret = query.secret
-  if (!cronSecret || cronSecret !== runtimeConfig.cronSecret) {
+
+  // Guard de seguridad: nunca comparar contra un secret vacío
+  if (!runtimeConfig.cronSecret) {
+    throw createError({ statusCode: 500, statusMessage: 'Cron secret no configurado en el servidor.' })
+  }
+
+  // Autorización: solo header 'Authorization: Bearer <secret>' (mecanismo oficial
+  // de Vercel Cron con la env var CRON_SECRET). No se acepta el secret por query
+  // string: las URLs de un GET quedan registradas en logs y proxies. Para disparos
+  // manuales usar curl con el header Bearer.
+  const authHeader = getHeader(event, 'authorization')
+  const autorizado =
+    typeof authHeader === 'string' &&
+    compararSecretoSeguro(authHeader, `Bearer ${runtimeConfig.cronSecret}`)
+
+  if (!autorizado) {
+    // Log explícito para que el fallo de auth del cron sea visible en los logs de función
+    console.error('Cron de notificaciones: petición no autorizada (header Bearer ausente o secret incorrecto).')
     throw createError({ statusCode: 401, statusMessage: 'No autorizado. Se requiere un secret válido.' })
   }
 
-  // Configurar las credenciales de VAPID para Web Push
-  const email = runtimeConfig.vapidEmail
-  const publicKey = runtimeConfig.public.vapidPublicKey
-  const privateKey = runtimeConfig.vapidPrivateKey
-
-  if (!email || !publicKey || !privateKey) {
-    throw createError({ statusCode: 500, statusMessage: 'Credenciales VAPID no configuradas en el servidor.' })
-  }
-
-  webpush.setVapidDetails(email, publicKey, privateKey)
+  // Configurar las credenciales de VAPID para Web Push (normaliza el subject mailto:)
+  configurarVapid(event)
 
   // Cliente de Supabase en el servidor con rol de servicio (bypassa RLS)
   const supabase = await serverSupabaseServiceRole(event)
@@ -38,7 +76,7 @@ export default defineEventHandler(async (event) => {
   // 1. Obtener todos los perfiles que tienen las notificaciones activas
   const { data: perfiles, error: profilesError } = await supabase
     .from('profiles')
-    .select('id, notif_enabled, notif_interval_days, notif_summary_type, notif_categories, last_notified_at, divisa')
+    .select('id, notif_enabled, notif_interval_days, notif_summary_type, notif_categories, notif_hour, notif_timezone, last_notified_at, divisa')
     .eq('notif_enabled', true)
 
   if (profilesError) {
@@ -46,16 +84,27 @@ export default defineEventHandler(async (event) => {
   }
 
   const resultados: any[] = []
+  const force = query.force === 'true'
 
   // 2. Procesar cada perfil
   for (const perfil of (perfiles as unknown as FilaPerfil[])) {
     const ahora = new Date()
+
+    // Gating por hora: el cron corre cada hora y notifica a partir de la hora
+    // preferida del usuario en SU zona horaria. Se usa >= en vez de igualdad
+    // exacta para que una ejecución perdida o retrasada del cron (deploy,
+    // incidencia, salto de DST) no salte el día entero: el control de intervalo
+    // sobre last_notified_at ya evita envíos duplicados dentro del mismo día
+    const horaLocal = horaActualEnTimezone(perfil.notif_timezone || TIMEZONE_FALLBACK)
+    if (!force && horaLocal < perfil.notif_hour) {
+      continue
+    }
+
     const lastNotified = perfil.last_notified_at ? new Date(perfil.last_notified_at) : null
-    
+
     // Verificar si ya se cumplió el intervalo de días establecido o si es un envío forzado para pruebas
     let debeNotificar = false
-    const force = query.force === 'true'
-    
+
     if (force || !lastNotified) {
       debeNotificar = true // Primera notificación o forzado manual de testeo
     } else {
@@ -129,43 +178,27 @@ export default defineEventHandler(async (event) => {
       continue
     }
 
-    let enviadosExitosos = 0
+    // 5. Enviar la notificación a cada suscripción del usuario (con limpieza de 410/404)
+    const { enviados, fallidos } = await enviarPushASuscripciones(supabase, suscripciones, {
+      title: 'Resumen de gastos 📊',
+      body: cuerpoNotificacion
+    })
 
-    // 5. Enviar la notificación a cada suscripción del usuario
-    for (const sub of suscripciones) {
-      try {
-        await webpush.sendNotification(
-          sub.subscription,
-          JSON.stringify({
-            title: 'Resumen de gastos 📊',
-            body: cuerpoNotificacion
-          })
-        )
-        enviadosExitosos++
-      } catch (err: any) {
-        console.warn(`Error enviando notificación a suscripción ${sub.id}:`, err.message)
-        // Limpieza de suscripciones obsoletas (410 Gone / 404 Not Found)
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          await supabase
-            .from('push_subscriptions')
-            .delete()
-            .eq('id', sub.id)
-          console.log(`Suscripción obsoleta ${sub.id} eliminada automáticamente.`)
-        }
-      }
+    // 6. Actualizar la fecha del último resumen enviado SOLO si hubo al menos
+    //    un envío exitoso; si todos fallaron, el próximo cron reintenta
+    if (enviados > 0) {
+      await supabase
+        .from('profiles')
+        .update({ last_notified_at: ahora.toISOString() })
+        .eq('id', perfil.id)
     }
-
-    // 6. Actualizar la fecha del último resumen enviado
-    await supabase
-      .from('profiles')
-      .update({ last_notified_at: ahora.toISOString() })
-      .eq('id', perfil.id)
 
     resultados.push({
       userId: perfil.id,
       interval: perfil.notif_interval_days,
       total: totalGastado,
-      sentCount: enviadosExitosos
+      sentCount: enviados,
+      failedCount: fallidos
     })
   }
 

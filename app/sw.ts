@@ -80,7 +80,8 @@ self.addEventListener('push', (event: any) => {
     }
   }
 
-  const options: NotificationOptions = {
+  // 'vibrate' no forma parte del NotificationOptions estándar (solo Chrome Android lo respeta)
+  const options: NotificationOptions & { vibrate?: number[] } = {
     body: data.body,
     icon: '/icono.png',
     badge: '/pwa-64x64.png',
@@ -101,9 +102,9 @@ self.addEventListener('notificationclick', (event: any) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList: any) => {
-      // Si ya hay una ventana abierta de la app, enfocarla
+      // Si ya hay una ventana abierta de la app (mismo origin), enfocarla
       for (const client of clientList) {
-        if ('focus' in client) {
+        if (client.url?.includes(self.location.origin) && 'focus' in client) {
           return client.focus()
         }
       }

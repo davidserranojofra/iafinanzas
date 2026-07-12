@@ -40,8 +40,12 @@ const presetsIntervalo = [
 const esIOS = ref(false)
 const esStandalone = ref(false)
 const cargando = ref(true)
+const inicializando = ref(true)
 const guardando = ref(false)
 const errorMsg = ref<string | null>(null)
+const horaResumen = ref(9)
+const enviandoPrueba = ref(false)
+const pruebaEnviada = ref(false)
 
 // Convertidor de base64 VAPID para el navegador
 function urlBase64ToUint8Array(base64String: string) {
@@ -70,7 +74,7 @@ onMounted(async () => {
 
     const { data: perfil, error } = await supabase
       .from('profiles')
-      .select('notif_enabled, notif_interval_days, notif_summary_type, notif_categories')
+      .select('notif_enabled, notif_interval_days, notif_summary_type, notif_categories, notif_hour, notif_timezone')
       .single()
 
     if (error) throw error
@@ -79,6 +83,9 @@ onMounted(async () => {
       habilitarNotificaciones.value = perfil.notif_enabled
       intervaloDias.value = perfil.notif_interval_days
       tipoResumen.value = (perfil.notif_summary_type as 'total' | 'categorias') || 'total'
+      if (typeof perfil.notif_hour === 'number') {
+        horaResumen.value = perfil.notif_hour
+      }
       if (perfil.notif_categories) {
         categoriasSeleccionadas.value = {
           ...categoriasSeleccionadas.value,
@@ -92,8 +99,20 @@ onMounted(async () => {
   } finally {
     await nextTick()
     cargando.value = false
+    inicializando.value = false
   }
 })
+
+// Esperar el service worker activo con timeout para no colgar la UI si el registro falló
+async function esperarServiceWorker(timeoutMs = 10000): Promise<ServiceWorkerRegistration> {
+  return await Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_, reject) => setTimeout(
+      () => reject(new Error('El service worker no está activo. Recarga la app e inténtalo de nuevo.')),
+      timeoutMs
+    ))
+  ])
+}
 
 // Solicitar permisos y registrar Web Push
 async function activarWebPush() {
@@ -108,7 +127,7 @@ async function activarWebPush() {
   }
 
   // 2. Obtener el service worker listo
-  const registration = await navigator.serviceWorker.ready
+  const registration = await esperarServiceWorker()
 
   // 3. Suscribirse a push
   const vapidPublicKey = runtimeConfig.public.vapidPublicKey
@@ -134,7 +153,7 @@ async function activarWebPush() {
 async function desactivarWebPush() {
   if (!import.meta.client || !('serviceWorker' in navigator)) return
 
-  const registration = await navigator.serviceWorker.ready
+  const registration = await esperarServiceWorker()
   const subscription = await registration.pushManager.getSubscription()
 
   if (subscription) {
@@ -152,7 +171,8 @@ async function desactivarWebPush() {
 // Guardar cambios en Supabase con debounce o guardado explícito reactivo
 let saveTimeout: ReturnType<typeof setTimeout>
 function guardarConfiguracion() {
-  if (cargando.value) return
+  // Bloquear solo durante la carga inicial (no usar 'cargando': el toggle lo activa mientras procesa)
+  if (inicializando.value) return
 
   clearTimeout(saveTimeout)
   guardando.value = true
@@ -168,7 +188,10 @@ function guardarConfiguracion() {
           notif_enabled: habilitarNotificaciones.value,
           notif_interval_days: intervaloDias.value,
           notif_summary_type: tipoResumen.value,
-          notif_categories: categoriasSeleccionadas.value
+          notif_categories: categoriasSeleccionadas.value,
+          notif_hour: horaResumen.value,
+          // Capturar siempre la zona horaria actual del navegador
+          notif_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Madrid'
         })
         .eq('id', authUser.id)
 
@@ -207,13 +230,40 @@ async function toggleNotificaciones() {
 }
 
 // Watchers para guardar automáticamente cualquier cambio secundario
+watch(habilitarNotificaciones, () => guardarConfiguracion())
 watch(intervaloDias, () => guardarConfiguracion())
+watch(horaResumen, () => guardarConfiguracion())
 watch(tipoResumen, () => guardarConfiguracion())
 watch(categoriasSeleccionadas, () => guardarConfiguracion(), { deep: true })
 
 function toggleCategoria(cat: string) {
   categoriasSeleccionadas.value[cat] = !categoriasSeleccionadas.value[cat]
   guardarConfiguracion()
+}
+
+// Testeo oculto: enviar una notificación de prueba al pulsar el texto informativo final
+let pruebaTimeout: ReturnType<typeof setTimeout>
+async function enviarNotificacionPrueba() {
+  if (enviandoPrueba.value) return
+  errorMsg.value = null
+  enviandoPrueba.value = true
+
+  try {
+    const resp = await $fetch<{ success: boolean; sentCount: number; failedCount: number }>(
+      '/api/notifications/test',
+      { method: 'POST' }
+    )
+    if (!resp.success) {
+      throw new Error('No se pudo entregar la notificación de prueba a ninguna suscripción.')
+    }
+    pruebaEnviada.value = true
+    clearTimeout(pruebaTimeout)
+    pruebaTimeout = setTimeout(() => { pruebaEnviada.value = false }, 4000)
+  } catch (err: any) {
+    errorMsg.value = err.data?.statusMessage || err.message || 'No se pudo enviar la notificación de prueba.'
+  } finally {
+    enviandoPrueba.value = false
+  }
 }
 </script>
 
@@ -306,6 +356,19 @@ function toggleCategoria(cat: string) {
                 <span class="text-xs text-dracula-muted ml-2">días</span>
               </div>
             </div>
+
+            <!-- Hora de envío -->
+            <div class="mt-4 pt-4 border-t border-dracula-muted/10">
+              <p class="text-sm font-semibold text-dracula-text mb-1">¿A qué hora quieres recibirlo?</p>
+              <p class="text-xs text-dracula-muted mb-3">El resumen se enviará a esta hora según tu zona horaria</p>
+              <!-- text-base (16px): con menos de 16px iOS Safari hace zoom automático al enfocar el control -->
+              <select v-model.number="horaResumen"
+                class="w-full h-11 bg-dracula-card rounded-xl px-3 text-base text-dracula-text focus:outline-none focus:ring-1 focus:ring-dracula-purple border border-transparent cursor-pointer">
+                <option v-for="h in 24" :key="h - 1" :value="h - 1">
+                  {{ String(h - 1).padStart(2, '0') }}:00
+                </option>
+              </select>
+            </div>
           </div>
 
           <!-- Tipo de Resumen -->
@@ -373,9 +436,17 @@ function toggleCategoria(cat: string) {
         </div>
       </Transition>
 
-      <p class="text-center text-xs text-dracula-muted/50 px-4 mt-2 mb-12">
-        Las alertas periódicas y resúmenes de notificaciones se procesan a nivel de servidor de forma segura.
-      </p>
+      <div class="mt-2 mb-12">
+        <p class="text-center text-xs text-dracula-muted/50 px-4 transition-opacity select-none"
+          :class="enviandoPrueba ? 'opacity-40' : ''" @click="enviarNotificacionPrueba">
+          Las alertas periódicas y resúmenes de notificaciones se procesan a nivel de servidor de forma segura.
+        </p>
+        <Transition name="fade-slide">
+          <p v-if="pruebaEnviada" class="text-center text-[10px] font-semibold text-dracula-green mt-2">
+            Notificación de prueba enviada ✓
+          </p>
+        </Transition>
+      </div>
 
     </div>
   </div>
