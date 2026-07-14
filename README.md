@@ -394,6 +394,10 @@ graph LR
 
 Enlace del proyecto desplegado: [https://iafinanzas.vercel.app](https://iafinanzas.vercel.app)
 
+Slides: [IAFinanzas](https://iafinanzas.vercel.app/IAFinanzas.pdf)
+
+Más documentación: carpeta `/docs` (Diseño de Calude design, accesibilidad, arquitectura, seguridad...)
+
 Para poder probar el funcionamiento de la aplicación en su entorno de producción, puedes utilizar las siguientes credenciales de prueba o registrate:
 
 - **Usuario / Email**: `demo@iafinanzas.com`
