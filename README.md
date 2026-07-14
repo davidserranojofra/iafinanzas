@@ -1,12 +1,47 @@
 # IAFinanzas
 
+## a. Descripción general del proyecto
+
 **IAFinanzas** es una app mobile-first PWA de gestión de gastos personales. Permite registrar tickets y facturas de dos formas: escaneando la imagen con IA (extrae automáticamente el comercio, fecha, total, IVA, productos, categoría, método de pago y una nota descriptiva) o rellenando un formulario manual. Los gastos se organizan por categoría, se visualizan con gráficos y se almacenan de forma segura en la nube.
 
 Pensada para usarse desde el móvil como una PWA instalable, con una interfaz limpia basada en el tema Dracula de VS Code.
 
 ---
 
-## Arranque rápido
+## b. Stack tecnológico utilizado
+
+### Tecnologías Core
+
+| Capa                 | Tecnología                                                |
+| -------------------- | --------------------------------------------------------- |
+| Framework            | Nuxt 4 (Vue 3, Composition API)                           |
+| Estilos              | Tailwind CSS v4 con tema Dracula                          |
+| Base de datos y auth | Supabase (PostgreSQL + GoTrue)                            |
+| IA                   | Groq — modelo `meta-llama/llama-4-scout-17b-16e-instruct` |
+| Estado global        | Pinia + `useState` de Nuxt                                |
+| Tipado               | TypeScript estricto                                       |
+
+### Design System — Paleta Dracula
+
+Los tokens están definidos en `app/assets/css/main.css` bajo `@theme {}` y se usan como clases de Tailwind v4 (`bg-dracula-bg`, `text-dracula-purple`, etc.). **Nunca usar `tailwind.config.ts`** — todo va en el CSS.
+
+| Token            | Valor     | Uso                           |
+| ---------------- | --------- | ----------------------------- |
+| `dracula-bg`     | `#282a36` | Fondo principal               |
+| `dracula-card`   | `#44475a` | Tarjetas                      |
+| `dracula-card2`  | `#383a4a` | Tarjetas secundarias / sheets |
+| `dracula-text`   | `#f8f8f2` | Texto principal               |
+| `dracula-muted`  | `#6272a4` | Texto secundario              |
+| `dracula-purple` | `#bd93f9` | Acento principal              |
+| `dracula-pink`   | `#ff79c6` | Acento secundario             |
+| `dracula-green`  | `#50fa7b` | Éxito, IA                     |
+| `dracula-cyan`   | `#8be9fd` | Info, monospace               |
+
+_Gradiente de acento:_ `linear-gradient(135deg, #bd93f9, #ff79c6)` — FAB, botones primarios, avatares.
+
+---
+
+## c. Información sobre su instalación y ejecución
 
 ### Requisitos
 
@@ -25,165 +60,116 @@ npm install
 Crea un archivo `.env` en la raíz del proyecto:
 
 ```env
+NUXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+NUXT_PUBLIC_SUPABASE_KEY=tu_anon_key_de_supabase
 NUXT_GROQ_API_KEY=tu_api_key_de_groq
-SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-SUPABASE_KEY=tu_anon_key_de_supabase
+NUXT_PUBLIC_VAPID_PUBLIC_KEY=api_key_push
+NUXT_VAPID_PRIVATE_KEY=secret_key_push
+NUXT_VAPID_EMAIL=mailto:email@mail.com
+NUXT_CRON_SECRET=secret_key
 ```
 
-### Comandos
+### Comandos de ejecución
 
 ```bash
 npm run dev       # servidor de desarrollo en http://localhost:3000
-npm run build     # build de producción
-npm run generate  # generación estática
-npm run preview   # previsualizar el build de producción
+npm run build     # build de producción (necesario para Vercel, incluye las funciones serverless de la API)
+npm run preview   # previsualizar el build de producción localmente
 ```
 
 ---
 
-## Documentación técnica
-
-### Stack
-
-| Capa                 | Tecnología                                                |
-| -------------------- | --------------------------------------------------------- |
-| Framework            | Nuxt 4 (Vue 3, Composition API)                           |
-| Estilos              | Tailwind CSS v4 con tema Dracula                          |
-| Base de datos y auth | Supabase (PostgreSQL + GoTrue)                            |
-| IA                   | Groq — modelo `meta-llama/llama-4-scout-17b-16e-instruct` |
-| Estado global        | Pinia + `useState` de Nuxt                                |
-| Tipado               | TypeScript estricto                                       |
+## d. Estructura del proyecto
 
 ### Estructura de directorios
 
 ```
 app/
-├── app.vue                  # Root: NuxtPage + BottomNav + AddTicketSheet
+├── app.vue                  # Root: NuxtPage + BottomNav + AddTicketSheet + Avisos/Cola
 ├── pages/
-│   ├── login.vue
-│   ├── dashboard.vue
+│   ├── login.vue            # Formulario de login y registro
+│   ├── confirm.vue          # Callback de OAuth (Supabase exchange code)
+│   ├── dashboard/
+│   │   └── index.vue        # Vista general y balance mensual
 │   ├── tickets/
-│   │   ├── index.vue        # Lista con filtros por categoría
-│   │   ├── escanear.vue     # Cámara + extracción IA
-│   │   ├── manual.vue       # Formulario manual
-│   │   └── [id].vue         # Detalle, edición y eliminación
-│   ├── estadisticas.vue
+│   │   ├── index.vue        # Lista con filtros y buscador de tickets
+│   │   ├── escanear.vue     # Cámara + extracción IA (Groq)
+│   │   ├── manual.vue       # Registro manual de tickets
+│   │   └── [id].vue         # Detalle, edición y borrado de tickets
+│   ├── estadisticas/
+│   │   └── index.vue        # Gráficos de barra y dona por categoría
 │   └── perfil/
-│       ├── index.vue
-│       ├── datos.vue
-│       ├── seguridad.vue
-│       ├── pagos.vue        # Métodos de pago activos del usuario
-│       └── ia.vue
+│       ├── index.vue        # Ajustes de cuenta
+│       ├── datos.vue        # Edición de nombre y divisa activa
+│       ├── seguridad.vue    # Cambio de contraseña
+│       ├── pagos.vue        # Métodos de pago preferidos del usuario
+│       ├── ia.vue           # Configuración del prompt y modelo de IA
+│       └── notificaciones.vue # Programación de resúmenes diarios/semanales
 ├── components/
+│   ├── TicketCapture.vue    # Control de captura de cámara / selección de archivo
 │   ├── layout/
-│   │   ├── BottomNav.vue
-│   │   └── AddTicketSheet.vue   # Bottom sheet global (FAB)
+│   │   ├── BottomNav.vue    # Barra de navegación inferior
+│   │   ├── AddTicketSheet.vue   # Bottom sheet global para agregar ticket
+│   │   ├── MobileHeader.vue     # Header superior con título e indicador de red
+│   │   ├── ActualizadorDatos.vue # Sincronizador de base de datos
+│   │   ├── AvisoInstalacion.vue  # Banner interactivo para instalar PWA (iOS/Android)
+│   │   ├── AvisoOffline.vue      # Indicador visual de pérdida de conexión
+│   │   └── EstadoColaTickets.vue # Toast flotante con el estado de tickets pendientes
 │   ├── tickets/
-│   │   └── CategoryIllustration.vue
+│   │   └── CategoryIllustration.vue # Renderizado SVG de iconos de categoría
 │   ├── dashboard/
 │   ├── stats/
 │   └── ui/
 ├── composables/
-│   ├── useTickets.ts        # CRUD completo de tickets
-│   ├── useAIExtraction.ts   # Lógica de llamada al endpoint IA
-│   └── useMetodoPago.ts     # formatMetodoPago — fuente única de labels
+│   ├── useTickets.ts        # CRUD completo sincronizado Supabase/IndexedDB
+│   ├── useAIExtraction.ts   # Envío de imágenes al servidor para extracción estructurada
+│   ├── useMetodoPago.ts     # Fuente única de nombres para métodos de pago
+│   ├── useCategories.ts     # Paleta de colores e iconos para categorías
+│   ├── useTheme.ts          # Control de tema visual Dracula/Claro
+│   ├── usePwaInstaller.ts   # Gestión del prompt de instalación de PWA
+│   ├── useOfflineDb.ts      # Cliente local IndexedDB para archivos y tickets
+│   ├── useColaTickets.ts    # Cola de sincronización offline con reintentos automáticos
+│   └── useColaLecturasDb.ts # DB local de lecturas de tickets procesados
 ├── stores/
-│   ├── auth.ts
-│   └── tickets.ts
+│   └── auth.ts              # Sesión del usuario actual en Supabase Auth
 ├── middleware/
-│   └── auth.ts              # Redirige a /login si no hay sesión
+│   └── auth.ts              # Redirección inteligente si no hay sesión
 ├── types/
-│   └── index.ts             # Ticket, CreateTicketDto, UserProfile, etc.
-└── assets/css/main.css      # Tokens Dracula en @theme {}
+│   └── index.ts             # Definición de interfaces TS
+└── assets/css/main.css      # Estilos base y tokens de color de Dracula en @theme
 
 server/
 └── api/
-    └── process-ticket.post.ts  # Endpoint IA: recibe imagen, devuelve JSON
+    ├── process-ticket.post.ts  # Consulta al modelo Groq Llama 4 Scout Vision
+    ├── tickets/
+    │   └── sync.post.ts        # Sincronización remota de tickets creados en offline
+    └── notifications/
+        ├── subscribe.post.ts   # Registro de suscripción web push (suscripción VAPID)
+        ├── unsubscribe.post.ts # Remueve suscripción web push
+        ├── test.post.ts        # Dispara una notificación de prueba al usuario
+        └── send-summary-cron.get.ts # Tarea Cron protegida para envío de resúmenes
 ```
 
-### Flujo de escaneo con IA
+### Rutas del sistema
 
-```
-[Cámara / archivo] → FormData (image)
-  → POST /api/process-ticket
-    → Groq Llama 4 Scout Vision
-    → JSON estructurado (comercio, fecha, total, IVA, items[], categoría, método_pago, notas)
-  → useAIExtraction composable
-    → result reactivo pre-rellena el formulario
-  → createTicket() → Supabase INSERT (incluye items como JSONB)
-```
+| Ruta                     | Auth    | Descripción                                              |
+| ------------------------ | ------- | -------------------------------------------------------- |
+| `/login`                 | público | Formulario de credenciales e inicio con Google OAuth     |
+| `/confirm`               | público | Intercambio de código por sesión activa de Supabase      |
+| `/dashboard`             | privado | Resumen financiero, balance mensual y últimos tickets    |
+| `/tickets`               | privado | Listado general con buscador y filtros por categoría     |
+| `/tickets/escanear`      | privado | Captura con cámara o selección de foto y extracción IA   |
+| `/tickets/manual`        | privado | Formulario manual de registro de tickets                 |
+| `/tickets/[id]`          | privado | Detalle de ticket, desglose de productos y edición       |
+| `/estadisticas`          | privado | Distribución de gastos mensuales y gráficos comparativos |
+| `/perfil`                | privado | Menú de ajustes generales                                |
+| `/perfil/datos`          | privado | Edición de nombre de usuario, divisa por defecto         |
+| `/perfil/seguridad`      | privado | Restablecimiento y actualización de contraseña           |
+| `/perfil/pagos`          | privado | Gestión de métodos de pago personalizados                |
+| `/perfil/ia`             | privado | Personalización de instrucciones del motor de IA Groq    |
+| `/perfil/notificaciones` | privado | Suscripción web push y hora para recibir resúmenes       |
 
-El endpoint vive exclusivamente en el servidor (`server/api/`) y nunca expone la API key al cliente.
-
-### Base de datos (Supabase)
-
-**Tabla `tickets`**
-
-| Columna           | Tipo        | Descripción                |
-| ----------------- | ----------- | -------------------------- |
-| `id`              | uuid        | PK generado por DB         |
-| `user_id`         | uuid        | FK a `auth.users`          |
-| `comercio`        | text        | Nombre del comercio        |
-| `fecha`           | date        | Fecha de la compra         |
-| `total`           | numeric     | Importe total              |
-| `iva`             | numeric     | IVA (opcional)             |
-| `categoria`       | text        | Enum de categorías         |
-| `metodo_pago`     | text        | Método de pago             |
-| `notas`           | text        | Observaciones              |
-| `image_url`       | text        | URL en Supabase Storage    |
-| `items`           | jsonb       | Líneas de productos        |
-| `extracted_by_ai` | boolean     | Si fue extraído por IA     |
-| `ai_confidence`   | numeric     | Confianza del modelo (0–1) |
-| `created_at`      | timestamptz | Timestamp automático       |
-
-**Tabla `profiles`**
-
-| Columna        | Tipo   | Descripción                            |
-| -------------- | ------ | -------------------------------------- |
-| `id`           | uuid   | FK a `auth.users`                      |
-| `nombre`       | text   | Nombre del usuario                     |
-| `metodos_pago` | text[] | Métodos activos (filtra el formulario) |
-| `divisa`       | text   | Divisa preferida                       |
-| `avatar_url`   | text   | URL del avatar                         |
-
-### Design system — Paleta Dracula
-
-Los tokens están definidos en `app/assets/css/main.css` bajo `@theme {}` y se usan como clases de Tailwind v4 (`bg-dracula-bg`, `text-dracula-purple`, etc.). **Nunca usar `tailwind.config.ts`** — todo va en el CSS.
-
-| Token            | Valor     | Uso                           |
-| ---------------- | --------- | ----------------------------- |
-| `dracula-bg`     | `#282a36` | Fondo principal               |
-| `dracula-card`   | `#44475a` | Tarjetas                      |
-| `dracula-card2`  | `#383a4a` | Tarjetas secundarias / sheets |
-| `dracula-text`   | `#f8f8f2` | Texto principal               |
-| `dracula-muted`  | `#6272a4` | Texto secundario              |
-| `dracula-purple` | `#bd93f9` | Acento principal              |
-| `dracula-pink`   | `#ff79c6` | Acento secundario             |
-| `dracula-green`  | `#50fa7b` | Éxito, IA                     |
-| `dracula-cyan`   | `#8be9fd` | Info, monospace               |
-
-Gradiente de acento: `linear-gradient(135deg, #bd93f9, #ff79c6)` — FAB, botones primarios, avatares.
-
-### PWA
-
-Iconos generados con `@vite-pwa/assets-generator` desde `public/logo_IAFianza.png`. Configuración en `nuxt.config.ts` — display `standalone` (muestra barra de estado del SO, oculta la UI del browser).
-
-| Archivo                        | Uso                      |
-| ------------------------------ | ------------------------ |
-| `favicon.ico`                  | Browser tab              |
-| `pwa-64x64.png`                | Manifest pequeño         |
-| `pwa-192x192.png`              | Android home screen      |
-| `pwa-512x512.png`              | Android splash + install |
-| `maskable-icon-512x512.png`    | Android adaptive icon    |
-| `apple-touch-icon-180x180.png` | iOS "Añadir a inicio"    |
-
-Para regenerar iconos:
-
-```bash
-npx pwa-assets-generator --config pwa-assets.config.ts
-```
-
-### Convenciones
+### Convenciones de diseño y desarrollo
 
 - **Tailwind v4**: tokens vía `@theme {}`, nunca `tailwind.config.ts`
 - **Auth redirects**: `supabase.redirect: false` — deshabilitados intencionalmente
@@ -195,29 +181,119 @@ npx pwa-assets-generator --config pwa-assets.config.ts
 - **Border radius**: `rounded-2xl` (16px) para cards, `rounded-3xl` para hero/modales
 - **Descarga de tickets**: genera PNG via Canvas API en cliente — incluye items si existen
 
-### Rutas
-
-| Ruta                | Auth    | Descripción                    |
-| ------------------- | ------- | ------------------------------ |
-| `/login`            | público | Login + OAuth                  |
-| `/dashboard`        | privado | Balance y últimos tickets      |
-| `/tickets`          | privado | Lista con filtros              |
-| `/tickets/escanear` | privado | Escaneo con IA                 |
-| `/tickets/manual`   | privado | Formulario manual              |
-| `/tickets/[id]`     | privado | Detalle, edición y eliminación |
-| `/estadisticas`     | privado | Gráficos por período           |
-| `/perfil`           | privado | Configuración del usuario      |
-| `/perfil/datos`     | privado | Datos personales               |
-| `/perfil/pagos`     | privado | Métodos de pago activos        |
-| `/perfil/ia`        | privado | Preferencias del motor IA      |
-
 ---
 
-## Infraestructura y navegación de datos
+## e. Funcionalidades principales
 
-### Arquitectura de servicios
+### 1. Escaneo inteligente de tickets y facturas con IA
 
-Visión global de los servicios externos y cómo se conectan con el cliente y el servidor.
+Permite registrar tickets automáticamente a partir de una foto o archivo de imagen.
+
+- **Flujo de escaneo:**
+
+```
+[Cámara / archivo] → FormData (image)
+  → POST /api/process-ticket
+    → Groq Llama 4 Scout Vision
+    → JSON estructurado (comercio, fecha, total, IVA, items[], categoría, método_pago, notas)
+  → useAIExtraction composable
+    → result reactivo pre-rellena el formulario
+  → createTicket() → Supabase INSERT (incluye items como JSONB)
+```
+
+- **Diagrama de secuencia de escaneo:**
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant E as /tickets/escanear
+    participant AI as useAIExtraction
+    participant API as /api/process-ticket
+    participant Groq as Groq (Llama 4 Scout)
+    participant SB as Supabase
+
+    U->>E: Selecciona imagen o abre cámara
+    E->>AI: extract(file)
+    AI->>API: POST FormData { image }
+    API->>Groq: imagen + prompt con JSON schema
+    Groq-->>API: { comercio, fecha, total, iva,<br/>items[], categoría, método_pago, notas }
+    API-->>AI: ExtractedTicket
+    AI-->>E: result reactivo · phase: done
+    E->>U: Formulario pre-rellenado
+    U->>E: Confirma o edita campos
+    E->>SB: storage.upload(imagen) → image_url
+    E->>SB: INSERT tickets { campos + image_url<br/>extracted_by_ai: true }
+    SB-->>E: ticket.id
+    E->>U: navigateTo /tickets/:id
+```
+
+- **Endpoint seguro:** El procesamiento de imágenes se realiza exclusivamente en el servidor (`server/api/process-ticket.post.ts`), manteniendo la clave de API de Groq totalmente segura.
+
+### 2. Arquitectura Offline-First (Soporte Offline y Cola de Sincronización)
+
+Diseño resiliente que permite operar en condiciones de nula o baja conectividad.
+
+- **Base de datos local:** Almacenamiento local mediante `IndexedDB` gestionado por `useOfflineDb.ts`.
+- **Cola de tareas:** Sincronización en segundo plano mediante `useColaTickets.ts` que monitoriza la conexión y sube los datos a Supabase automáticamente cuando se restablece la red.
+- **Service Worker:** Configurado con estrategias personalizadas (`strategy: injectManifest` en `sw.ts`) para almacenar en caché los recursos estáticos y habilitar la instalación PWA.
+
+### 3. Notificaciones Push y Tareas Programadas (Cron)
+
+- **Web Push (VAPID):** Registro de suscripciones (`/api/notifications/subscribe`) para enviar notificaciones web directamente al dispositivo del usuario.
+- **Resúmenes programados:** Tarea Cron del sistema (`/api/notifications/send-summary-cron.get.ts`) protegida por un token (`NUXT_CRON_SECRET`), permitiendo el envío recurrente de informes financieros diarios o semanales.
+
+### 4. Soporte PWA Instalable
+
+Optimización de interfaz móvil con soporte nativo de pantalla completa.
+
+- **Configuración de Assets:**
+  | Archivo | Uso |
+  | ------------------------------ | ------------------------ |
+  | `favicon.ico` | Browser tab |
+  | `pwa-64x64.png` | Manifest pequeño |
+  | `pwa-192x192.png` | Android home screen |
+  | `pwa-512x512.png` | Android splash + install |
+  | `maskable-icon-512x512.png` | Android adaptive icon |
+  | `apple-touch-icon-180x180.png` | iOS "Añadir a inicio" |
+
+- **Generación de iconos:**
+
+```bash
+npx pwa-assets-generator --config pwa-assets.config.ts
+```
+
+### 5. Persistencia de Datos e Infraestructura
+
+#### Base de datos (Supabase)
+
+**Tabla `tickets`**
+| Columna | Tipo | Descripción |
+| ----------------- | ----------- | -------------------------- |
+| `id` | uuid | PK generado por DB |
+| `user_id` | uuid | FK a `auth.users` |
+| `comercio` | text | Nombre del comercio |
+| `fecha` | date | Fecha de la compra |
+| `total` | numeric | Importe total |
+| `iva` | numeric | IVA (opcional) |
+| `categoria` | text | Enum de categorías |
+| `metodo_pago` | text | Método de pago |
+| `notas` | text | Observaciones |
+| `image_url` | text | URL en Supabase Storage |
+| `items` | jsonb | Líneas de productos |
+| `extracted_by_ai` | boolean | Si fue extraído por IA |
+| `ai_confidence` | numeric | Confianza del modelo (0–1) |
+| `created_at` | timestamptz | Timestamp automático |
+
+**Tabla `profiles`**
+| Columna | Tipo | Descripción |
+| -------------- | ------ | -------------------------------------- |
+| `id` | uuid | FK a `auth.users` |
+| `nombre` | text | Nombre del usuario |
+| `metodos_pago` | text[] | Métodos activos (filtra el formulario) |
+| `divisa` | text | Divisa preferida |
+| `avatar_url` | text | URL del avatar |
+
+#### Arquitectura de Servicios y Flujo de Datos
 
 ```mermaid
 graph TD
@@ -251,11 +327,7 @@ graph TD
     SW -.->|"caché assets + rutas"| Pages
 ```
 
----
-
-### Flujo de autenticación con Google
-
-Cómo viajan las credenciales desde el botón de login hasta la sesión activa en el cliente.
+#### Flujo de Autenticación con Google
 
 ```mermaid
 sequenceDiagram
@@ -277,41 +349,7 @@ sequenceDiagram
     Confirm->>U: window.location → /dashboard
 ```
 
----
-
-### Flujo de escaneo con IA
-
-Recorrido de la imagen desde la cámara hasta el ticket guardado en base de datos.
-
-```mermaid
-sequenceDiagram
-    actor U as Usuario
-    participant E as /tickets/escanear
-    participant AI as useAIExtraction
-    participant API as /api/process-ticket
-    participant Groq as Groq (Llama 4 Scout)
-    participant SB as Supabase
-
-    U->>E: Selecciona imagen o abre cámara
-    E->>AI: extract(file)
-    AI->>API: POST FormData { image }
-    API->>Groq: imagen + prompt con JSON schema
-    Groq-->>API: { comercio, fecha, total, iva,<br/>items[], categoría, método_pago, notas }
-    API-->>AI: ExtractedTicket
-    AI-->>E: result reactivo · phase: done
-    E->>U: Formulario pre-rellenado
-    U->>E: Confirma o edita campos
-    E->>SB: storage.upload(imagen) → image_url
-    E->>SB: INSERT tickets { campos + image_url<br/>extracted_by_ai: true }
-    SB-->>E: ticket.id
-    E->>U: navigateTo /tickets/:id
-```
-
----
-
-### Capa de estado y acceso a datos
-
-Cómo los componentes acceden a los datos a través de composables, store y servicios remotos.
+#### Capa de Estado y Acceso a Datos
 
 ```mermaid
 graph LR
@@ -349,3 +387,17 @@ graph LR
     Groq -->|"JSON ticket"| EP
     P -->|"upload directo"| Stor
 ```
+
+---
+
+## f. Usuario y contraseña de prueba
+
+Enlace del proyecto desplegado: [https://iafinanzas.vercel.app](https://iafinanzas.vercel.app)
+
+Para poder probar el funcionamiento de la aplicación en su entorno de producción, puedes utilizar las siguientes credenciales de prueba o registrate:
+
+- **Usuario / Email**: `demo@iafinanzas.com`
+- **Contraseña**: `DemoIAF2026!`
+
+> [!NOTE]
+> La aplicación también admite el inicio de sesión directo a través de **Google OAuth** o bien mediante la creación de un nuevo usuario a través del formulario de registro incorporado.
