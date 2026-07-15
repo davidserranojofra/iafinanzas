@@ -1,6 +1,9 @@
 <script setup lang="ts">
 const route = useRoute()
-const showNav = computed(() => route.path !== '/login')
+const showNav = computed(() => {
+  const publicPaths = ['/', '/login', '/confirm']
+  return !publicPaths.includes(route.path)
+})
 
 const { $pwa } = useNuxtApp()
 
