@@ -142,15 +142,15 @@ onUnmounted(() => {
           Revolucionando tus finanzas
         </div>
         <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
-          Digitalizá tus tickets en segundos con <br class="hidden md:inline" />
+          Digitaliza tus tickets en segundos con <br class="hidden md:inline" />
           <span
             class="bg-gradient-to-r from-dracula-purple via-dracula-pink to-dracula-cyan bg-clip-text text-transparent">
             Inteligencia Artificial
           </span>
         </h2>
         <p class="text-dracula-muted text-base md:text-xl max-w-2xl mx-auto leading-relaxed">
-          Subí una foto o escaneá tus comprobantes físicos. Nuestra IA de visión procesa y categoriza los gastos al
-          instante. Sin fricción, de forma segura y 100% offline-first.
+          Sube una foto o escanea tus comprobantes físicos. Nuestra IA de visión procesa y categoriza los gastos al
+          instante. Sin fricción, de forma segura y 100 % offline-first.
         </p>
         <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
           <NuxtLink to="/login"
@@ -169,9 +169,9 @@ onUnmounted(() => {
     <section id="demo" class="py-16 px-6 bg-dracula-bg2 border-y border-dracula-card/25 scroll-mt-24">
       <div class="max-w-5xl mx-auto space-y-12">
         <div class="text-center space-y-3">
-          <h3 class="text-3xl font-bold">Probá el escáner de IA en vivo</h3>
+          <h3 class="text-3xl font-bold">Prueba el escáner de IA en vivo</h3>
           <p class="text-dracula-muted max-w-xl mx-auto">
-            Seleccioná un ticket de prueba y mira cómo el motor de IA extrae la información en tiempo real.
+            Selecciona un ticket de prueba y mira cómo el motor de IA extrae la información en tiempo real.
           </p>
         </div>
 
@@ -240,9 +240,9 @@ onUnmounted(() => {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 4v1m6 11h2m-6 0h-2v4m0-16v.01M4 12h2m0 0h2m-2 0V8m8 8h2m-2 0v4M4 16h2v-4m12 0h-2v-4m-2-2H8M4 8h2V6a2 2 0 012-2h8a2 2 0 012 2v2h2" />
                 </svg>
-                <span v-if="scanState === 'idle'">Escanear Ticket</span>
-                <span v-else-if="scanState === 'scanning'">Procesando con IA ({{ progress }}%)...</span>
-                <span v-else>Escaneo Completado</span>
+                <span v-if="scanState === 'idle'">Escanear ticket</span>
+                <span v-else-if="scanState === 'scanning'">Procesando con IA ({{ progress }} %)...</span>
+                <span v-else>Escaneo completado</span>
               </button>
             </div>
           </div>
@@ -268,7 +268,7 @@ onUnmounted(() => {
             <div class="flex-grow flex flex-col justify-center">
               <div v-if="scanState === 'idle'" class="text-center space-y-2 py-8">
                 <p class="text-dracula-muted">Esperando inicio de escaneo...</p>
-                <p class="text-xs text-dracula-muted/55">Pulsá el botón verde de la izquierda</p>
+                <p class="text-xs text-dracula-muted/55">Pulsa el botón verde de la izquierda</p>
               </div>
 
               <div v-else-if="scanState === 'scanning'" class="space-y-4">
@@ -355,7 +355,7 @@ onUnmounted(() => {
         <div class="text-center space-y-4">
           <h3 class="text-3xl md:text-4xl font-bold">Construido bajo estándares de ingeniería</h3>
           <p class="text-dracula-muted max-w-xl mx-auto">
-            No somos una base de datos simple. Implementamos resiliencia total y seguridad estricta para tus gastos.
+            No somos una simple base de datos. Implementamos resiliencia total y seguridad estricta para tus gastos.
           </p>
         </div>
 
@@ -376,8 +376,8 @@ onUnmounted(() => {
               </div>
               <h4 class="text-xl font-bold">Visión Computacional y Estructuración IA</h4>
               <p class="text-dracula-muted leading-relaxed">
-                Olvidate de escribir a mano. Nuestro motor seguro procesa los tickets y los deconstruye en líneas de
-                artículos, IVA y comercio de forma inteligente con un 98% de precisión media.
+                Olvídate de escribir a mano. Nuestro motor seguro procesa los tickets y los desglosa en líneas de
+                artículos, IVA y comercio de forma inteligente con un 98 % de precisión media.
               </p>
             </div>
             <div class="mt-6 flex flex-wrap gap-2">
@@ -403,7 +403,7 @@ onUnmounted(() => {
               <h4 class="text-xl font-bold">Resiliencia Offline-First</h4>
               <p class="text-dracula-muted leading-relaxed">
                 Diseñado para funcionar sin red. Las transacciones se encolan localmente en IndexedDB y se sincronizan
-                solas cuando recuperas internet.
+                solas cuando recuperes la conexión a internet.
               </p>
             </div>
             <div class="mt-6">
@@ -449,8 +449,8 @@ onUnmounted(() => {
               </div>
               <h4 class="text-xl font-bold">Generación de Comprobantes Visuales</h4>
               <p class="text-dracula-muted leading-relaxed">
-                Visualizá tus facturas con estilo. El sistema procesa los tickets y renderiza comprobantes en imagen de
-                alta resolución usando Canvas API localmente en el cliente, permitiendo descargas y archivado inmediato.
+                Visualiza tus facturas con estilo. El sistema procesa los tickets y genera comprobantes en imágenes de
+                alta resolución usando la API Canvas de forma local en el cliente, lo que permite descargarlas y archivarlas de inmediato.
               </p>
             </div>
             <div class="mt-6 flex flex-wrap gap-2">
@@ -475,7 +475,7 @@ onUnmounted(() => {
             PWA HÍBRIDA
           </div>
           <h3 class="text-3xl font-extrabold tracking-tight">
-            Instalá en tu pantalla de inicio sin intermediarios
+            Instálalo en tu pantalla de inicio sin intermediarios
           </h3>
           <p class="text-dracula-muted leading-relaxed">
             IA Finanzas es una PWA (Progressive Web Application). Se instala directo en tu teléfono en segundos,
@@ -492,7 +492,7 @@ onUnmounted(() => {
               <div>
                 <h5 class="font-bold text-sm">iOS / iPhone</h5>
                 <p class="text-xs text-dracula-muted leading-normal">
-                  Pulsá el botón de Compartir en Safari y seleccioná "Añadir a la pantalla de inicio".
+                  Pulsa el botón de Compartir en Safari y selecciona "Añadir a la pantalla de inicio".
                 </p>
               </div>
             </div>
@@ -504,7 +504,7 @@ onUnmounted(() => {
               <div>
                 <h5 class="font-bold text-sm">Android / Chrome</h5>
                 <p class="text-xs text-dracula-muted leading-normal">
-                  Pulsá el banner de instalación nativo que aparece al ingresar a la aplicación.
+                  Pulsa el banner de instalación nativo que aparece al acceder a la aplicación.
                 </p>
               </div>
             </div>

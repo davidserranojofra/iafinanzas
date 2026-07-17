@@ -65,6 +65,7 @@ export default defineNuxtConfig({
     } as any,
     app: {
         head: {
+            title: 'IAFinanzas',
             viewport: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no',
             meta: [
                 {name: 'theme-color', content: '#282a36'},
