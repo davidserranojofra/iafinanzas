@@ -94,7 +94,7 @@ async function submit() {
 
     const ticket = await createTicket({
       ...payload,
-      id: crypto.randomUUID(),
+      id: generateUUID(),
     })
 
     await navigateTo(`/tickets/${ticket.id}`, { replace: true })

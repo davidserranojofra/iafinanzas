@@ -49,7 +49,7 @@ export function useAIExtraction() {
       const formData = new FormData()
       formData.append('image', file)
 
-      const activeModel = import.meta.client ? (localStorage.getItem('ia_model') || 'meta-llama/llama-4-scout-17b-16e-instruct') : 'meta-llama/llama-4-scout-17b-16e-instruct'
+      const activeModel = import.meta.client ? (localStorage.getItem('ia_model') || 'gemini-3.5-flash') : 'gemini-3.5-flash'
 
       const raw = await $fetch<Record<string, unknown>>('/api/process-ticket', {
         method: 'POST',

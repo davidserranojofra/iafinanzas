@@ -183,10 +183,10 @@ async function save() {
   saving.value = true
   saveError.value = null
 
-  const id = crypto.randomUUID()
   let imageUrl: string | undefined
 
   try {
+    const id = generateUUID()
     const file = selectedFile.value ?? fileInput.value?.files?.[0]
     if (file && user.value) {
       const ext = file.name ? (file.name.split('.').pop() ?? 'jpg') : 'jpg'

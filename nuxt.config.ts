@@ -21,6 +21,7 @@ export default defineNuxtConfig({
     },
     runtimeConfig: {
         groqApiKey: process.env.NUXT_GROQ_API_KEY || '',
+        geminiApiKey: process.env.NUXT_GEMINI_API_KEY || '',
         vapidPrivateKey: process.env.NUXT_VAPID_PRIVATE_KEY || '',
         vapidEmail: process.env.NUXT_VAPID_EMAIL || '',
         // Vercel Cron solo adjunta el header 'Authorization: Bearer <valor>' si existe

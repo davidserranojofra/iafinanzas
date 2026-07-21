@@ -4,12 +4,12 @@ definePageMeta({ middleware: 'auth' })
 const confianzaMinima = ref(0.6)
 const autoCategoria = ref(true)
 const sugerirNotas = ref(true)
-const modeloActivo = ref('meta-llama/llama-4-scout-17b-16e-instruct')
+const modeloActivo = ref('gemini-3.5-flash')
 
 const modelos = [
-  { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout (17B)', provider: 'Groq — Optimizado Vision' },
-  { id: 'llama-3.2-11b-vision-preview', name: 'Llama 3.2 Vision (11B)', provider: 'Groq — Súper veloz' },
-  { id: 'llama-3.2-90b-vision-preview', name: 'Llama 3.2 Vision (90B)', provider: 'Groq — Máxima precisión' }
+  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash', provider: 'Google — Recomendado y más nuevo' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google — Máxima precisión' },
+  { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', provider: 'Google — Súper veloz' }
 ]
 
 const labelConfianza = computed(() => {

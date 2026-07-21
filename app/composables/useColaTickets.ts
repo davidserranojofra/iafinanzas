@@ -94,7 +94,7 @@ export function useColaTickets() {
     }
   }
 
-  async function encolarTicket(payload: CreateTicketDto, id = payload.id ?? crypto.randomUUID()) {
+  async function encolarTicket(payload: CreateTicketDto, id = payload.id ?? generateUUID()) {
     await guardarTicketPendiente({
       id,
       payload: {
@@ -115,7 +115,7 @@ export function useColaTickets() {
     return id
   }
 
-  async function encolarLectura(file: File | Blob, userId: string, id = crypto.randomUUID()) {
+  async function encolarLectura(file: File | Blob, userId: string, id = generateUUID()) {
     // Convertir File a Blob plano para evitar DataCloneError al serializar en IndexedDB (iOS/Android)
     const fileBlob = file instanceof File ? new Blob([file], { type: file.type }) : file
 
@@ -236,7 +236,7 @@ export function useColaTickets() {
               const formData = new FormData()
               formData.append('image', lectura.file)
               
-              const activeModel = localStorage.getItem('ia_model') || 'meta-llama/llama-4-scout-17b-16e-instruct'
+              const activeModel = localStorage.getItem('ia_model') || 'gemini-3.5-flash'
 
               const raw = await $fetch<any>('/api/process-ticket', {
                 method: 'POST',

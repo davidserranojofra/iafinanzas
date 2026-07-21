@@ -1,10 +1,11 @@
-import Groq from 'groq-sdk'
+import { GoogleGenAI } from '@google/genai'
 import { serverSupabaseUser } from '#supabase/server'
 
 const MODELOS_IA_PERMITIDOS = [
-    'meta-llama/llama-4-scout-17b-16e-instruct',
-    'llama-3.2-11b-vision-preview',
-    'llama-3.2-90b-vision-preview'
+    'gemini-2.5-flash',
+    'gemini-3.5-flash',
+    'gemini-2.5-pro',
+    'gemini-2.5-flash-lite'
 ]
 
 const EXTRACTION_PROMPT = `
@@ -33,6 +34,39 @@ Reglas estrictas:
 5. Los precios de "items" deben ser números, nunca strings.
 `.trim()
 
+const TICKET_RESPONSE_SCHEMA = {
+    type: 'OBJECT',
+    properties: {
+        comercio: { type: 'STRING' },
+        fecha: { type: 'STRING' },
+        total: { type: 'NUMBER' },
+        categoria: {
+            type: 'STRING',
+            enum: ['alimentación', 'transporte', 'salud', 'tecnología', 'ropa', 'hogar', 'entretenimiento', 'restaurante', 'cuidado_personal', 'otro']
+        },
+        iva: { type: 'NUMBER', nullable: true },
+        notas: { type: 'STRING' },
+        metodo_pago: {
+            type: 'STRING',
+            enum: ['efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'desconocido']
+        },
+        confianza: { type: 'NUMBER' },
+        items: {
+            type: 'ARRAY',
+            items: {
+                type: 'OBJECT',
+                properties: {
+                    nombre: { type: 'STRING' },
+                    precio: { type: 'NUMBER' },
+                    cantidad: { type: 'NUMBER' }
+                },
+                required: ['nombre', 'precio', 'cantidad']
+            }
+        }
+    },
+    required: ['comercio', 'fecha', 'total', 'categoria', 'iva', 'notas', 'metodo_pago', 'confianza', 'items']
+}
+
 export default defineEventHandler(async (event) => {
     // 1. Validar autenticación
     const user = await serverSupabaseUser(event)
@@ -47,13 +81,13 @@ export default defineEventHandler(async (event) => {
     }
 
     // 3. Validar modelo de IA solicitado
-    const selectedModel = getHeader(event, 'x-ia-model') || 'meta-llama/llama-4-scout-17b-16e-instruct'
+    const selectedModel = getHeader(event, 'x-ia-model') || 'gemini-3.5-flash'
     if (!MODELOS_IA_PERMITIDOS.includes(selectedModel)) {
         throw createError({ statusCode: 400, message: 'Modelo de IA no permitido.' })
     }
 
-    const {groqApiKey} = useRuntimeConfig(event)
-    const groq = new Groq({apiKey: groqApiKey})
+    const {geminiApiKey} = useRuntimeConfig(event)
+    const ai = new GoogleGenAI({apiKey: geminiApiKey})
 
     const form = await readMultipartFormData(event)
     const imageField = form?.find((f) => f.name === 'image')
@@ -65,27 +99,30 @@ export default defineEventHandler(async (event) => {
     const base64 = Buffer.from(imageField.data).toString('base64')
 
     try {
-        const response = await groq.chat.completions.create({
+        const response = await ai.models.generateContent({
             model: selectedModel,
-            messages: [
+            contents: [
+                EXTRACTION_PROMPT,
                 {
-                    role: 'user',
-                    content: [
-                        {type: 'text', text: EXTRACTION_PROMPT},
-                        {type: 'image_url', image_url: {url: `data:${mimeType};base64,${base64}`}},
-                    ],
-                },
+                    inlineData: {
+                        data: base64,
+                        mimeType: mimeType
+                    }
+                }
             ],
-            response_format: {type: 'json_object'},
-            temperature: 0,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: TICKET_RESPONSE_SCHEMA,
+                temperature: 0,
+            }
         })
 
-        const text = response.choices[0]?.message?.content?.trim()
+        const text = response.text?.trim()
         if (!text) throw createError({statusCode: 500, message: 'La IA no devolvió datos.'})
         return JSON.parse(text)
     } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
-        console.error('[process-ticket] Groq error:', msg)
+        console.error('[process-ticket] Gemini error:', msg)
         if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('rate')) {
             throw createError({
                 statusCode: 429,
